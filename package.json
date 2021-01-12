@@ -1,0 +1,17 @@
+{
+  "name": "bannerdesigner",
+  "version": "0.0.1",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-external-helpers": "^7.12.1",
+    "@babel/preset-env": "^7.12.11",
+    "canvas2image-2": "^2.3.0",
+    "rollup": "^2.36.1",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-multi-entry": "^2.1.0",
+    "rollup-plugin-typescript2": "^0.29.0",
+    "typescript": "^4.1.3"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "noUnusedLocals": true,
+    "lib": ["ES2016", "DOM"]
+  }
+}
