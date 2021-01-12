@@ -1,3 +1,4 @@
+import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
 
 enum RATIOTYPES {
@@ -10,6 +11,13 @@ enum DATEINFOTYPES {
   date = 'date',
   venue = 'venue',
   tickets = 'tickets',
+}
+
+interface ICurrentCanvasConfig {
+  canvas?: HTMLCanvasElement;
+  canvasContext?: CanvasRenderingContext2D;
+  configName?: string;
+  image?: HTMLImageElement;
 }
 
 interface ICanvasTypesConfig {
@@ -49,12 +57,15 @@ export class CanvasCreator {
       type: RATIOTYPES.wide,
     },
   };
+  private currentCanvas: ICurrentCanvasConfig[] = [];
   private fontsize = 16;
   private lineheight = 30;
   private theme = {
-    bgColor: '000',
-    dateColor: 'rgb(50, 50, 225)',
-    venueColor: 'rgb(255, 255, 255)',
+    artistColor: 'FFFFFF',
+    bgColor: '000000',
+    dateColor: '3333FF',
+    tournameColor: '3333FF',
+    venueColor: 'FFFFFF',
   };
   private types = [RATIOTYPES.wide, RATIOTYPES.square, RATIOTYPES.tall];
 
@@ -94,22 +105,45 @@ export class CanvasCreator {
         height = this.containerWidth * this.canvasConfig[configName].ratio;
         break;
     }
+
     this.canvasConfig[configName].canvas = canvas;
     this.canvasConfig[configName].canvasContext = ctx;
-    // console.log('ratioe', this.canvasConfig[configName].ratio);
+
+    this.currentCanvas.push({ canvas, canvasContext: ctx, configName });
+
     canvas.height = height;
     canvas.width = width;
 
-    // console.log('width', width);
-    // console.log('config this', this.canvasConfig[configName]);
-    canvas.setAttribute('style', `background: #${this.theme.bgColor}; border: 5px solid #d3d3d3`);
+    canvas.setAttribute('style', `background: #${this.theme.bgColor};`);
 
     wrapper.appendChild(canvas);
     this.canvasContainer.appendChild(wrapper);
   }
 
-  public addDates(datesInfo, cfgName) {
+  public async addContent(contentInfo, clear) {
+    const { image } = contentInfo;
+    let imageReturn;
+    if (image) {
+      imageReturn = await imageHandler(image);
+      console.log(imageReturn);
+    }
+    console.log('image?', image);
+    this.currentCanvas.forEach((current) => {
+      const { configName } = current;
+      const cfg = this.canvasConfig[configName];
+      if (clear) {
+        cfg.canvasContext.clearRect(0, 0, cfg.canvas.width, cfg.canvas.height);
+      }
+      if (image) {
+        this.addImage(imageReturn, current);
+      }
+      this.addText(contentInfo, current);
+    });
+  }
+
+  public addDates(datesInfo, cfgName, top) {
     const cfg = this.canvasConfig[cfgName];
+    const dateTexts = [];
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
@@ -118,18 +152,18 @@ export class CanvasCreator {
           const elName = datesInfoElement.name;
 
           if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
-            dateText = datesInfoElement.value;
+            dateText = datesInfoElement.value.toUpperCase();
           }
           if (elName.indexOf(DATEINFOTYPES.venue) !== -1) {
-            venueText = datesInfoElement.value;
+            venueText = datesInfoElement.value.toUpperCase();
           }
           if (elName.indexOf(DATEINFOTYPES.tickets) !== -1 && datesInfoElement.checked) {
             switch (datesInfoElement.value) {
               case 'few':
-                ticketText = 'Få billetter';
+                ticketText = 'Få billetter'.toUpperCase();
                 break;
               case 'soldout':
-                ticketText = 'Udsolgt';
+                ticketText = 'Udsolgt'.toUpperCase();
                 break;
               default:
                 ticketText = '';
@@ -138,59 +172,88 @@ export class CanvasCreator {
           }
         });
         cfg.canvasContext.fillStyle = this.theme.dateColor;
-        simpleTextStyler.setFont(cfg.canvasContext);
-        simpleTextStyler.drawText(
-          cfg.canvasContext,
-          `{#00FF00${dateText}} {#FFFFFF${venueText} {-{-${ticketText}}}}`,
-          cfg.left,
-          cfg.top,
-          21
+        dateTexts.push(
+          `{#${this.theme.dateColor}${dateText}} {#${this.theme.venueColor}${venueText} {-${ticketText}}}`
         );
       }
     }
-    // context.measureText()
+    simpleTextStyler.setFont(cfg.canvasContext);
+    const datestexting = dateTexts.join('\n');
+    console.log(datestexting);
+    simpleTextStyler.drawText(
+      cfg.canvasContext,
+      datestexting,
+      cfg.left,
+      top + cfg.top + this.lineheight,
+      this.fontsize
+    );
   }
 
-  public addText(stuff, clear: boolean = false) {
+  public addImage(baseImage, current) {
+    console.log(baseImage);
+
+    const iWidth = baseImage.width;
+    const iHeight = baseImage.height;
+    const bigWidth = iWidth > iHeight;
+    const ratio = bigWidth ? iHeight / iWidth : iWidth / iHeight;
+
+    const { canvas, canvasContext } = current;
+    current.image = baseImage;
+    const cImgWidth = canvas.width / 3;
+    const cImgMaxHeight = canvas.height / 3;
+    const h = bigWidth ? cImgMaxHeight * ratio : cImgMaxHeight,
+      w = bigWidth ? cImgWidth : cImgWidth * ratio,
+      y = canvas.height - h,
+      x = canvas.width - w;
+
+    console.log('cImgWidth', cImgWidth, cImgWidth * ratio, ratio, cImgMaxHeight);
+
+    canvasContext.drawImage(baseImage, x, y, w, h);
+
+    console.log('canvas', this.currentCanvas);
+  }
+
+  public addText(stuff, current) {
     const { artist, dates, tourname } = stuff;
-    // console.log('addText artist', artist, 'tourname', tourname, this.lineheight);
-    this.types.forEach((cfgName) => {
-      const cfg = this.canvasConfig[cfgName];
-      if (clear) {
-        cfg.canvasContext.clearRect(0, 0, cfg.canvas.width, cfg.canvas.height);
-      }
-      cfg.canvasContext.font = `${this.fontsize}px Arial`;
-      cfg.canvasContext.textAlign = 'left';
 
-      cfg.canvasContext.fillStyle = 'rgb(250, 250, 250)';
-      cfg.canvasContext.fillText(artist, cfg.left, cfg.top);
+    const { configName } = current;
+    const cfg = this.canvasConfig[configName];
 
-      cfg.canvasContext.fillStyle = 'rgb(0, 0, 200)';
-      cfg.canvasContext.fillText(tourname, cfg.left, cfg.top + this.lineheight / 2);
+    cfg.canvasContext.font = `${this.fontsize}px/1 Arial`;
+    cfg.canvasContext.textAlign = 'left';
 
-      this.addDates(dates, cfgName);
+    const tournameTop = cfg.top + this.lineheight / 2;
+    const headerString = `{#${this.theme.artistColor}${artist.toUpperCase()}}\n{#${
+      this.theme.tournameColor
+    }${tourname.toUpperCase()}}`;
+    simpleTextStyler.drawText(cfg.canvasContext, headerString, cfg.left, cfg.top + this.fontsize, this.fontsize);
 
-      // console.log('measurement', cfg.canvasContext.measureText(artist));
-      // console.log('measurement', cfg.canvasContext.measureText(tourname));
-    });
+    this.addDates(dates, configName, tournameTop);
+  }
+
+  public getCanvas() {
+    return this.currentCanvas;
   }
 
   public update(eleList: HTMLFormControlsCollection) {
     const formElements = Array.from(eleList);
-    // console.log(formElements);
+
     const info = {
       dates: {},
     };
+
     formElements.forEach((el: HTMLInputElement) => {
       if (el.dataset.line) {
         info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
         info.dates[el.dataset.line].push(el);
       } else if (el.name) {
         info[el.name] = el.value;
+      } else if (el.type === 'file') {
+        info['image'] = el.value ? el : null;
       }
     });
 
-    // console.log('info:', info);
-    this.addText(info, true);
+    this.addContent(info, true);
+    // this.addText(info, true);
   }
 }
