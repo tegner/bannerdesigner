@@ -1,4 +1,4 @@
-// import canvas2image from 'canvas2image-2';
+import canvas2image from 'canvas2image-2';
 import { CanvasCreator } from './canvascreator';
 
 import { LineItems } from './lineitem';
@@ -26,6 +26,12 @@ canvasCreator.addAll();
 // const bdTitle = document.getElementById('bdTitle') as HTMLInputElement;
 // const bdArtist = document.getElementById('bdArtist') as HTMLInputElement;
 
+const bdFile = document.getElementById('bdFile');
+
+bdFile.addEventListener('change', (ev) => {
+  canvasCreator.imageChanged(true);
+});
+
 const bannerdesigner = document.getElementById('bannerdesigner') as HTMLFormElement;
 
 bannerdesigner.addEventListener('submit', (ev) => {
@@ -44,6 +50,12 @@ const bdSave = document.getElementById('bdSave');
 bdSave.addEventListener('click', () => {
   // const imgTypes = Array.from(typeSet.elements).filter((typeInput) => (typeInput as HTMLInputElement).checked);
   // console.log(imgTypes);
+  console.log(canvasCreator.getCanvas());
+  console.log(canvas2image);
+  const currentCanvas = canvasCreator.getCanvas()[0];
+  // const img = canvas2image.convertToImage(currentCanvas.canvas, 1600, 900, 'png');
+
+  canvas2image.saveAsImage(currentCanvas.canvas, 1600, 900, 'png');
   // for (const imgTypeEl of imgTypes) {
   //   const imgType = (imgTypeEl as HTMLInputElement).value;
   //   console.log(imgType);

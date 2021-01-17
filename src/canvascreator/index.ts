@@ -1,37 +1,18 @@
+import { DragHandler } from '../draghandler';
 import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
+import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES } from './canvascreator';
 
-enum RATIOTYPES {
-  square = 'square',
-  tall = 'tall',
-  wide = 'wide',
-}
-
-enum DATEINFOTYPES {
-  date = 'date',
-  venue = 'venue',
-  tickets = 'tickets',
-}
-
-interface ICurrentCanvasConfig {
-  canvas?: HTMLCanvasElement;
-  canvasContext?: CanvasRenderingContext2D;
-  configName?: string;
-  image?: HTMLImageElement;
-}
-
-interface ICanvasTypesConfig {
-  [id: string]: ICanvasConfig;
-}
-
-interface ICanvasConfig {
-  canvas?: any;
-  canvasContext?: any;
-  left: number;
-  ratio: number;
-  top: number;
-  type: string;
-}
+const sizeCanvas = (w, h, ratio = 4) => {
+  const can = document.createElement('canvas') as HTMLCanvasElement;
+  can.width = w * ratio;
+  can.height = h * ratio;
+  can.style.width = w + 'px';
+  can.style.height = h + 'px';
+  can.getContext('2d').setTransform(ratio, 0, 0, ratio, 0, 0);
+  can.getContext('2d').scale(ratio, ratio);
+  return can;
+};
 
 export class CanvasCreator {
   private container: HTMLElement;
@@ -58,12 +39,15 @@ export class CanvasCreator {
     },
   };
   private currentCanvas: ICurrentCanvasConfig[] = [];
-  private fontsize = 16;
-  private lineheight = 30;
+  private fontsize = 32;
+  private imageHasChanged = false;
+  private lineheight = 60;
+  private scaleFactor = 0.4;
   private theme = {
     artistColor: 'FFFFFF',
     bgColor: '000000',
     dateColor: '3333FF',
+    font: `${this.fontsize}px/${this.lineheight}px Arial`,
     tournameColor: '3333FF',
     venueColor: 'FFFFFF',
   };
@@ -71,24 +55,27 @@ export class CanvasCreator {
 
   constructor(container) {
     this.container = container;
-    this.containerWidth = this.container.clientWidth;
+    this.containerWidth = 1600; // this.container.clientWidth;
 
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
   }
 
+  public imageChanged(status: boolean) {
+    this.imageHasChanged = status;
+  }
+
   public addAll() {
+    // TODO!!!
     // this.types.forEach((configName) => {
-    // this.addCanvas(configName);
+    //   this.addCanvas(configName);
     // });
     this.addCanvas(this.types[0]);
   }
 
   public addCanvas(configName) {
     const wrapper = document.createElement('div');
-    const canvas = document.createElement('canvas') as HTMLCanvasElement;
-    canvas.id = this.canvasConfig[configName].type;
-    const ctx = canvas.getContext('2d');
+    wrapper.setAttribute('style', `transform: scale(${this.scaleFactor}); transform-origin: top left;`);
 
     let width, height;
     switch (this.canvasConfig[configName].type) {
@@ -105,38 +92,35 @@ export class CanvasCreator {
         height = this.containerWidth * this.canvasConfig[configName].ratio;
         break;
     }
+    const canvas = sizeCanvas(width, height, 4);
+    canvas.id = this.canvasConfig[configName].type;
+    const ctx = canvas.getContext('2d');
 
     this.canvasConfig[configName].canvas = canvas;
     this.canvasConfig[configName].canvasContext = ctx;
 
-    this.currentCanvas.push({ canvas, canvasContext: ctx, configName });
+    const curCanvas = { canvas, canvasContext: ctx, configName };
+    this.currentCanvas.push(curCanvas);
 
     canvas.height = height;
     canvas.width = width;
 
-    canvas.setAttribute('style', `background: #${this.theme.bgColor};`);
-
     wrapper.appendChild(canvas);
     this.canvasContainer.appendChild(wrapper);
+
+    this.resetCanvas(curCanvas);
   }
 
   public async addContent(contentInfo, clear) {
-    const { image } = contentInfo;
-    let imageReturn;
-    if (image) {
-      imageReturn = await imageHandler(image);
-      console.log(imageReturn);
-    }
-    console.log('image?', image);
     this.currentCanvas.forEach((current) => {
       const { configName } = current;
       const cfg = this.canvasConfig[configName];
       if (clear) {
-        cfg.canvasContext.clearRect(0, 0, cfg.canvas.width, cfg.canvas.height);
+        this.resetCanvas(cfg);
       }
-      if (image) {
-        this.addImage(imageReturn, current);
-      }
+
+      this.addImage(contentInfo, current);
+
       this.addText(contentInfo, current);
     });
   }
@@ -144,10 +128,12 @@ export class CanvasCreator {
   public addDates(datesInfo, cfgName, top) {
     const cfg = this.canvasConfig[cfgName];
     const dateTexts = [];
+    cfg.canvasContext.textBaseline = 'alphabetic';
+    cfg.canvasContext.font = this.theme.font;
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
-        cfg.canvasContext.textBaseline = 'alphabetic';
+
         datesInfo[dates].forEach((datesInfoElement: HTMLInputElement) => {
           const elName = datesInfoElement.name;
 
@@ -171,7 +157,7 @@ export class CanvasCreator {
             }
           }
         });
-        cfg.canvasContext.fillStyle = this.theme.dateColor;
+        // cfg.canvasContext.fillStyle = this.theme.dateColor;
         dateTexts.push(
           `{#${this.theme.dateColor}${dateText}} {#${this.theme.venueColor}${venueText} {-${ticketText}}}`
         );
@@ -183,33 +169,39 @@ export class CanvasCreator {
     simpleTextStyler.drawText(
       cfg.canvasContext,
       datestexting,
-      cfg.left,
-      top + cfg.top + this.lineheight,
+      cfg.left * 2,
+      top + cfg.top + this.fontsize,
       this.fontsize
     );
   }
 
-  public addImage(baseImage, current) {
-    console.log(baseImage);
-
-    const iWidth = baseImage.width;
-    const iHeight = baseImage.height;
-    const bigWidth = iWidth > iHeight;
-    const ratio = bigWidth ? iHeight / iWidth : iWidth / iHeight;
-
+  public async addImage(contentInfo, current: ICurrentCanvasConfig) {
+    const { image } = contentInfo;
     const { canvas, canvasContext } = current;
-    current.image = baseImage;
-    const cImgWidth = canvas.width / 3;
-    const cImgMaxHeight = canvas.height / 3;
-    const h = bigWidth ? cImgMaxHeight * ratio : cImgMaxHeight,
-      w = bigWidth ? cImgWidth : cImgWidth * ratio,
-      y = canvas.height - h,
-      x = canvas.width - w;
+    let imageReturn;
+    if (image && this.imageHasChanged) {
+      this.imageChanged(false);
+      imageReturn = await imageHandler(image);
 
-    console.log('cImgWidth', cImgWidth, cImgWidth * ratio, ratio, cImgMaxHeight);
+      const iWidth = imageReturn.width;
+      const iHeight = imageReturn.height;
+      const bigWidth = iWidth > iHeight;
+      const ratio = bigWidth ? iHeight / iWidth : iWidth / iHeight;
 
-    canvasContext.drawImage(baseImage, x, y, w, h);
+      const cImgWidth = canvas.width / 3;
+      const cImgMaxHeight = canvas.height / 3;
+      const h = bigWidth ? cImgMaxHeight * ratio : cImgMaxHeight,
+        w = bigWidth ? cImgWidth : cImgWidth * ratio,
+        y = canvas.height - h,
+        x = canvas.width - w;
 
+      current.image = { image: imageReturn, x, y, w, h };
+    }
+    if (current.image) {
+      const { image, x, y, w, h } = current.image;
+      canvasContext.drawImage(image, x, y, w, h);
+      current.image.dragImage = new DragHandler(current, this.scaleFactor);
+    }
     console.log('canvas', this.currentCanvas);
   }
 
@@ -219,14 +211,15 @@ export class CanvasCreator {
     const { configName } = current;
     const cfg = this.canvasConfig[configName];
 
-    cfg.canvasContext.font = `${this.fontsize}px/1 Arial`;
+    cfg.canvasContext.font = this.theme.font;
     cfg.canvasContext.textAlign = 'left';
 
-    const tournameTop = cfg.top + this.lineheight / 2;
+    const tournameTop = cfg.top + this.lineheight;
     const headerString = `{#${this.theme.artistColor}${artist.toUpperCase()}}\n{#${
       this.theme.tournameColor
     }${tourname.toUpperCase()}}`;
-    simpleTextStyler.drawText(cfg.canvasContext, headerString, cfg.left, cfg.top + this.fontsize, this.fontsize);
+
+    simpleTextStyler.drawText(cfg.canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
 
     this.addDates(dates, configName, tournameTop);
   }
@@ -255,5 +248,11 @@ export class CanvasCreator {
 
     this.addContent(info, true);
     // this.addText(info, true);
+  }
+
+  private resetCanvas(cfg: ICurrentCanvasConfig) {
+    cfg.canvasContext.clearRect(0, 0, cfg.canvas.width, cfg.canvas.height);
+    cfg.canvasContext.fillStyle = `#${this.theme.bgColor};`;
+    cfg.canvasContext.fillRect(0, 0, cfg.canvas.width, cfg.canvas.height);
   }
 }
