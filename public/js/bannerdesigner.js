@@ -378,7 +378,6 @@
 	        this.imageInfo = current.image;
 	        // listen for mouse events
 	        current.canvas.addEventListener('mousedown', function (mouseEv) {
-	            console.log('this.handleMouseDown(mouseEv)');
 	            _this.handleMouseDown(mouseEv);
 	        });
 	        current.canvas.addEventListener('mousemove', function (mouseEv) {
@@ -919,7 +918,7 @@
 	}());
 
 	var createLine = function (idx) { return "\n  <div class=\"flex-item line-item date\">\n    <input data-line=\"" + idx + "\" type=\"text\" name=\"date-" + idx + "\" id=\"bdDate-" + idx + "\" />\n  </div>\n  <div class=\"flex-item line-item venue\">\n    <input data-line=\"" + idx + "\" type=\"text\" name=\"venue-" + idx + "\" id=\"bdVenue-" + idx + "\" />\n  </div>\n  <div class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"reg\" checked hidden />\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"few\" />\n  </div>\n  <div class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"soldout\" />\n  </div>\n  "; };
-	var createHeader = function () { return "\n  <div class=\"flex\">\n    <div class=\"flex-item delete-item\"></div>\n    <div class=\"flex-item date\">Datoer</div>\n    <div class=\"flex-item venue\">Spillested</div>\n    <div class=\"flex-item radio\">F\u00E5 billetter</div>\n    <div class=\"flex-item radio\">Udsolgt</div>\n  </div>\n  "; };
+	var createHeader = function () { return "\n  <div class=\"flex-item delete-item\"></div>\n  <div class=\"flex-item date\">Datoer</div>\n  <div class=\"flex-item venue\">Spillested</div>\n  <div class=\"flex-item radio\">F\u00E5 billetter</div>\n  <div class=\"flex-item radio\">Udsolgt</div>\n  "; };
 	var LineItems = /** @class */ (function () {
 	    function LineItems() {
 	        this.container = document.createDocumentFragment();
@@ -949,6 +948,7 @@
 	        var _this = this;
 	        this.addItem();
 	        var header = document.createElement('div');
+	        header.className = 'flex';
 	        header.innerHTML = createHeader();
 	        var addButton = document.createElement('div');
 	        addButton.className = 'button-add';
@@ -967,37 +967,13 @@
 	var canvascontainer = document.getElementById('canvascontainer');
 	var canvasCreator = new CanvasCreator(canvascontainer);
 	canvasCreator.addAll();
-	// console.log('canvasCreator', canvasCreator);
-	// var canvas = document.getElementById('myCanvas') as HTMLCanvasElement;
-	// var canvasContext = canvas.getContext('2d');
-	// canvasContext.fillStyle = 'rgb(200, 0, 0)';
-	// canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-	// canvasContext.fillStyle = 'rgb(0, 30, 0)';
-	// canvasContext.font = '30px Arial';
-	// canvasContext.fillText('Your Text', 10, 50);
-	// console.log('we in here?');
-	// const bdText = document.getElementById('bdText') as HTMLInputElement;
-	// const bdUpdate = document.getElementById('bdUpdate');
-	// const bdTitle = document.getElementById('bdTitle') as HTMLInputElement;
-	// const bdArtist = document.getElementById('bdArtist') as HTMLInputElement;
-	var bdFile = document.getElementById('bdFile');
-	bdFile.addEventListener('change', function (ev) {
-	    canvasCreator.imageChanged(true);
-	});
 	var bannerdesigner = document.getElementById('bannerdesigner');
 	bannerdesigner.addEventListener('submit', function (ev) {
 	    ev.preventDefault();
-	    // canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-	    // canvasContext.fillText(bdText.value, 10, 50);
 	    canvasCreator.update(bannerdesigner.elements);
-	    // canvasCreator.addText(bdArtist.value, bdTitle.value);
 	});
 	var bdSave = document.getElementById('bdSave');
-	// save img
-	// const typeSet = document.getElementById('typeSet') as HTMLFieldSetElement;
 	bdSave.addEventListener('click', function () {
-	    // const imgTypes = Array.from(typeSet.elements).filter((typeInput) => (typeInput as HTMLInputElement).checked);
-	    // console.log(imgTypes);
 	    console.log(canvasCreator.getCanvas());
 	    console.log(canvas2image);
 	    var currentCanvas = canvasCreator.getCanvas()[0];
@@ -1018,5 +994,17 @@
 	var thing = document.getElementById('lineitems');
 	var lineItems = new LineItems();
 	thing.appendChild(lineItems.render());
+	var fileElementBtn = document.getElementById('fileElementBtn');
+	var fileElementValue = document.getElementById('fileElementValue');
+	var bdFile = document.getElementById('bdFile');
+	bdFile.addEventListener('change', function () {
+	    canvasCreator.imageChanged(true);
+	    var splitValue = bdFile.value.split('\\');
+	    fileElementValue.innerHTML = splitValue[splitValue.length - 1];
+	});
+	fileElementBtn.addEventListener('click', function (ev) {
+	    ev.preventDefault();
+	    bdFile.click();
+	});
 
 }());

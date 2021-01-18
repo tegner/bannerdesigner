@@ -8,48 +8,17 @@ const canvascontainer = document.getElementById('canvascontainer');
 const canvasCreator = new CanvasCreator(canvascontainer);
 canvasCreator.addAll();
 
-// console.log('canvasCreator', canvasCreator);
-
-// var canvas = document.getElementById('myCanvas') as HTMLCanvasElement;
-// var canvasContext = canvas.getContext('2d');
-// canvasContext.fillStyle = 'rgb(200, 0, 0)';
-// canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-// canvasContext.fillStyle = 'rgb(0, 30, 0)';
-// canvasContext.font = '30px Arial';
-// canvasContext.fillText('Your Text', 10, 50);
-
-// console.log('we in here?');
-
-// const bdText = document.getElementById('bdText') as HTMLInputElement;
-// const bdUpdate = document.getElementById('bdUpdate');
-
-// const bdTitle = document.getElementById('bdTitle') as HTMLInputElement;
-// const bdArtist = document.getElementById('bdArtist') as HTMLInputElement;
-
-const bdFile = document.getElementById('bdFile');
-
-bdFile.addEventListener('change', (ev) => {
-  canvasCreator.imageChanged(true);
-});
-
 const bannerdesigner = document.getElementById('bannerdesigner') as HTMLFormElement;
 
 bannerdesigner.addEventListener('submit', (ev) => {
   ev.preventDefault();
-  // canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-  // canvasContext.fillText(bdText.value, 10, 50);
+
   canvasCreator.update(bannerdesigner.elements);
-  // canvasCreator.addText(bdArtist.value, bdTitle.value);
 });
 
 const bdSave = document.getElementById('bdSave');
 
-// save img
-// const typeSet = document.getElementById('typeSet') as HTMLFieldSetElement;
-
 bdSave.addEventListener('click', () => {
-  // const imgTypes = Array.from(typeSet.elements).filter((typeInput) => (typeInput as HTMLInputElement).checked);
-  // console.log(imgTypes);
   console.log(canvasCreator.getCanvas());
   console.log(canvas2image);
   const currentCanvas = canvasCreator.getCanvas()[0];
@@ -73,3 +42,19 @@ const thing = document.getElementById('lineitems');
 const lineItems = new LineItems();
 
 thing.appendChild(lineItems.render());
+
+const fileElementBtn = document.getElementById('fileElementBtn');
+const fileElementValue = document.getElementById('fileElementValue');
+
+const bdFile = document.getElementById('bdFile') as HTMLInputElement;
+
+bdFile.addEventListener('change', () => {
+  canvasCreator.imageChanged(true);
+  const splitValue = bdFile.value.split('\\');
+  fileElementValue.innerHTML = splitValue[splitValue.length - 1];
+});
+
+fileElementBtn.addEventListener('click', (ev) => {
+  ev.preventDefault();
+  bdFile.click();
+});

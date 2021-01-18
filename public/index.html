@@ -4,50 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Banner designer</title>
-    <style>
-      .flex {
-        display: flex;
-      }
-      .flex-wrap {
-        flex-wrap: wrap;
-        justify-content: space-between;
-      }
-      .flex-item {
-        margin: 5px;
-      }
-      .flex-item [type="text"] {
-        width: 100%;
-      }
-      .date {
-        width: 40px;
-      }
-      .radio {
-        width: 20px;
-      }
-      .venue {
-        width: 120px;
-      }
-      .button-add {
-        border: 1px solid #000;
-        border-radius: 2px;
-        font-size: 30px;
-        font-weight: bold;
-        text-align: center;
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
-        cursor: pointer;
-      }
-      .delete-item {
-        cursor: pointer;
-        font-size: 18px;
-        line-height: 18px;
-      }
-      .canvascontainer {
-        margin-right: 20px;
-        width: 60%;
-      }
-    </style>
+
+    <link href="../css/style.css" rel="stylesheet" />
   </head>
   <body>
     <div class="flex">
@@ -55,25 +13,34 @@
       <div>
         <form id="bannerdesigner">
           <div id="lineitems"></div>
-          <div>
-            <label>tourname</label>
-            <input name="tourname" type="text" value="" id="bdTourname" />
+          <div class="form-element padding-s--b">
+            <input class="form-input" name="tourname" type="text" value="" id="bdTourname" placeholder="Tourname" />
+            <label class="form-label">Tourname</label>
           </div>
+          <div class="form-element padding-s--b">
+            <input class="form-input" name="artist" type="text" value="" id="bdArtist" placeholder="Artist" />
+            <label class="form-label">Artist</label>
+          </div>
+          <div class="form-element padding-s--b">
+            <div class="form-input form-input--select">
+              <select>
+                <option>Rock</option>
+                <option>Indie</option>
+              </select>
+            </div>
+            <label class="form-label">Tema</label>
+          </div>
+          <div class="form-element padding-s--b" id="fileElement">
+            <input type="file" id="bdFile" style="display: none" />
 
-          <div>
-            <label>Artist</label>
-            <input name="artist" type="text" value="" id="bdArtist" />
+            <button class="button" id="fileElementBtn">Vælg billede</button>
+            <small id="fileElementValue"></small>
           </div>
-          <input type="file" id="bdFile" />
-          <button id="bdUpdate">opdater</button>
         </form>
-        <fieldset id="typeset">
-          <legend>Filtype</legend>
-          <label>PNG <input type="checkbox" checked name="imgType" value="png" /></label>
-          <!-- <input type="checkbox" name="imgType" value="jpg" /> -->
-        </fieldset>
-
-        <button id="bdSave">Gem</button>
+        <div class="flex flex-justify--between form-element">
+          <button class="button" id="bdUpdate" form="bannerdesigner" value="submit">opdater</button>
+          <button class="button button--submit" id="bdSave">Gem</button>
+        </div>
       </div>
     </div>
     <script src="js/bannerdesigner.js"></script>

@@ -65,7 +65,6 @@ export class DragHandler {
 
     // listen for mouse events
     current.canvas.addEventListener('mousedown', (mouseEv: MouseEvent) => {
-      console.log('this.handleMouseDown(mouseEv)');
       this.handleMouseDown(mouseEv);
     });
     current.canvas.addEventListener('mousemove', (mouseEv: MouseEvent) => {

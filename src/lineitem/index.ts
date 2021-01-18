@@ -15,13 +15,11 @@ const createLine = (idx: number) => `
   `;
 
 const createHeader = () => `
-  <div class="flex">
-    <div class="flex-item delete-item"></div>
-    <div class="flex-item date">Datoer</div>
-    <div class="flex-item venue">Spillested</div>
-    <div class="flex-item radio">Få billetter</div>
-    <div class="flex-item radio">Udsolgt</div>
-  </div>
+  <div class="flex-item delete-item"></div>
+  <div class="flex-item date">Datoer</div>
+  <div class="flex-item venue">Spillested</div>
+  <div class="flex-item radio">Få billetter</div>
+  <div class="flex-item radio">Udsolgt</div>
   `;
 
 export class LineItems {
@@ -59,6 +57,7 @@ export class LineItems {
     this.addItem();
 
     const header = document.createElement('div');
+    header.className = 'flex';
     header.innerHTML = createHeader();
 
     const addButton = document.createElement('div');

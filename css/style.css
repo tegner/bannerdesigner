@@ -1,0 +1,625 @@
+body {
+  font-family: Verdana, Helvetica, Arial, sans-serif;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex--center {
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-align--center {
+  align-items: center;
+}
+
+.flex-align--stretch {
+  align-items: stretch;
+}
+
+.flex-align--start {
+  align-items: flex-start;
+}
+
+.flex-align--end {
+  align-items: flex-end;
+}
+
+.flex-wrap--wrap {
+  flex-wrap: wrap;
+}
+
+.flex-row--reverse {
+  flex-direction: row-reverse;
+}
+
+.flex-justify--end {
+  justify-content: flex-end;
+}
+
+.flex-justify--between {
+  justify-content: space-between;
+}
+
+.flex-justify--around {
+  justify-content: space-around;
+}
+
+.flex-justify--center {
+  justify-content: center;
+}
+
+.flex-item--grow {
+  flex-grow: 1;
+}
+
+.flex-item--noshrink {
+  flex-shrink: 0;
+}
+
+.flex-item--start {
+  align-self: flex-start;
+}
+
+.flex-item--end {
+  align-self: flex-end;
+}
+
+.flex-item--stretch {
+  align-self: stretch;
+}
+
+.flex-item--center {
+  align-self: center;
+}
+
+:root {
+  --color--focus: var(--color--blue);
+  --form-border-radius: var(--border-radius--small);
+}
+
+:focus {
+  outline: 1px auto var(--color--focus);
+}
+
+.form-element {
+  position: relative;
+
+  margin-top: 20px;
+}
+
+.form-group .form-element + .form-element {
+  margin-top: 25px;
+}
+
+.form-input {
+  /**
+  @description: Form input, dependent on the surrounding form-element
+  @template:
+  <div class="form-element">
+    <input type="text" class="form-input form-input--text" id="formInput" placeholder="$1" />
+    <label for="formInput" class="form-label">$1</label>
+  </div>
+  */
+  border: 1px solid;
+  border-radius: var(--form-border-radius);
+  box-sizing: border-box;
+  line-height: 30px;
+  padding: 5px;
+  height: 30px;
+}
+
+.form-input ~ .form-label {
+  position: absolute;
+  top: 0;
+  left: 5px;
+
+  font-size: .7em;
+  transform: translate(0, -110%);
+}
+
+.form-input:placeholder-shown ~ .form-label {
+  opacity: 0;
+}
+
+.form-input:not(:placeholder-shown) ~ .form-label,
+.form-input:focus ~ .form-label {
+  opacity: 1;
+}
+
+.form-element--icon {
+  position: relative;
+
+  border: 1px solid;
+  border-radius: 5px;
+  box-sizing: border-box;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.form-input.form-input--icon {
+  border: 0;
+  line-height: normal;
+  padding: 0;
+  height: auto;
+}
+
+.form-element--icon .form-icon:first-child {
+  margin-right: 5px;
+}
+
+.form-element--icon .form-icon:last-child {
+  margin-left: 5px;
+}
+
+/**
+* Icon checkbox
+*/
+.form-checkbox--icon {
+  position: absolute;
+  z-index: -1;
+}
+
+.form-checkbox--icon ~ .form-label {
+  background: var(--color--white);
+  color: var(--fgcolor--white);
+}
+
+.form-checkbox--icon:focus ~ .form-label .form-checkbox-toggle--on,
+.form-checkbox--icon:focus ~ .form-label .form-checkbox-toggle--off {
+  outline: 5px auto var(--color--focus);
+}
+
+.form-checkbox--icon ~ .form-label .form-checkbox-toggle--on,
+.form-checkbox--icon:checked ~ .form-label .form-checkbox-toggle--off {
+  display: none;
+}
+
+.form-checkbox--icon ~ .form-label .form-checkbox-toggle--off,
+.form-checkbox--icon:checked ~ .form-label .form-checkbox-toggle--on {
+  display: inline-block;
+}
+
+.button {
+  background: #fff;
+  border: 1px solid #333;
+  border-radius: 36px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+.button:hover {
+  background: #ccc;
+}
+
+.button--submit {
+  background: darkgreen;
+  border: 1px solid darkgreen;
+  color: #fff;
+}
+
+.button--submit:hover {
+  background: lightgreen;
+  color: #000;
+}
+
+/* margin */
+
+.margin-none {
+  margin: 0;
+}
+
+.margin-none--t {
+  margin-top: 0;
+}
+
+.margin-none--r {
+  margin-right: 0;
+}
+
+.margin-none--b {
+  margin-bottom: 0;
+}
+
+.margin-none--l {
+  margin-left: 0;
+}
+
+.margin-s {
+  margin: 5px;
+}
+
+.margin-s--tb {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.margin-s--rl {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.margin-s--t {
+  margin-top: 5px;
+}
+
+.margin-s--r {
+  margin-right: 5px;
+}
+
+.margin-s--b {
+  margin-bottom: 5px;
+}
+
+.margin-s--l {
+  margin-left: 5px;
+}
+
+.margin-m {
+  margin: 10px;
+}
+
+.margin-m--tb {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.margin-m--rl {
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+.margin-m--t {
+  margin-top: 10px;
+}
+
+.margin-m--r {
+  margin-right: 10px;
+}
+
+.margin-m--b {
+  margin-bottom: 10px;
+}
+
+.margin-m--l {
+  margin-left: 10px;
+}
+
+.margin-l {
+  margin: 20px;
+}
+
+.margin-l--tb {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.margin-l--rl {
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+.margin-l--t {
+  margin-top: 20px;
+}
+
+.margin-l--r {
+  margin-right: 20px;
+}
+
+.margin-l--b {
+  margin-bottom: 20px;
+}
+
+.margin-l--l {
+  margin-left: 20px;
+}
+
+.margin-xl {
+  margin: 30px;
+}
+
+.margin-xl--tb {
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+.margin-xl--rl {
+  margin-right: 30px;
+  margin-left: 30px;
+}
+
+.margin-xl--t {
+  margin-top: 30px;
+}
+
+.margin-xl--r {
+  margin-right: 30px;
+}
+
+.margin-xl--b {
+  margin-bottom: 30px;
+}
+
+.margin-xl--l {
+  margin-left: 30px;
+}
+
+.margin-xxl {
+  margin: 30px;
+}
+
+.margin-xxl--tb {
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+
+.margin-xxl--rl {
+  margin-right: 50px;
+  margin-left: 50px;
+}
+
+.margin-xxl--t {
+  margin-top: 50px;
+}
+
+.margin-xxl--r {
+  margin-right: 50px;
+}
+
+.margin-xxl--b {
+  margin-bottom: 50px;
+}
+
+.margin-xxl--l {
+  margin-left: 50px;
+}
+
+.margin-l--auto {
+  margin-left: auto;
+}
+
+.margin-r---auto {
+  margin-right: auto;
+}
+
+/* padding */
+
+.padding-none {
+  padding: 0;
+}
+
+.padding-none--t {
+  padding-top: 0;
+}
+
+.padding-none--r {
+  padding-right: 0;
+}
+
+.padding-none--b {
+  padding-bottom: 0;
+}
+
+.padding-none--l {
+  padding-left: 0;
+}
+
+.padding-s {
+  padding: 5px;
+}
+
+.padding-s--tb {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.padding-s--rl {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+.padding-s--t {
+  padding-top: 5px;
+}
+
+.padding-s--r {
+  padding-right: 5px;
+}
+
+.padding-s--b {
+  padding-bottom: 5px;
+}
+
+.padding-s--l {
+  padding-left: 5px;
+}
+
+.padding-m {
+  padding: 10px;
+}
+
+.padding-m--tb {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.padding-m--rl {
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+.padding-m--t {
+  padding-top: 10px;
+}
+
+.padding-m--r {
+  padding-right: 10px;
+}
+
+.padding-m--b {
+  padding-bottom: 10px;
+}
+
+.padding-m--l {
+  padding-left: 10px;
+}
+
+.padding-l {
+  padding: 20px;
+}
+
+.padding-l--tb {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.padding-l--rl {
+  padding-right: 20px;
+  padding-left: 20px;
+}
+
+.padding-l--t {
+  padding-top: 20px;
+}
+
+.padding-l--r {
+  padding-right: 20px;
+}
+
+.padding-l--b {
+  padding-bottom: 20px;
+}
+
+.padding-l--l {
+  padding-left: 20px;
+}
+
+.padding-xl {
+  padding: 30px;
+}
+
+.padding-xl--tb {
+  padding-top: 30px;
+  padding-bottom: 30px;
+}
+
+.padding-xl--rl {
+  padding-right: 30px;
+  padding-left: 30px;
+}
+
+.padding-xl--t {
+  padding-top: 30px;
+}
+
+.padding-xl--r {
+  padding-right: 30px;
+}
+
+.padding-xl--b {
+  padding-bottom: 30px;
+}
+
+.padding-xl--l {
+  padding-left: 30px;
+}
+
+.padding-xxl {
+  padding: 50px;
+}
+
+.padding-xxl--tb {
+  padding-top: 50px;
+  padding-bottom: 50px;
+}
+
+.padding-xxl--rl {
+  padding-right: 50px;
+  padding-left: 50px;
+}
+
+.padding-xxl--t {
+  padding-top: 50px;
+}
+
+.padding-xxl--r {
+  padding-right: 50px;
+}
+
+.padding-xxl--b {
+  padding-bottom: 50px;
+}
+
+.padding-xxl--l {
+  padding-left: 50px;
+}
+
+/** stuff here */
+
+.flex-wrap {
+  justify-content: space-between;
+
+  flex-wrap: wrap;
+}
+
+.flex-item {
+  margin: 5px;
+}
+
+.flex-item [type="text"] {
+  width: 100%;
+}
+
+.date {
+  width: 40px;
+}
+
+.radio {
+  width: 20px;
+}
+
+.venue {
+  width: 120px;
+}
+
+.button-add {
+  border: 1px solid #000;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 18px;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+}
+
+.delete-item {
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.canvascontainer {
+  margin-right: 20px;
+  width: 60%;
+}
+
+.form-input--select {
+  display: flex;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.form-input--select select {
+  border: 0;
+  width: 100%;
+}
