@@ -24,6 +24,7 @@ export interface ICurrentCanvasConfig {
     w: number;
     h: number;
   };
+  scaleFactor?: number;
 }
 
 export interface ICanvasTypesConfig {
@@ -33,8 +34,10 @@ export interface ICanvasTypesConfig {
 export interface ICanvasConfig {
   canvas?: HTMLCanvasElement;
   canvasContext?: CanvasRenderingContext2D;
+  height: number;
   left: number;
   ratio: number;
   top: number;
   type: string;
+  width: number;
 }

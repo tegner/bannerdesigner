@@ -20,29 +20,34 @@ export class CanvasCreator {
   private canvasContainer = document.createElement('div');
   private canvasConfig: ICanvasTypesConfig = {
     square: {
+      height: 900,
       left: 10,
       ratio: 1 / 2.3,
       top: 10,
       type: RATIOTYPES.square,
+      width: 900,
     },
     tall: {
+      height: 600,
       left: 10,
       ratio: 16 / 9,
       top: 10,
       type: RATIOTYPES.tall,
+      width: 300,
     },
     wide: {
+      height: 700,
       left: 20,
-      ratio: 9 / 16,
+      ratio: 7 / 19,
       top: 20,
       type: RATIOTYPES.wide,
+      width: 1900,
     },
   };
   private currentCanvas: ICurrentCanvasConfig[] = [];
   private fontsize = 32;
   private imageHasChanged = false;
   private lineheight = 60;
-  private scaleFactor = 0.4;
   private theme = {
     artistColor: 'FFFFFF',
     bgColor: '000000',
@@ -51,12 +56,11 @@ export class CanvasCreator {
     tournameColor: '3333FF',
     venueColor: 'FFFFFF',
   };
-  private types = [RATIOTYPES.wide, RATIOTYPES.square, RATIOTYPES.tall];
+  private types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
   constructor(container) {
     this.container = container;
-    this.containerWidth = 1600; // this.container.clientWidth;
-
+    this.containerWidth = container.clientWidth;
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
   }
@@ -66,40 +70,43 @@ export class CanvasCreator {
   }
 
   public addAll() {
-    // TODO!!!
-    // this.types.forEach((configName) => {
-    //   this.addCanvas(configName);
-    // });
-    this.addCanvas(this.types[0]);
+    this.types.forEach((configName) => {
+      this.addCanvas(configName);
+    });
   }
 
   public addCanvas(configName) {
     const wrapper = document.createElement('div');
-    wrapper.setAttribute('style', `transform: scale(${this.scaleFactor}); transform-origin: top left;`);
+    wrapper.className = 'margin-l--b';
 
-    let width, height;
-    switch (this.canvasConfig[configName].type) {
+    const { height, type, width } = this.canvasConfig[configName];
+
+    let scaleFactor;
+    switch (type) {
       case RATIOTYPES.square:
-        width = this.containerWidth * this.canvasConfig[configName].ratio;
-        height = this.containerWidth * this.canvasConfig[configName].ratio;
+        scaleFactor = this.containerWidth / this.canvasConfig.wide.width;
         break;
       case RATIOTYPES.tall:
-        width = this.containerWidth / 2; // this.containerWidth * this.canvasConfig[configName].ratio;
-        height = (this.containerWidth / 2) * this.canvasConfig[configName].ratio;
+        scaleFactor = width < this.containerWidth / 2 ? 1 : width / this.containerWidth;
         break;
       case RATIOTYPES.wide:
-        width = this.containerWidth;
-        height = this.containerWidth * this.canvasConfig[configName].ratio;
+        scaleFactor = this.containerWidth / width;
         break;
     }
+
     const canvas = sizeCanvas(width, height, 4);
-    canvas.id = this.canvasConfig[configName].type;
+    console.log('scalefac', scaleFactor, configName);
+    if (type !== RATIOTYPES.tall) {
+      wrapper.setAttribute('style', `width: ${width * scaleFactor}px; height: ${height * scaleFactor}px;`);
+      canvas.setAttribute('style', `transform: scale(${scaleFactor}); transform-origin: top left;`);
+    }
+    canvas.id = type;
     const ctx = canvas.getContext('2d');
 
     this.canvasConfig[configName].canvas = canvas;
     this.canvasConfig[configName].canvasContext = ctx;
 
-    const curCanvas = { canvas, canvasContext: ctx, configName };
+    const curCanvas = { canvas, canvasContext: ctx, configName, scaleFactor };
     this.currentCanvas.push(curCanvas);
 
     canvas.height = height;
@@ -200,7 +207,7 @@ export class CanvasCreator {
     if (current.image) {
       const { image, x, y, w, h } = current.image;
       canvasContext.drawImage(image, x, y, w, h);
-      current.image.dragImage = new DragHandler(current, this.scaleFactor);
+      current.image.dragImage = new DragHandler(current, current.scaleFactor);
     }
     console.log('canvas', this.currentCanvas);
   }

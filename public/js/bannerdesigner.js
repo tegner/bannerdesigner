@@ -703,29 +703,34 @@
 	        this.canvasContainer = document.createElement('div');
 	        this.canvasConfig = {
 	            square: {
+	                height: 900,
 	                left: 10,
 	                ratio: 1 / 2.3,
 	                top: 10,
 	                type: RATIOTYPES.square,
+	                width: 900,
 	            },
 	            tall: {
+	                height: 600,
 	                left: 10,
 	                ratio: 16 / 9,
 	                top: 10,
 	                type: RATIOTYPES.tall,
+	                width: 300,
 	            },
 	            wide: {
+	                height: 700,
 	                left: 20,
-	                ratio: 9 / 16,
+	                ratio: 7 / 19,
 	                top: 20,
 	                type: RATIOTYPES.wide,
+	                width: 1900,
 	            },
 	        };
 	        this.currentCanvas = [];
 	        this.fontsize = 32;
 	        this.imageHasChanged = false;
 	        this.lineheight = 60;
-	        this.scaleFactor = 0.4;
 	        this.theme = {
 	            artistColor: 'FFFFFF',
 	            bgColor: '000000',
@@ -736,7 +741,8 @@
 	        };
 	        this.types = [RATIOTYPES.wide, RATIOTYPES.square, RATIOTYPES.tall];
 	        this.container = container;
-	        this.containerWidth = 1600; // this.container.clientWidth;
+	        this.containerWidth = container.clientWidth; // this.container.clientWidth;
+	        // this.scaleFactor = container.clientWidth / this.canvasConfig.wide.width;
 	        this.canvasContainer.className = 'flex flex-wrap flex-start';
 	        this.container.appendChild(this.canvasContainer);
 	    }
@@ -744,36 +750,42 @@
 	        this.imageHasChanged = status;
 	    };
 	    CanvasCreator.prototype.addAll = function () {
+	        var _this = this;
 	        // TODO!!!
-	        // this.types.forEach((configName) => {
-	        //   this.addCanvas(configName);
-	        // });
-	        this.addCanvas(this.types[0]);
+	        this.types.forEach(function (configName) {
+	            _this.addCanvas(configName);
+	        });
+	        // this.addCanvas(this.types[0]);
 	    };
 	    CanvasCreator.prototype.addCanvas = function (configName) {
 	        var wrapper = document.createElement('div');
-	        wrapper.setAttribute('style', "transform: scale(" + this.scaleFactor + "); transform-origin: top left;");
-	        var width, height;
-	        switch (this.canvasConfig[configName].type) {
+	        wrapper.className = 'margin-l--b';
+	        // wrapper.setAttribute('style', `transform: scale(${this.scaleFactor}); transform-origin: top left;`);
+	        var _a = this.canvasConfig[configName], height = _a.height, type = _a.type, width = _a.width;
+	        // let width, height;
+	        var scaleFactor;
+	        switch (type) {
 	            case RATIOTYPES.square:
-	                width = this.containerWidth * this.canvasConfig[configName].ratio;
-	                height = this.containerWidth * this.canvasConfig[configName].ratio;
+	                scaleFactor = this.containerWidth / this.canvasConfig.wide.width;
 	                break;
 	            case RATIOTYPES.tall:
-	                width = this.containerWidth / 2; // this.containerWidth * this.canvasConfig[configName].ratio;
-	                height = (this.containerWidth / 2) * this.canvasConfig[configName].ratio;
+	                scaleFactor = width < this.containerWidth / 2 ? 1 : width / this.containerWidth;
 	                break;
 	            case RATIOTYPES.wide:
-	                width = this.containerWidth;
-	                height = this.containerWidth * this.canvasConfig[configName].ratio;
+	                scaleFactor = this.containerWidth / width;
 	                break;
 	        }
 	        var canvas = sizeCanvas(width, height, 4);
-	        canvas.id = this.canvasConfig[configName].type;
+	        console.log('scalefac', scaleFactor, configName);
+	        if (type !== RATIOTYPES.tall) {
+	            wrapper.setAttribute('style', "width: " + width * scaleFactor + "px; height: " + height * scaleFactor + "px;");
+	            canvas.setAttribute('style', "transform: scale(" + scaleFactor + "); transform-origin: top left;");
+	        }
+	        canvas.id = type;
 	        var ctx = canvas.getContext('2d');
 	        this.canvasConfig[configName].canvas = canvas;
 	        this.canvasConfig[configName].canvasContext = ctx;
-	        var curCanvas = { canvas: canvas, canvasContext: ctx, configName: configName };
+	        var curCanvas = { canvas: canvas, canvasContext: ctx, configName: configName, scaleFactor: scaleFactor };
 	        this.currentCanvas.push(curCanvas);
 	        canvas.height = height;
 	        canvas.width = width;
@@ -867,7 +879,7 @@
 	                        if (current.image) {
 	                            _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
 	                            canvasContext.drawImage(image_1, x, y, w, h);
-	                            current.image.dragImage = new DragHandler(current, this.scaleFactor);
+	                            current.image.dragImage = new DragHandler(current, current.scaleFactor);
 	                        }
 	                        console.log('canvas', this.currentCanvas);
 	                        return [2 /*return*/];
