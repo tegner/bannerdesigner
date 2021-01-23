@@ -297,6 +297,17 @@
 	PERFORMANCE OF THIS SOFTWARE.
 	***************************************************************************** */
 
+	var __assign = function() {
+	    __assign = Object.assign || function __assign(t) {
+	        for (var s, i = 1, n = arguments.length; i < n; i++) {
+	            s = arguments[i];
+	            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+	        }
+	        return t;
+	    };
+	    return __assign.apply(this, arguments);
+	};
+
 	function __awaiter(thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
 	    return new (P || (P = Promise))(function (resolve, reject) {
@@ -333,6 +344,29 @@
 	        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
 	        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
 	    }
+	}
+
+	function asyncForEach(array, callback) {
+	    return __awaiter(this, void 0, void 0, function () {
+	        var index;
+	        return __generator(this, function (_a) {
+	            switch (_a.label) {
+	                case 0:
+	                    index = 0;
+	                    _a.label = 1;
+	                case 1:
+	                    if (!(index < array.length)) return [3 /*break*/, 4];
+	                    return [4 /*yield*/, callback(array[index], index, array)];
+	                case 2:
+	                    _a.sent();
+	                    _a.label = 3;
+	                case 3:
+	                    index++;
+	                    return [3 /*break*/, 1];
+	                case 4: return [2 /*return*/];
+	            }
+	        });
+	    });
 	}
 
 	// var canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -461,34 +495,9 @@
 	    return DragHandler;
 	}());
 
-	// export function imageHandler(fileInputID, canvasCreator) {
-	//   const bdFile = document.getElementById(fileInputID);
-	//   bdFile.addEventListener('change', (ev) => {
-	//     var input = ev.target as HTMLInputElement;
-	//     var url = input.value;
-	//     var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
-	//     console.log('ext', url, ext);
-	//     if (input.files && input.files[0] && (ext == 'gif' || ext == 'png' || ext == 'jpeg' || ext == 'jpg')) {
-	//       var reader = new FileReader();
-	//       reader.addEventListener('load', (readerLoadEvent) => {
-	//         console.log('readerLoadEvent', readerLoadEvent.target.result);
-	//         const base_image = new Image();
-	//         base_image.src = readerLoadEvent.target.result.toString();
-	//         base_image.addEventListener('load', () => {
-	//           console.log('height', base_image.height, 'width', base_image.width);
-	//           canvasCreator.addImage(base_image);
-	//         });
-	//       });
-	//       reader.readAsDataURL(input.files[0]);
-	//     } else {
-	//       console.log('ELSE!!!');
-	//     }
-	//   });
-	// }
 	function imageHandler(input) {
 	    var url = input.value;
 	    var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
-	    console.log('ext', url, ext);
 	    return new Promise(function (resolve, reject) {
 	        if (input.files && input.files[0] && (ext == 'gif' || ext == 'png' || ext == 'jpeg' || ext == 'jpg')) {
 	            var reader = new FileReader();
@@ -501,16 +510,6 @@
 	                });
 	            });
 	            reader.readAsDataURL(input.files[0]);
-	            // var reader = new FileReader();
-	            // reader.addEventListener('load', (readerLoadEvent) => {
-	            //   console.log('readerLoadEvent', readerLoadEvent.target.result);
-	            //   const base_image = new Image();
-	            //   base_image.src = readerLoadEvent.target.result.toString();
-	            //   base_image.addEventListener('load', () => {
-	            //     console.log('height', base_image.height, 'width', base_image.width);
-	            //     canvasCreator.addImage(base_image);
-	            //   });
-	            // });
 	        }
 	        else {
 	            reject();
@@ -704,6 +703,10 @@
 	        this.canvasConfig = {
 	            square: {
 	                height: 900,
+	                imageConfig: {
+	                    maxHeight: 0.5,
+	                    maxWidth: 0.5,
+	                },
 	                left: 10,
 	                ratio: 1 / 2.3,
 	                top: 10,
@@ -712,6 +715,9 @@
 	            },
 	            tall: {
 	                height: 600,
+	                imageConfig: {
+	                    maxWidth: 1,
+	                },
 	                left: 10,
 	                ratio: 16 / 9,
 	                top: 10,
@@ -720,6 +726,9 @@
 	            },
 	            wide: {
 	                height: 700,
+	                imageConfig: {
+	                    maxHeight: 1,
+	                },
 	                left: 20,
 	                ratio: 7 / 19,
 	                top: 20,
@@ -735,34 +744,30 @@
 	            artistColor: 'FFFFFF',
 	            bgColor: '000000',
 	            dateColor: '3333FF',
-	            font: this.fontsize + "px/" + this.lineheight + "px Arial",
+	            font: this.fontsize + "px Arial",
 	            tournameColor: '3333FF',
 	            venueColor: 'FFFFFF',
 	        };
-	        this.types = [RATIOTYPES.wide, RATIOTYPES.square, RATIOTYPES.tall];
+	        this.types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 	        this.container = container;
-	        this.containerWidth = container.clientWidth; // this.container.clientWidth;
-	        // this.scaleFactor = container.clientWidth / this.canvasConfig.wide.width;
+	        this.containerWidth = container.clientWidth;
 	        this.canvasContainer.className = 'flex flex-wrap flex-start';
 	        this.container.appendChild(this.canvasContainer);
+	        this.addAll();
 	    }
 	    CanvasCreator.prototype.imageChanged = function (status) {
 	        this.imageHasChanged = status;
 	    };
 	    CanvasCreator.prototype.addAll = function () {
 	        var _this = this;
-	        // TODO!!!
 	        this.types.forEach(function (configName) {
 	            _this.addCanvas(configName);
 	        });
-	        // this.addCanvas(this.types[0]);
 	    };
 	    CanvasCreator.prototype.addCanvas = function (configName) {
 	        var wrapper = document.createElement('div');
 	        wrapper.className = 'margin-l--b';
-	        // wrapper.setAttribute('style', `transform: scale(${this.scaleFactor}); transform-origin: top left;`);
 	        var _a = this.canvasConfig[configName], height = _a.height, type = _a.type, width = _a.width;
-	        // let width, height;
 	        var scaleFactor;
 	        switch (type) {
 	            case RATIOTYPES.square:
@@ -783,9 +788,8 @@
 	        }
 	        canvas.id = type;
 	        var ctx = canvas.getContext('2d');
-	        this.canvasConfig[configName].canvas = canvas;
-	        this.canvasConfig[configName].canvasContext = ctx;
-	        var curCanvas = { canvas: canvas, canvasContext: ctx, configName: configName, scaleFactor: scaleFactor };
+	        var curCanvas = __assign(__assign({}, this.canvasConfig[configName]), { canvas: canvas, canvasContext: ctx, configName: configName,
+	            scaleFactor: scaleFactor });
 	        this.currentCanvas.push(curCanvas);
 	        canvas.height = height;
 	        canvas.width = width;
@@ -797,24 +801,119 @@
 	        return __awaiter(this, void 0, void 0, function () {
 	            var _this = this;
 	            return __generator(this, function (_a) {
-	                this.currentCanvas.forEach(function (current) {
-	                    var configName = current.configName;
-	                    var cfg = _this.canvasConfig[configName];
-	                    if (clear) {
-	                        _this.resetCanvas(cfg);
-	                    }
-	                    _this.addImage(contentInfo, current);
-	                    _this.addText(contentInfo, current);
-	                });
-	                return [2 /*return*/];
+	                switch (_a.label) {
+	                    case 0: return [4 /*yield*/, asyncForEach(this.currentCanvas, function (current) { return __awaiter(_this, void 0, void 0, function () {
+	                            return __generator(this, function (_a) {
+	                                switch (_a.label) {
+	                                    case 0:
+	                                        // const { configName } = current;
+	                                        // const cfg = this.canvasConfig[configName];
+	                                        if (clear) {
+	                                            this.resetCanvas(current);
+	                                        }
+	                                        return [4 /*yield*/, this.addImage(contentInfo, current)];
+	                                    case 1:
+	                                        _a.sent();
+	                                        console.log('wiat fir mi+', contentInfo);
+	                                        this.addText(contentInfo, current);
+	                                        return [2 /*return*/];
+	                                }
+	                            });
+	                        }); })];
+	                    case 1:
+	                        _a.sent();
+	                        return [2 /*return*/];
+	                }
 	            });
 	        });
 	    };
-	    CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top) {
+	    CanvasCreator.prototype.addImage = function (contentInfo, current) {
+	        return __awaiter(this, void 0, void 0, function () {
+	            var image, canvas, canvasContext, imageConfig, imageReturn, iWidth, iHeight, bigWidth, ratio, maxHeight, maxWidth, cImgMaxWidth, cImgMaxHeight, h, w, y, x, _a, image_1, x, y, w, h;
+	            return __generator(this, function (_b) {
+	                switch (_b.label) {
+	                    case 0:
+	                        image = contentInfo.image;
+	                        console.log('image?', image);
+	                        canvas = current.canvas, canvasContext = current.canvasContext, imageConfig = current.imageConfig;
+	                        if (!(image && this.imageHasChanged)) return [3 /*break*/, 2];
+	                        this.imageChanged(false);
+	                        return [4 /*yield*/, imageHandler(image)];
+	                    case 1:
+	                        imageReturn = _b.sent();
+	                        this.image = imageReturn;
+	                        _b.label = 2;
+	                    case 2:
+	                        if (this.image) {
+	                            iWidth = this.image.width;
+	                            iHeight = this.image.height;
+	                            bigWidth = iWidth > iHeight;
+	                            ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
+	                            console.log('image ratio', ratio, bigWidth);
+	                            maxHeight = imageConfig.maxHeight, maxWidth = imageConfig.maxWidth;
+	                            cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
+	                            cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
+	                            h = cImgMaxHeight, w = cImgMaxWidth, y = canvas.height - h, x = canvas.width - w;
+	                            console.log(h, w, y, x);
+	                            current.image = { image: this.image, x: x, y: y, w: w, h: h };
+	                        }
+	                        console.log('image≤current.image?', current.image);
+	                        if (current.image) {
+	                            _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
+	                            canvasContext.drawImage(image_1, x, y, w, h);
+	                            current.image.dragImage = new DragHandler(current, current.scaleFactor);
+	                        }
+	                        console.log('canvas image', current);
+	                        return [2 /*return*/];
+	                }
+	            });
+	        });
+	    };
+	    CanvasCreator.prototype.addText = function (stuff, current) {
+	        var artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
+	        var canvasContext = current.canvasContext, configName = current.configName;
+	        var cfg = this.canvasConfig[configName];
+	        canvasContext.font = this.theme.font;
+	        canvasContext.textAlign = 'left';
+	        canvasContext.textBaseline = 'top';
+	        var tournameTop = cfg.top * 2;
+	        console.log('tournameTop', tournameTop, cfg.top, this.lineheight);
+	        var headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
+	        simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
+	        console.log('ctx.measureText(text);', canvasContext.measureText(headerString).actualBoundingBoxAscent +
+	            canvasContext.measureText(headerString).actualBoundingBoxDescent);
+	        canvasContext.measureText(headerString).actualBoundingBoxAscent;
+	        this.addDates(dates, configName, tournameTop + this.fontsize * 2, current);
+	    };
+	    CanvasCreator.prototype.getCanvas = function () {
+	        return this.currentCanvas;
+	    };
+	    CanvasCreator.prototype.update = function (eleList) {
+	        var formElements = Array.from(eleList);
+	        var info = {
+	            dates: {},
+	        };
+	        formElements.forEach(function (el) {
+	            if (el.dataset.line) {
+	                info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
+	                info.dates[el.dataset.line].push(el);
+	            }
+	            else if (el.name) {
+	                info[el.name] = el.value;
+	            }
+	            else if (el.type === 'file') {
+	                info['image'] = el.value ? el : null;
+	            }
+	        });
+	        this.addContent(info, true);
+	        // this.addText(info, true);
+	    };
+	    CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
 	        var cfg = this.canvasConfig[cfgName];
 	        var dateTexts = [];
-	        cfg.canvasContext.textBaseline = 'alphabetic';
-	        cfg.canvasContext.font = this.theme.font;
+	        var canvasContext = current.canvasContext;
+	        canvasContext.textBaseline = 'alphabetic';
+	        canvasContext.font = this.theme.font;
 	        var _loop_1 = function (dates) {
 	            if (datesInfo[dates]) {
 	                var dateText_1, ticketText_1, venueText_1;
@@ -848,83 +947,17 @@
 	        for (var dates in datesInfo) {
 	            _loop_1(dates);
 	        }
-	        simpleTextStyler.setFont(cfg.canvasContext);
+	        simpleTextStyler.setFont(canvasContext);
 	        var datestexting = dateTexts.join('\n');
 	        console.log(datestexting);
-	        simpleTextStyler.drawText(cfg.canvasContext, datestexting, cfg.left * 2, top + cfg.top + this.fontsize, this.fontsize);
+	        var textTop = top + cfg.top + this.fontsize;
+	        console.log('textTop', textTop);
+	        simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize);
 	    };
-	    CanvasCreator.prototype.addImage = function (contentInfo, current) {
-	        return __awaiter(this, void 0, void 0, function () {
-	            var image, canvas, canvasContext, imageReturn, iWidth, iHeight, bigWidth, ratio, cImgWidth, cImgMaxHeight, h, w, y, x, _a, image_1, x, y, w, h;
-	            return __generator(this, function (_b) {
-	                switch (_b.label) {
-	                    case 0:
-	                        image = contentInfo.image;
-	                        canvas = current.canvas, canvasContext = current.canvasContext;
-	                        if (!(image && this.imageHasChanged)) return [3 /*break*/, 2];
-	                        this.imageChanged(false);
-	                        return [4 /*yield*/, imageHandler(image)];
-	                    case 1:
-	                        imageReturn = _b.sent();
-	                        iWidth = imageReturn.width;
-	                        iHeight = imageReturn.height;
-	                        bigWidth = iWidth > iHeight;
-	                        ratio = bigWidth ? iHeight / iWidth : iWidth / iHeight;
-	                        cImgWidth = canvas.width / 3;
-	                        cImgMaxHeight = canvas.height / 3;
-	                        h = bigWidth ? cImgMaxHeight * ratio : cImgMaxHeight, w = bigWidth ? cImgWidth : cImgWidth * ratio, y = canvas.height - h, x = canvas.width - w;
-	                        current.image = { image: imageReturn, x: x, y: y, w: w, h: h };
-	                        _b.label = 2;
-	                    case 2:
-	                        if (current.image) {
-	                            _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
-	                            canvasContext.drawImage(image_1, x, y, w, h);
-	                            current.image.dragImage = new DragHandler(current, current.scaleFactor);
-	                        }
-	                        console.log('canvas', this.currentCanvas);
-	                        return [2 /*return*/];
-	                }
-	            });
-	        });
-	    };
-	    CanvasCreator.prototype.addText = function (stuff, current) {
-	        var artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
-	        var configName = current.configName;
-	        var cfg = this.canvasConfig[configName];
-	        cfg.canvasContext.font = this.theme.font;
-	        cfg.canvasContext.textAlign = 'left';
-	        var tournameTop = cfg.top + this.lineheight;
-	        var headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
-	        simpleTextStyler.drawText(cfg.canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
-	        this.addDates(dates, configName, tournameTop);
-	    };
-	    CanvasCreator.prototype.getCanvas = function () {
-	        return this.currentCanvas;
-	    };
-	    CanvasCreator.prototype.update = function (eleList) {
-	        var formElements = Array.from(eleList);
-	        var info = {
-	            dates: {},
-	        };
-	        formElements.forEach(function (el) {
-	            if (el.dataset.line) {
-	                info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
-	                info.dates[el.dataset.line].push(el);
-	            }
-	            else if (el.name) {
-	                info[el.name] = el.value;
-	            }
-	            else if (el.type === 'file') {
-	                info['image'] = el.value ? el : null;
-	            }
-	        });
-	        this.addContent(info, true);
-	        // this.addText(info, true);
-	    };
-	    CanvasCreator.prototype.resetCanvas = function (cfg) {
-	        cfg.canvasContext.clearRect(0, 0, cfg.canvas.width, cfg.canvas.height);
-	        cfg.canvasContext.fillStyle = "#" + this.theme.bgColor + ";";
-	        cfg.canvasContext.fillRect(0, 0, cfg.canvas.width, cfg.canvas.height);
+	    CanvasCreator.prototype.resetCanvas = function (currentCfg) {
+	        currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+	        currentCfg.canvasContext.fillStyle = "#" + this.theme.bgColor + ";";
+	        currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
 	    };
 	    return CanvasCreator;
 	}());
@@ -976,9 +1009,276 @@
 	    return LineItems;
 	}());
 
+	/* modified version of: https://github.com/hongru/canvas2image/blob/master/canvas2image.js */
+
+	/* based on version 1.0.5 */
+
+	/**
+	 * covert canvas to image
+	 * and save the image file
+	 */
+	// check if support sth.
+	var $support$1 = function () {
+	  var canvas = document.createElement("canvas"),
+	      ctx = canvas.getContext("2d");
+	  return {
+	    canvas: !!ctx,
+	    imageData: !!ctx.getImageData,
+	    dataURL: !!canvas.toDataURL,
+	    btoa: !!window.btoa
+	  };
+	}();
+
+	var downloadMime$1 = "image/octet-stream";
+
+	function scaleCanvas$1(canvas, width, height) {
+	  var w = canvas.width,
+	      h = canvas.height;
+
+	  if (width == undefined) {
+	    width = w;
+	  }
+
+	  if (height == undefined) {
+	    height = h;
+	  }
+
+	  var retCanvas = document.createElement("canvas");
+	  var retCtx = retCanvas.getContext("2d");
+	  retCanvas.width = width;
+	  retCanvas.height = height;
+	  retCtx.drawImage(canvas, 0, 0, w, h, 0, 0, width, height);
+	  return retCanvas;
+	}
+
+	function getDataURL$1(canvas, type, width, height) {
+	  canvas = scaleCanvas$1(canvas, width, height);
+	  return canvas.toDataURL(type);
+	} // eslint-disable-next-line
+
+
+	function saveFile$1(strData, fileType, fileName = "download") {
+	  let saveLink = document.createElement("a");
+	  saveLink.download = fileName + "." + fileType;
+	  saveLink.href = strData;
+	  saveLink.click();
+	}
+
+	function genImage$1(strData) {
+	  var img = document.createElement("img");
+	  img.src = strData;
+	  return img;
+	}
+
+	function fixType$1(type) {
+	  type = type.toLowerCase().replace(/jpg/i, "jpeg");
+	  var r = type.match(/png|jpeg|bmp|gif/)[0];
+	  return "image/" + r;
+	}
+
+	function encodeData$1(data) {
+	  if (!window.btoa) {
+	    throw "btoa undefined";
+	  }
+
+	  var str = "";
+
+	  if (typeof data == "string") {
+	    str = data;
+	  } else {
+	    for (var i = 0; i < data.length; i++) {
+	      str += String.fromCharCode(data[i]);
+	    }
+	  }
+
+	  return btoa(str);
+	}
+
+	function getImageData$1(canvas) {
+	  var w = canvas.width,
+	      h = canvas.height;
+	  return canvas.getContext("2d").getImageData(0, 0, w, h);
+	}
+
+	function makeURI$1(strData, type) {
+	  return "data:" + type + ";base64," + strData;
+	}
+	/**
+	 * create bitmap image
+	 * 按照规则生成图片响应头和响应体
+	 */
+
+
+	var genBitmapImage$1 = function (oData) {
+	  //
+	  // BITMAPFILEHEADER: http://msdn.microsoft.com/en-us/library/windows/desktop/dd183374(v=vs.85).aspx
+	  // BITMAPINFOHEADER: http://msdn.microsoft.com/en-us/library/dd183376.aspx
+	  //
+	  var biWidth = oData.width;
+	  var biHeight = oData.height;
+	  var biSizeImage = biWidth * biHeight * 3;
+	  var bfSize = biSizeImage + 54; // total header size = 54 bytes
+	  //
+	  //  typedef struct tagBITMAPFILEHEADER {
+	  //  	WORD bfType;
+	  //  	DWORD bfSize;
+	  //  	WORD bfReserved1;
+	  //  	WORD bfReserved2;
+	  //  	DWORD bfOffBits;
+	  //  } BITMAPFILEHEADER;
+	  //
+
+	  var BITMAPFILEHEADER = [// WORD bfType -- The file type signature; must be "BM"
+	  0x42, 0x4d, // DWORD bfSize -- The size, in bytes, of the bitmap file
+	  bfSize & 0xff, bfSize >> 8 & 0xff, bfSize >> 16 & 0xff, bfSize >> 24 & 0xff, // WORD bfReserved1 -- Reserved; must be zero
+	  0, 0, // WORD bfReserved2 -- Reserved; must be zero
+	  0, 0, // DWORD bfOffBits -- The offset, in bytes, from the beginning of the BITMAPFILEHEADER structure to the bitmap bits.
+	  54, 0, 0, 0]; //
+	  //  typedef struct tagBITMAPINFOHEADER {
+	  //  	DWORD biSize;
+	  //  	LONG  biWidth;
+	  //  	LONG  biHeight;
+	  //  	WORD  biPlanes;
+	  //  	WORD  biBitCount;
+	  //  	DWORD biCompression;
+	  //  	DWORD biSizeImage;
+	  //  	LONG  biXPelsPerMeter;
+	  //  	LONG  biYPelsPerMeter;
+	  //  	DWORD biClrUsed;
+	  //  	DWORD biClrImportant;
+	  //  } BITMAPINFOHEADER, *PBITMAPINFOHEADER;
+	  //
+
+	  var BITMAPINFOHEADER = [// DWORD biSize -- The number of bytes required by the structure
+	  40, 0, 0, 0, // LONG biWidth -- The width of the bitmap, in pixels
+	  biWidth & 0xff, biWidth >> 8 & 0xff, biWidth >> 16 & 0xff, biWidth >> 24 & 0xff, // LONG biHeight -- The height of the bitmap, in pixels
+	  biHeight & 0xff, biHeight >> 8 & 0xff, biHeight >> 16 & 0xff, biHeight >> 24 & 0xff, // WORD biPlanes -- The number of planes for the target device. This value must be set to 1
+	  1, 0, // WORD biBitCount -- The number of bits-per-pixel, 24 bits-per-pixel -- the bitmap
+	  // has a maximum of 2^24 colors (16777216, Truecolor)
+	  24, 0, // DWORD biCompression -- The type of compression, BI_RGB (code 0) -- uncompressed
+	  0, 0, 0, 0, // DWORD biSizeImage -- The size, in bytes, of the image. This may be set to zero for BI_RGB bitmaps
+	  biSizeImage & 0xff, biSizeImage >> 8 & 0xff, biSizeImage >> 16 & 0xff, biSizeImage >> 24 & 0xff, // LONG biXPelsPerMeter, unused
+	  0, 0, 0, 0, // LONG biYPelsPerMeter, unused
+	  0, 0, 0, 0, // DWORD biClrUsed, the number of color indexes of palette, unused
+	  0, 0, 0, 0, // DWORD biClrImportant, unused
+	  0, 0, 0, 0];
+	  var iPadding = (4 - biWidth * 3 % 4) % 4;
+	  var aImgData = oData.data;
+	  var strPixelData = "";
+	  var biWidth4 = biWidth << 2;
+	  var y = biHeight;
+	  var fromCharCode = String.fromCharCode;
+
+	  do {
+	    var iOffsetY = biWidth4 * (y - 1);
+	    var strPixelRow = "";
+
+	    for (var x = 0; x < biWidth; x++) {
+	      var iOffsetX = x << 2;
+	      strPixelRow += fromCharCode(aImgData[iOffsetY + iOffsetX + 2]) + fromCharCode(aImgData[iOffsetY + iOffsetX + 1]) + fromCharCode(aImgData[iOffsetY + iOffsetX]);
+	    }
+
+	    for (var c = 0; c < iPadding; c++) {
+	      strPixelRow += String.fromCharCode(0);
+	    }
+
+	    strPixelData += strPixelRow;
+	  } while (--y);
+
+	  var strEncoded = encodeData$1(BITMAPFILEHEADER.concat(BITMAPINFOHEADER)) + encodeData$1(strPixelData);
+	  return strEncoded;
+	};
+	/**
+	 * saveAsImage
+	 * @param canvasElement
+	 * @param {String} image type
+	 * @param {Number} [optional] png width
+	 * @param {Number} [optional] png height
+	 */
+
+
+	var saveAsImage$1 = function (canvas, width, height, fileType) {
+	  if ($support$1.canvas && $support$1.dataURL) {
+	    if (typeof canvas == "string") {
+	      canvas = document.getElementById(canvas);
+	    }
+
+	    if (fileType == undefined) {
+	      fileType = "png";
+	    }
+
+	    let type = fixType$1(fileType);
+
+	    if (/bmp/.test(type)) {
+	      var data = getImageData$1(scaleCanvas$1(canvas, width, height));
+	      let strData = genBitmapImage$1(data);
+	      saveFile$1(makeURI$1(strData, downloadMime$1), fileType);
+	    } else {
+	      let strData = getDataURL$1(canvas, type, width, height);
+	      saveFile$1(strData.replace(type, downloadMime$1), fileType);
+	    }
+	  }
+	};
+
+	var convertToImage$1 = function (canvas, width, height, type) {
+	  if ($support$1.canvas && $support$1.dataURL) {
+	    if (typeof canvas == "string") {
+	      canvas = document.getElementById(canvas);
+	    }
+
+	    if (type == undefined) {
+	      type = "png";
+	    }
+
+	    type = fixType$1(type);
+
+	    if (/bmp/.test(type)) {
+	      var data = getImageData$1(scaleCanvas$1(canvas, width, height));
+	      let strData = genBitmapImage$1(data);
+	      return genImage$1(makeURI$1(strData, "image/bmp"));
+	    } else {
+	      let strData = getDataURL$1(canvas, type, width, height);
+	      return genImage$1(strData);
+	    }
+	  }
+	};
+
+	var canvas2image$1 = {
+	  saveAsImage: saveAsImage$1,
+	  saveAsPNG: function (canvas, width, height) {
+	    return saveAsImage$1(canvas, width, height, "png");
+	  },
+	  saveAsJPEG: function (canvas, width, height) {
+	    return saveAsImage$1(canvas, width, height, "jpeg");
+	  },
+	  saveAsGIF: function (canvas, width, height) {
+	    return saveAsImage$1(canvas, width, height, "gif");
+	  },
+	  saveAsBMP: function (canvas, width, height) {
+	    return saveAsImage$1(canvas, width, height, "bmp");
+	  },
+	  convertToImage: convertToImage$1,
+	  convertToPNG: function (canvas, width, height) {
+	    return convertToImage$1(canvas, width, height, "png");
+	  },
+	  convertToJPEG: function (canvas, width, height) {
+	    return convertToImage$1(canvas, width, height, "jpeg");
+	  },
+	  convertToGIF: function (canvas, width, height) {
+	    return convertToImage$1(canvas, width, height, "gif");
+	  },
+	  convertToBMP: function (canvas, width, height) {
+	    return convertToImage$1(canvas, width, height, "bmp");
+	  }
+	};
+
+	function SaveToDisk(current) {
+	    var canvas = current.canvas, height = current.height, width = current.width;
+	    canvas2image$1.saveAsImage(canvas, width, height, 'png');
+	}
+
 	var canvascontainer = document.getElementById('canvascontainer');
 	var canvasCreator = new CanvasCreator(canvascontainer);
-	canvasCreator.addAll();
 	var bannerdesigner = document.getElementById('bannerdesigner');
 	bannerdesigner.addEventListener('submit', function (ev) {
 	    ev.preventDefault();
@@ -988,9 +1288,10 @@
 	bdSave.addEventListener('click', function () {
 	    console.log(canvasCreator.getCanvas());
 	    console.log(canvas2image);
-	    var currentCanvas = canvasCreator.getCanvas()[0];
+	    canvasCreator.getCanvas().forEach(function (currentCanvas) {
+	        SaveToDisk(currentCanvas);
+	    });
 	    // const img = canvas2image.convertToImage(currentCanvas.canvas, 1600, 900, 'png');
-	    canvas2image.saveAsImage(currentCanvas.canvas, 1600, 900, 'png');
 	    // for (const imgTypeEl of imgTypes) {
 	    //   const imgType = (imgTypeEl as HTMLInputElement).value;
 	    //   console.log(imgType);

@@ -2,11 +2,11 @@ import canvas2image from 'canvas2image-2';
 import { CanvasCreator } from './canvascreator';
 
 import { LineItems } from './lineitem';
+import { SaveToDisk } from './util/savetodisk';
 
 const canvascontainer = document.getElementById('canvascontainer');
 
 const canvasCreator = new CanvasCreator(canvascontainer);
-canvasCreator.addAll();
 
 const bannerdesigner = document.getElementById('bannerdesigner') as HTMLFormElement;
 
@@ -21,10 +21,13 @@ const bdSave = document.getElementById('bdSave');
 bdSave.addEventListener('click', () => {
   console.log(canvasCreator.getCanvas());
   console.log(canvas2image);
-  const currentCanvas = canvasCreator.getCanvas()[0];
+
+  canvasCreator.getCanvas().forEach((currentCanvas) => {
+    SaveToDisk(currentCanvas);
+  });
+
   // const img = canvas2image.convertToImage(currentCanvas.canvas, 1600, 900, 'png');
 
-  canvas2image.saveAsImage(currentCanvas.canvas, 1600, 900, 'png');
   // for (const imgTypeEl of imgTypes) {
   //   const imgType = (imgTypeEl as HTMLInputElement).value;
   //   console.log(imgType);

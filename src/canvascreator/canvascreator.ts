@@ -32,9 +32,11 @@ export interface ICanvasTypesConfig {
 }
 
 export interface ICanvasConfig {
-  canvas?: HTMLCanvasElement;
-  canvasContext?: CanvasRenderingContext2D;
   height: number;
+  imageConfig: {
+    maxHeight?: number;
+    maxWidth?: number;
+  };
   left: number;
   ratio: number;
   top: number;
