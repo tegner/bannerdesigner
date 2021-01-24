@@ -1,44 +1,5 @@
 import { ICurrentCanvasConfig } from '../canvascreator/canvascreator';
 
-// var canvas = document.getElementById('canvas') as HTMLCanvasElement;
-// var ctx = canvas.getContext('2d');
-
-// // variables used to get mouse position on the canvas
-// var offsetX = canvas.offsetLeft;
-// var offsetY = canvas.offsetTop;
-
-// // variables to save last mouse position
-// // used to see how far the user dragged the mouse
-// // and then move the text by that distance
-// var startX;
-// var startY;
-
-// // some text objects
-// var texts = [];
-
-// // some test texts
-// texts.push({
-//   text: 'Hello',
-//   x: 20,
-//   y: 20,
-// });
-// texts.push({
-//   text: 'World',
-//   x: 20,
-//   y: 70,
-// });
-
-// // calculate width of each text for hit-testing purposes
-// ctx.font = '16px verdana';
-// for (var i = 0; i < texts.length; i++) {
-//   var text = texts[i];
-//   text.width = ctx.measureText(text.text).width;
-//   text.height = 16;
-// }
-
-// // this var will hold the index of the selected text
-// var selectedText = -1;
-
 export class DragHandler {
   private current;
   private dragging = false;
@@ -78,29 +39,12 @@ export class DragHandler {
     });
   }
 
-  // clear the canvas draw all texts
-  // private draw() {
-  //   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  //   for (var i = 0; i < texts.length; i++) {
-  //     var text = texts[i];
-  //     ctx.fillText(text.text, text.x, text.y);
-  //   }
-  // }
-
   // test if x,y is inside the bounding box of texts[textIndex]
   private imageHittest(x, y) {
     const { h: imageH, x: imageX, y: imageY, w: imageW } = this.imageInfo;
 
     const scaledX = imageX * this.scaleFactor;
     const scaledY = imageY * this.scaleFactor;
-    console.log('imageHittest h - w', imageH, imageW);
-
-    // console.log('imageHittest x ', x, scaledX * this.scaleFactor);
-    console.log('imageHittest scaledY', scaledY + imageH);
-    console.log('imageHittest mouse y', y);
-
-    // console.log('imageHittest x', x >= scaledX && x <= scaledX + imageW);
-    console.log('imageHittest y', y >= scaledY - imageH, y <= scaledY + imageH);
 
     return x >= scaledX && x <= scaledX + imageW && y >= scaledY && y <= scaledY + imageH;
   }
@@ -116,7 +60,6 @@ export class DragHandler {
 
     // Put your mousedown stuff here
 
-    console.log(this.imageHittest(this.startX, this.startY));
     this.dragging = this.imageHittest(this.startX, this.startY);
   }
 
@@ -129,7 +72,7 @@ export class DragHandler {
       return;
     }
     ev.preventDefault();
-    console.log(this.imageInfo);
+
     const mouseX = ev.clientX - this.offsetX;
     const mouseY = ev.clientY - this.offsetY;
 
@@ -146,9 +89,6 @@ export class DragHandler {
     this.imageInfo.y += dy;
 
     this.current.canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
-
-    console.log(this.imageInfo);
-    // this.draw();
   }
 
   // // also done dragging

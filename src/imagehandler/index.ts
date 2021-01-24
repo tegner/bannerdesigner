@@ -9,8 +9,6 @@ export function imageHandler(input: HTMLInputElement) {
         const base_image = new Image();
         base_image.src = readerLoadEvent.target.result.toString();
         base_image.addEventListener('load', () => {
-          console.log('height', base_image.height, 'width', base_image.width);
-
           resolve(base_image);
         });
       });

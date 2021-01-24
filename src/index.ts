@@ -1,4 +1,3 @@
-import canvas2image from 'canvas2image-2';
 import { CanvasCreator } from './canvascreator';
 
 import { LineItems } from './lineitem';
@@ -19,26 +18,9 @@ bannerdesigner.addEventListener('submit', (ev) => {
 const bdSave = document.getElementById('bdSave');
 
 bdSave.addEventListener('click', () => {
-  console.log(canvasCreator.getCanvas());
-  console.log(canvas2image);
-
   canvasCreator.getCanvas().forEach((currentCanvas) => {
     SaveToDisk(currentCanvas);
   });
-
-  // const img = canvas2image.convertToImage(currentCanvas.canvas, 1600, 900, 'png');
-
-  // for (const imgTypeEl of imgTypes) {
-  //   const imgType = (imgTypeEl as HTMLInputElement).value;
-  //   console.log(imgType);
-  //   canvas2image.convertToImage(canvas, 900, 1600, imgType);
-  //   canvas2image.saveAsImage(canvas, 900, 1600, imgType);
-  // }
-  // canvas2image.convertToImage(canvas, 1600, 900, imgType);
-  // canvas2image.convertToImage(canvas, 900, 900, imgType);
-  // canvas2image.saveAsImage(canvas, 900, 1600, imgType);
-  // canvas2image.saveAsImage(canvas, 1600, 900, imgType);
-  // canvas2image.saveAsImage(canvas, 900, 900, imgType);
 });
 
 const thing = document.getElementById('lineitems');

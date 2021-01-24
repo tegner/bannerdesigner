@@ -23,6 +23,7 @@ export class CanvasCreator {
   private canvasContainer = document.createElement('div');
   private canvasConfig: ICanvasTypesConfig = {
     square: {
+      header: 'Banner: Instagram',
       height: 900,
       imageConfig: {
         maxHeight: 0.5,
@@ -35,6 +36,7 @@ export class CanvasCreator {
       width: 900,
     },
     tall: {
+      header: 'Banner: Skyskraper',
       height: 600,
       imageConfig: {
         maxWidth: 1,
@@ -46,9 +48,14 @@ export class CanvasCreator {
       width: 300,
     },
     wide: {
+      header: 'Banner: Facebook',
       height: 700,
       imageConfig: {
+        base: 'height',
         maxHeight: 1,
+        square: 1,
+        tall: 1,
+        wide: 1,
       },
       left: 20,
       ratio: 7 / 19,
@@ -61,7 +68,7 @@ export class CanvasCreator {
   private fontsize = 32;
   private image;
   private imageHasChanged = false;
-  private lineheight = 60;
+
   private theme = {
     artistColor: 'FFFFFF',
     bgColor: '000000',
@@ -92,10 +99,17 @@ export class CanvasCreator {
   }
 
   private addCanvas(configName) {
+    const { header, height, type, width } = this.canvasConfig[configName];
+
     const wrapper = document.createElement('div');
     wrapper.className = 'margin-l--b';
+    wrapper.id = `wrapper${type}`;
+    this.canvasContainer.appendChild(wrapper);
 
-    const { height, type, width } = this.canvasConfig[configName];
+    const head = document.createElement('h5');
+    head.innerHTML = header;
+
+    wrapper.appendChild(head);
 
     let scaleFactor;
     switch (type) {
@@ -111,9 +125,11 @@ export class CanvasCreator {
     }
 
     const canvas = sizeCanvas(width, height, 4);
-    console.log('scalefac', scaleFactor, configName);
     if (type !== RATIOTYPES.tall) {
-      wrapper.setAttribute('style', `width: ${width * scaleFactor}px; height: ${height * scaleFactor}px;`);
+      wrapper.setAttribute(
+        'style',
+        `width: ${width * scaleFactor}px; height: ${height * scaleFactor + head.clientHeight}px;`
+      );
       canvas.setAttribute('style', `transform: scale(${scaleFactor}); transform-origin: top left;`);
     }
     canvas.id = type;
@@ -132,59 +148,67 @@ export class CanvasCreator {
     canvas.width = width;
 
     wrapper.appendChild(canvas);
-    this.canvasContainer.appendChild(wrapper);
 
     this.resetCanvas(curCanvas);
   }
 
   private async addContent(contentInfo, clear) {
     await asyncForEach(this.currentCanvas, async (current) => {
-      // const { configName } = current;
-      // const cfg = this.canvasConfig[configName];
       if (clear) {
         this.resetCanvas(current);
       }
 
       await this.addImage(contentInfo, current);
-      console.log('wiat fir mi+', contentInfo);
+
       this.addText(contentInfo, current);
     });
   }
 
   private async addImage(contentInfo, current: TCurrentCanvasInfo) {
     const { image } = contentInfo;
-    console.log('image?', image);
-    const { canvas, canvasContext, imageConfig } = current;
+
+    const { canvas, canvasContext, imageConfig, type } = current;
     let imageReturn;
     if (image && this.imageHasChanged) {
       this.imageChanged(false);
       imageReturn = await imageHandler(image);
       this.image = imageReturn;
+      if (current.image) delete current.image;
     }
     if (this.image) {
       const iWidth = this.image.width;
       const iHeight = this.image.height;
       const bigWidth = iWidth > iHeight;
-      const ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
-      console.log('image ratio', ratio, bigWidth);
-      // const cImgMaxWidth = canvas.width;
+
+      let ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
+
       const { maxHeight, maxWidth } = imageConfig;
       const cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
       const cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
-      const h = cImgMaxHeight,
-        w = cImgMaxWidth,
-        y = canvas.height - h,
+      let h = cImgMaxHeight,
+        w = cImgMaxWidth;
+
+      if (iWidth > iHeight) {
+        ratio = iHeight / iWidth;
+        w = type === RATIOTYPES.wide ? w * ratio : w;
+        h = type === RATIOTYPES.square ? w * maxWidth : h;
+      } else if (iWidth < iHeight) {
+        ratio = iWidth / iHeight;
+        w = h * ratio;
+      } else {
+        w = h;
+      }
+      const y = canvas.height - h,
         x = canvas.width - w;
-      console.log(h, w, y, x);
+
       current.image = { image: this.image, x, y, w, h };
     }
-    console.log('image≤current.image?', current.image);
+
     if (current.image) {
       const { image, x, y, w, h } = current.image;
       canvasContext.drawImage(image, x, y, w, h);
       current.image.dragImage = new DragHandler(current, current.scaleFactor);
     }
-    console.log('canvas image', current);
   }
 
   private addText(stuff, current: TCurrentCanvasInfo) {
@@ -198,17 +222,13 @@ export class CanvasCreator {
     canvasContext.textBaseline = 'top';
 
     const tournameTop = cfg.top * 2;
-    console.log('tournameTop', tournameTop, cfg.top, this.lineheight);
+
     const headerString = `{#${this.theme.artistColor}${artist.toUpperCase()}}\n{#${
       this.theme.tournameColor
     }${tourname.toUpperCase()}}`;
 
     simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
-    console.log(
-      'ctx.measureText(text);',
-      canvasContext.measureText(headerString).actualBoundingBoxAscent +
-        canvasContext.measureText(headerString).actualBoundingBoxDescent
-    );
+
     canvasContext.measureText(headerString).actualBoundingBoxAscent;
     this.addDates(dates, configName, tournameTop + this.fontsize * 2, current);
   }
@@ -272,7 +292,7 @@ export class CanvasCreator {
             }
           }
         });
-        // cfg.canvasContext.fillStyle = this.theme.dateColor;
+
         dateTexts.push(
           `{#${this.theme.dateColor}${dateText}} {#${this.theme.venueColor}${venueText} {-${ticketText}}}`
         );
@@ -280,9 +300,9 @@ export class CanvasCreator {
     }
     simpleTextStyler.setFont(canvasContext);
     const datestexting = dateTexts.join('\n');
-    console.log(datestexting);
+
     const textTop = top + cfg.top + this.fontsize;
-    console.log('textTop', textTop);
+
     simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize);
   }
 

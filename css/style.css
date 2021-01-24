@@ -1,6 +1,25 @@
 body {
   font-family: Verdana, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
 }
+
+.masthead {
+  background: lightslategray;
+  color: #000;
+  font-size: 2em;
+  margin-bottom: 20px;
+  padding: 20px 40px;
+  text-transform: uppercase;
+}
+
+h5 {
+  font-weight: normal;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/** helpers */
 
 .flex {
   display: flex;
@@ -583,11 +602,12 @@ body {
 }
 
 .radio {
-  width: 20px;
+  white-space: nowrap;
+  min-width: 20px;
 }
 
 .venue {
-  width: 120px;
+  min-width: 180px;
 }
 
 .button-add {
@@ -606,10 +626,11 @@ body {
   cursor: pointer;
   font-size: 18px;
   line-height: 18px;
+  width: 12px;
 }
 
 .canvascontainer {
-  margin: 20px;
+  margin: 0 20px;
   width: 60%;
 }
 
@@ -622,4 +643,11 @@ body {
 .form-input--select select {
   border: 0;
   width: 100%;
+}
+
+/**
+* font-size
+*/
+.fs--small {
+  font-size: .75em;
 }
