@@ -360,7 +360,7 @@
             artistColor: 'D9E4E1',
             bgColor: '000000',
             dateColor: 'D47843',
-            fontFamily: 'Arial',
+            fontFamily: 'Cormorant Garamond',
             tournameColor: 'D47843',
             venueColor: 'D9E4E1',
         },
@@ -368,7 +368,7 @@
             artistColor: 'E5DADA',
             bgColor: '000000',
             dateColor: '015EB6',
-            fontFamily: 'Roboto Condensed',
+            fontFamily: 'Bebas Neue',
             tournameColor: '015EB6',
             venueColor: 'E5DADA',
         },
@@ -391,7 +391,7 @@
             this.canvasContainer = document.createElement('div');
             this.canvasConfig = {
                 square: {
-                    fontSize: 36,
+                    fontSize: 45,
                     header: 'Banner: Instagram',
                     height: 900,
                     imageConfig: {
@@ -428,15 +428,14 @@
                         tall: 1,
                         wide: 1,
                     },
-                    left: 40,
+                    left: 30,
                     ratio: 7 / 19,
-                    top: 40,
+                    top: 30,
                     type: RATIOTYPES.wide,
                     width: 1900,
                 },
             };
             this.currentCanvas = [];
-            this.fontsize = 64;
             this.imageHasChanged = false;
             this.theme = __assign({}, themes.classic);
             this.types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
@@ -446,8 +445,34 @@
             this.container.appendChild(this.canvasContainer);
             this.addAll();
         }
+        CanvasCreator.prototype.getCanvas = function () {
+            return this.currentCanvas;
+        };
         CanvasCreator.prototype.imageChanged = function (status) {
             this.imageHasChanged = status;
+        };
+        CanvasCreator.prototype.setTheme = function (themeName) {
+            this.theme = themes[themeName];
+            console.log(this.theme);
+        };
+        CanvasCreator.prototype.update = function (eleList) {
+            var formElements = Array.from(eleList);
+            var info = {
+                dates: {},
+            };
+            formElements.forEach(function (el) {
+                if (el.dataset.line) {
+                    info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
+                    info.dates[el.dataset.line].push(el);
+                }
+                else if (el.name) {
+                    info[el.name] = el.value;
+                }
+                else if (el.type === 'file') {
+                    info['image'] = el.value ? el : null;
+                }
+            });
+            this.addContent(info, true);
         };
         CanvasCreator.prototype.addAll = function () {
             var _this = this;
@@ -572,55 +597,34 @@
         };
         CanvasCreator.prototype.addText = function (stuff, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var artist, dates, tourname, canvasContext, configName, cfg, tournameTop, headerString;
+                var artist, dates, tourname, canvasContext, configName, cfg, fontSize, tournameTop, headerString;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
                             canvasContext = current.canvasContext, configName = current.configName;
                             cfg = this.canvasConfig[configName];
+                            fontSize = cfg.fontSize;
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(configName))];
                         case 1:
                             _a.sent();
-                            console.log('fontshit . configName', configName, this.canvasFont(configName));
+                            console.log('fontshit . configName', configName, this.canvasFont(configName), canvasContext.font);
                             canvasContext.textAlign = 'left';
                             canvasContext.textBaseline = 'top';
                             tournameTop = cfg.top * 2;
                             headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
                             console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
-                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize)];
+                            simpleTextStyler.setFont(canvasContext);
+                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
                         case 2:
                             _a.sent();
                             this.bannerName = artist.replace(/\s/g, '-') + "_" + tourname.replace(/\s/g, '-');
                             canvasContext.measureText(headerString).actualBoundingBoxAscent;
-                            this.addDates(dates, configName, tournameTop + this.fontsize * 2, current);
+                            this.addDates(dates, configName, tournameTop + fontSize * 2, current);
                             return [2 /*return*/];
                     }
                 });
             });
-        };
-        CanvasCreator.prototype.getCanvas = function () {
-            return this.currentCanvas;
-        };
-        CanvasCreator.prototype.update = function (eleList) {
-            var formElements = Array.from(eleList);
-            var info = {
-                dates: {},
-            };
-            formElements.forEach(function (el) {
-                if (el.dataset.line) {
-                    info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
-                    info.dates[el.dataset.line].push(el);
-                }
-                else if (el.name) {
-                    info[el.name] = el.value;
-                }
-                else if (el.type === 'file') {
-                    info['image'] = el.value ? el : null;
-                }
-            });
-            this.addContent(info, true);
-            // this.addText(info, true);
         };
         CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
             return __awaiter(this, void 0, void 0, function () {
@@ -635,7 +639,7 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
                             _a.sent();
-                            console.log('addDates', cfgName, this.canvasFont(cfgName));
+                            console.log('addDates fontshit', cfgName, this.canvasFont(cfgName), canvasContext.font);
                             _loop_1 = function (dates) {
                                 if (datesInfo[dates]) {
                                     var dateText_1, ticketText_1, venueText_1;
@@ -671,9 +675,9 @@
                             console.log('canvasContext.font', canvasContext.font);
                             simpleTextStyler.setFont(canvasContext);
                             datestexting = dateTexts.join('\n');
-                            textTop = top + cfg.top + this.fontsize;
+                            textTop = top + cfg.top + cfg.fontSize;
                             console.log('datetext', datestexting);
-                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize)];
+                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize)];
                         case 2:
                             _a.sent();
                             return [2 /*return*/];
@@ -685,7 +689,12 @@
             return this.canvasConfig[cfgName].fontSize + "px " + this.theme.fontFamily;
         };
         CanvasCreator.prototype.resetCanvas = function (currentCfg) {
+            console.log('RESET!!!', currentCfg);
             currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+            currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
+            currentCfg.canvasContext.moveTo(0, 0);
+            // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
+            currentCfg.canvasContext.stroke();
             currentCfg.canvasContext.fillStyle = "#" + this.theme.bgColor + ";";
             currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
         };
@@ -1017,8 +1026,8 @@
         var img = zip.folder(bannerName);
         currentArray.forEach(function (current) {
             var _a;
-            var canvas = current.canvas, height = current.height, fileName = current.fileName, type = current.type, width = current.width;
-            var nameForFile = (_a = fileName + "-" + type + ".png") !== null && _a !== void 0 ? _a : "bannermaker-" + type + ".png";
+            var canvas = current.canvas, height = current.height, type = current.type, width = current.width;
+            var nameForFile = (_a = bannerName + "-" + type + ".png") !== null && _a !== void 0 ? _a : "bannermaker-" + type + ".png";
             var imgDataUrl = canvas2image.convertToImage(canvas, width, height, 'png');
             var imgData = imgDataUrl.replace(/^data:image\/(png|jpg);base64,/, '');
             img.file(nameForFile, imgData, { base64: true });
@@ -1037,6 +1046,12 @@
     bannerdesigner.addEventListener('submit', function (ev) {
         ev.preventDefault();
         canvasCreator.update(bannerdesigner.elements);
+    });
+    bannerdesigner.addEventListener('change', function (ev) {
+        console.log('it done changed', ev.target.value, ev);
+        if (ev.target.nodeName === 'SELECT') {
+            canvasCreator.setTheme(ev.target.value);
+        }
     });
     var bdSave = document.getElementById('bdSave');
     bdSave.addEventListener('click', function () {
@@ -1057,5 +1072,14 @@
         ev.preventDefault();
         bdFile.click();
     });
+    for (var theme in themes) {
+        if (theme) {
+            console.log('theme', theme, themes[theme].fontFamily);
+            var themeFont = document.createElement('div');
+            themeFont.setAttribute('style', "font-family: \"" + themes[theme].fontFamily + "\";visibility: hidden;");
+            themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
+            document.body.appendChild(themeFont);
+        }
+    }
 
 }());

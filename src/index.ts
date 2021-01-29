@@ -1,4 +1,5 @@
 import { CanvasCreator } from './canvascreator';
+import { themes } from './canvascreator/themes';
 
 import { LineItems } from './lineitem';
 import { saveToDisk } from './util/savetodisk';
@@ -13,6 +14,13 @@ bannerdesigner.addEventListener('submit', (ev) => {
   ev.preventDefault();
 
   canvasCreator.update(bannerdesigner.elements);
+});
+
+bannerdesigner.addEventListener('change', (ev) => {
+  console.log('it done changed', (ev.target as HTMLInputElement).value, ev);
+  if ((ev.target as HTMLInputElement).nodeName === 'SELECT') {
+    canvasCreator.setTheme((ev.target as HTMLInputElement).value);
+  }
 });
 
 const bdSave = document.getElementById('bdSave');
@@ -41,3 +49,13 @@ fileElementBtn.addEventListener('click', (ev) => {
   ev.preventDefault();
   bdFile.click();
 });
+
+for (const theme in themes) {
+  if (theme) {
+    console.log('theme', theme, themes[theme].fontFamily);
+    const themeFont = document.createElement('div');
+    themeFont.setAttribute('style', `font-family: "${themes[theme].fontFamily}";visibility: hidden;`);
+    themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
+    document.body.appendChild(themeFont);
+  }
+}

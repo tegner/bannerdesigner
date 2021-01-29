@@ -26,7 +26,7 @@ export class CanvasCreator {
   private canvasContainer = document.createElement('div');
   private canvasConfig: ICanvasTypesConfig = {
     square: {
-      fontSize: 36,
+      fontSize: 45,
       header: 'Banner: Instagram',
       height: 900,
       imageConfig: {
@@ -63,15 +63,14 @@ export class CanvasCreator {
         tall: 1,
         wide: 1,
       },
-      left: 40,
+      left: 30,
       ratio: 7 / 19,
-      top: 40,
+      top: 30,
       type: RATIOTYPES.wide,
       width: 1900,
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
-  private fontsize = 64;
   private image;
   private imageHasChanged = false;
 
@@ -90,8 +89,38 @@ export class CanvasCreator {
     this.addAll();
   }
 
+  public getCanvas(): TCurrentCanvasInfo[] {
+    return this.currentCanvas;
+  }
+
   public imageChanged(status: boolean) {
     this.imageHasChanged = status;
+  }
+
+  public setTheme(themeName: string) {
+    this.theme = themes[themeName];
+    console.log(this.theme);
+  }
+
+  public update(eleList: HTMLFormControlsCollection) {
+    const formElements = Array.from(eleList);
+
+    const info = {
+      dates: {},
+    };
+
+    formElements.forEach((el: HTMLInputElement) => {
+      if (el.dataset.line) {
+        info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
+        info.dates[el.dataset.line].push(el);
+      } else if (el.name) {
+        info[el.name] = el.value;
+      } else if (el.type === 'file') {
+        info['image'] = el.value ? el : null;
+      }
+    });
+
+    this.addContent(info, true);
   }
 
   private addAll() {
@@ -218,9 +247,10 @@ export class CanvasCreator {
 
     const { canvasContext, configName } = current;
     const cfg = this.canvasConfig[configName];
+    const { fontSize } = cfg;
 
     await (canvasContext.font = this.canvasFont(configName));
-    console.log('fontshit . configName', configName, this.canvasFont(configName));
+    console.log('fontshit . configName', configName, this.canvasFont(configName), canvasContext.font);
     canvasContext.textAlign = 'left';
     canvasContext.textBaseline = 'top';
 
@@ -230,38 +260,13 @@ export class CanvasCreator {
       this.theme.tournameColor
     }${tourname.toUpperCase()}}`;
     console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
-    await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
+    simpleTextStyler.setFont(canvasContext);
+    await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
 
     this.bannerName = `${artist.replace(/\s/g, '-')}_${tourname.replace(/\s/g, '-')}`;
 
     canvasContext.measureText(headerString).actualBoundingBoxAscent;
-    this.addDates(dates, configName, tournameTop + this.fontsize * 2, current);
-  }
-
-  public getCanvas() {
-    return this.currentCanvas;
-  }
-
-  public update(eleList: HTMLFormControlsCollection) {
-    const formElements = Array.from(eleList);
-
-    const info = {
-      dates: {},
-    };
-
-    formElements.forEach((el: HTMLInputElement) => {
-      if (el.dataset.line) {
-        info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
-        info.dates[el.dataset.line].push(el);
-      } else if (el.name) {
-        info[el.name] = el.value;
-      } else if (el.type === 'file') {
-        info['image'] = el.value ? el : null;
-      }
-    });
-
-    this.addContent(info, true);
-    // this.addText(info, true);
+    this.addDates(dates, configName, tournameTop + fontSize * 2, current);
   }
 
   private async addDates(datesInfo, cfgName, top, current: TCurrentCanvasInfo) {
@@ -270,7 +275,7 @@ export class CanvasCreator {
     const { canvasContext } = current;
     canvasContext.textBaseline = 'alphabetic';
     await (canvasContext.font = this.canvasFont(cfgName));
-    console.log('addDates', cfgName, this.canvasFont(cfgName));
+    console.log('addDates fontshit', cfgName, this.canvasFont(cfgName), canvasContext.font);
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
@@ -308,9 +313,9 @@ export class CanvasCreator {
     simpleTextStyler.setFont(canvasContext);
     const datestexting = dateTexts.join('\n');
 
-    const textTop = top + cfg.top + this.fontsize;
+    const textTop = top + cfg.top + cfg.fontSize;
     console.log('datetext', datestexting);
-    await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize);
+    await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
   }
 
   private canvasFont(cfgName: string) {
@@ -318,7 +323,13 @@ export class CanvasCreator {
   }
 
   private resetCanvas(currentCfg: TCurrentCanvasInfo) {
+    console.log('RESET!!!', currentCfg);
+
     currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+    currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
+    currentCfg.canvasContext.moveTo(0, 0);
+    // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
+    currentCfg.canvasContext.stroke();
     currentCfg.canvasContext.fillStyle = `#${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
   }

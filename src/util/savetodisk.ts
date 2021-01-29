@@ -24,9 +24,9 @@ export function saveToDisk(currentArray, bannerName: string) {
   const zip = new (window as any).JSZip();
   const img = zip.folder(bannerName);
   currentArray.forEach((current) => {
-    const { canvas, height, fileName, type, width } = current;
+    const { canvas, height, type, width } = current;
 
-    const nameForFile = `${fileName}-${type}.png` ?? `bannermaker-${type}.png`;
+    const nameForFile = `${bannerName}-${type}.png` ?? `bannermaker-${type}.png`;
     const imgDataUrl = canvas2image.convertToImage(canvas, width, height, 'png');
     const imgData = imgDataUrl.replace(/^data:image\/(png|jpg);base64,/, '');
 

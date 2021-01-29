@@ -5,10 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Banner designer</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond" rel="stylesheet" />
 
     <link href="../css/style.css" rel="stylesheet" />
+    <style>
+      h1 {
+        font-family: "Bebas Neue";
+      }
+      .garamond {
+        font-family: "Cormorant Garamond";
+      }
+    </style>
   </head>
   <body>
     <div class="masthead"><div>Bannermaker</div></div>
@@ -26,13 +34,13 @@
           </div>
           <div class="padding-l--tb" id="lineitems"></div>
           <div class="form-element padding-s--b">
+            <label class="form-label">Tema</label>
             <div class="form-input form-input--select">
               <select>
-                <option>Classic</option>
-                <option>Modern</option>
+                <option value="classic">Classic</option>
+                <option value="modern">Modern</option>
               </select>
             </div>
-            <label class="form-label">Tema</label>
           </div>
           <div class="form-element padding-s--b" id="fileElement">
             <input type="file" id="bdFile" style="display: none" />
