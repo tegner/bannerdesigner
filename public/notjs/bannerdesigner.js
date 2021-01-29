@@ -220,6 +220,7 @@
         setFont: function (context) {
             this.font = context.font;
             this.baseSize = this.getFontSize(this.font);
+            console.log('setFont', this.font, this.baseSize);
             for (var i = 32; i < 256; i++) {
                 this.sizes[i - 32] = context.measureText(String.fromCharCode(i), 0, 0).width / this.baseSize;
             }
@@ -259,6 +260,7 @@
             }
             var colour = ctx.fillStyle;
             ctx.font = this.font;
+            console.log('drawtext ... ', ctx.font);
             len = text.length;
             subText = '';
             w = 0;
@@ -353,6 +355,25 @@
         DATEINFOTYPES["tickets"] = "tickets";
     })(DATEINFOTYPES || (DATEINFOTYPES = {}));
 
+    var themes = {
+        classic: {
+            artistColor: 'D9E4E1',
+            bgColor: '000000',
+            dateColor: 'D47843',
+            fontFamily: 'Arial',
+            tournameColor: 'D47843',
+            venueColor: 'D9E4E1',
+        },
+        modern: {
+            artistColor: 'E5DADA',
+            bgColor: '000000',
+            dateColor: '015EB6',
+            fontFamily: 'Roboto Condensed',
+            tournameColor: '015EB6',
+            venueColor: 'E5DADA',
+        },
+    };
+
     var sizeCanvas = function (w, h, ratio) {
         if (ratio === void 0) { ratio = 4; }
         var can = document.createElement('canvas');
@@ -370,31 +391,34 @@
             this.canvasContainer = document.createElement('div');
             this.canvasConfig = {
                 square: {
+                    fontSize: 36,
                     header: 'Banner: Instagram',
                     height: 900,
                     imageConfig: {
                         maxHeight: 0.5,
                         maxWidth: 0.5,
                     },
-                    left: 10,
+                    left: 20,
                     ratio: 1 / 2.3,
-                    top: 10,
+                    top: 20,
                     type: RATIOTYPES.square,
                     width: 900,
                 },
                 tall: {
+                    fontSize: 36,
                     header: 'Banner: Skyskraper',
                     height: 600,
                     imageConfig: {
                         maxWidth: 1,
                     },
-                    left: 10,
+                    left: 20,
                     ratio: 16 / 9,
-                    top: 10,
+                    top: 20,
                     type: RATIOTYPES.tall,
                     width: 300,
                 },
                 wide: {
+                    fontSize: 55,
                     header: 'Banner: Facebook',
                     height: 700,
                     imageConfig: {
@@ -404,24 +428,17 @@
                         tall: 1,
                         wide: 1,
                     },
-                    left: 20,
+                    left: 40,
                     ratio: 7 / 19,
-                    top: 20,
+                    top: 40,
                     type: RATIOTYPES.wide,
                     width: 1900,
                 },
             };
             this.currentCanvas = [];
-            this.fontsize = 32;
+            this.fontsize = 64;
             this.imageHasChanged = false;
-            this.theme = {
-                artistColor: 'FFFFFF',
-                bgColor: '000000',
-                dateColor: '3333FF',
-                font: this.fontsize + "px Arial",
-                tournameColor: '3333FF',
-                venueColor: 'FFFFFF',
-            };
+            this.theme = __assign({}, themes.classic);
             this.types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
             this.container = container;
             this.containerWidth = container.clientWidth;
@@ -554,17 +571,33 @@
             });
         };
         CanvasCreator.prototype.addText = function (stuff, current) {
-            var artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
-            var canvasContext = current.canvasContext, configName = current.configName;
-            var cfg = this.canvasConfig[configName];
-            canvasContext.font = this.theme.font;
-            canvasContext.textAlign = 'left';
-            canvasContext.textBaseline = 'top';
-            var tournameTop = cfg.top * 2;
-            var headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
-            simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
-            canvasContext.measureText(headerString).actualBoundingBoxAscent;
-            this.addDates(dates, configName, tournameTop + this.fontsize * 2, current);
+            return __awaiter(this, void 0, void 0, function () {
+                var artist, dates, tourname, canvasContext, configName, cfg, tournameTop, headerString;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
+                            canvasContext = current.canvasContext, configName = current.configName;
+                            cfg = this.canvasConfig[configName];
+                            return [4 /*yield*/, (canvasContext.font = this.canvasFont(configName))];
+                        case 1:
+                            _a.sent();
+                            console.log('fontshit . configName', configName, this.canvasFont(configName));
+                            canvasContext.textAlign = 'left';
+                            canvasContext.textBaseline = 'top';
+                            tournameTop = cfg.top * 2;
+                            headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
+                            console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
+                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize)];
+                        case 2:
+                            _a.sent();
+                            this.bannerName = artist.replace(/\s/g, '-') + "_" + tourname.replace(/\s/g, '-');
+                            canvasContext.measureText(headerString).actualBoundingBoxAscent;
+                            this.addDates(dates, configName, tournameTop + this.fontsize * 2, current);
+                            return [2 /*return*/];
+                    }
+                });
+            });
         };
         CanvasCreator.prototype.getCanvas = function () {
             return this.currentCanvas;
@@ -590,47 +623,66 @@
             // this.addText(info, true);
         };
         CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
-            var cfg = this.canvasConfig[cfgName];
-            var dateTexts = [];
-            var canvasContext = current.canvasContext;
-            canvasContext.textBaseline = 'alphabetic';
-            canvasContext.font = this.theme.font;
-            var _loop_1 = function (dates) {
-                if (datesInfo[dates]) {
-                    var dateText_1, ticketText_1, venueText_1;
-                    datesInfo[dates].forEach(function (datesInfoElement) {
-                        var elName = datesInfoElement.name;
-                        if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
-                            dateText_1 = datesInfoElement.value.toUpperCase();
-                        }
-                        if (elName.indexOf(DATEINFOTYPES.venue) !== -1) {
-                            venueText_1 = datesInfoElement.value.toUpperCase();
-                        }
-                        if (elName.indexOf(DATEINFOTYPES.tickets) !== -1 && datesInfoElement.checked) {
-                            switch (datesInfoElement.value) {
-                                case 'few':
-                                    ticketText_1 = 'Få billetter'.toUpperCase();
-                                    break;
-                                case 'soldout':
-                                    ticketText_1 = 'Udsolgt'.toUpperCase();
-                                    break;
-                                default:
-                                    ticketText_1 = '';
-                                    break;
+            return __awaiter(this, void 0, void 0, function () {
+                var cfg, dateTexts, canvasContext, _loop_1, this_1, dates, datestexting, textTop;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            cfg = this.canvasConfig[cfgName];
+                            dateTexts = [];
+                            canvasContext = current.canvasContext;
+                            canvasContext.textBaseline = 'alphabetic';
+                            return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
+                        case 1:
+                            _a.sent();
+                            console.log('addDates', cfgName, this.canvasFont(cfgName));
+                            _loop_1 = function (dates) {
+                                if (datesInfo[dates]) {
+                                    var dateText_1, ticketText_1, venueText_1;
+                                    datesInfo[dates].forEach(function (datesInfoElement) {
+                                        var elName = datesInfoElement.name;
+                                        if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
+                                            dateText_1 = datesInfoElement.value.toUpperCase();
+                                        }
+                                        if (elName.indexOf(DATEINFOTYPES.venue) !== -1) {
+                                            venueText_1 = datesInfoElement.value.toUpperCase();
+                                        }
+                                        if (elName.indexOf(DATEINFOTYPES.tickets) !== -1 && datesInfoElement.checked) {
+                                            switch (datesInfoElement.value) {
+                                                case 'few':
+                                                    ticketText_1 = 'Få billetter'.toUpperCase();
+                                                    break;
+                                                case 'soldout':
+                                                    ticketText_1 = 'Udsolgt'.toUpperCase();
+                                                    break;
+                                                default:
+                                                    ticketText_1 = '';
+                                                    break;
+                                            }
+                                        }
+                                    });
+                                    dateTexts.push("{#" + this_1.theme.dateColor + dateText_1 + "} {#" + this_1.theme.venueColor + venueText_1 + " {-" + ticketText_1 + "}}");
+                                }
+                            };
+                            this_1 = this;
+                            for (dates in datesInfo) {
+                                _loop_1(dates);
                             }
-                        }
-                    });
-                    dateTexts.push("{#" + this_1.theme.dateColor + dateText_1 + "} {#" + this_1.theme.venueColor + venueText_1 + " {-" + ticketText_1 + "}}");
-                }
-            };
-            var this_1 = this;
-            for (var dates in datesInfo) {
-                _loop_1(dates);
-            }
-            simpleTextStyler.setFont(canvasContext);
-            var datestexting = dateTexts.join('\n');
-            var textTop = top + cfg.top + this.fontsize;
-            simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize);
+                            console.log('canvasContext.font', canvasContext.font);
+                            simpleTextStyler.setFont(canvasContext);
+                            datestexting = dateTexts.join('\n');
+                            textTop = top + cfg.top + this.fontsize;
+                            console.log('datetext', datestexting);
+                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize)];
+                        case 2:
+                            _a.sent();
+                            return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        CanvasCreator.prototype.canvasFont = function (cfgName) {
+            return this.canvasConfig[cfgName].fontSize + "px " + this.theme.fontFamily;
         };
         CanvasCreator.prototype.resetCanvas = function (currentCfg) {
             currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
@@ -740,12 +792,6 @@
       saveLink.download = fileName + '.' + fileType;
       saveLink.href = strData;
       saveLink.click();
-    }
-
-    function genImage(strData) {
-      var img = document.createElement('img');
-      img.src = strData;
-      return img;
     }
 
     function fixType(type) {
@@ -913,10 +959,10 @@
         if (/bmp/.test(type)) {
           var data = getImageData(scaleCanvas(canvas, width, height));
           let strData = genBitmapImage(data);
-          return genImage(makeURI(strData, 'image/bmp'));
+          return makeURI(strData, 'image/bmp');
         } else {
           let strData = getDataURL(canvas, type, width, height);
-          return genImage(strData);
+          return strData;
         }
       }
     };
@@ -950,10 +996,39 @@
       }
     };
 
-    function SaveToDisk(current) {
-        var canvas = current.canvas, height = current.height, type = current.type, width = current.width;
-        var fileName = "bannermaker-" + type;
-        canvas2image.saveAsImage(canvas, width, height, 'png', fileName);
+    function downloadFile(data, fileName, type) {
+        if (type === void 0) { type = 'text/plain'; }
+        // Create an invisible A element
+        var a = document.createElement('a');
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        // Set the HREF to a Blob representation of the data to be downloaded
+        a.href = window.URL.createObjectURL(new Blob([data], { type: type }));
+        // Use download attribute to set set desired file name
+        a.setAttribute('download', fileName);
+        // Trigger the download by simulating click
+        a.click();
+        // Cleanup
+        window.URL.revokeObjectURL(a.href);
+        document.body.removeChild(a);
+    }
+    function saveToDisk(currentArray, bannerName) {
+        var zip = new window.JSZip();
+        var img = zip.folder(bannerName);
+        currentArray.forEach(function (current) {
+            var _a;
+            var canvas = current.canvas, height = current.height, fileName = current.fileName, type = current.type, width = current.width;
+            var nameForFile = (_a = fileName + "-" + type + ".png") !== null && _a !== void 0 ? _a : "bannermaker-" + type + ".png";
+            var imgDataUrl = canvas2image.convertToImage(canvas, width, height, 'png');
+            var imgData = imgDataUrl.replace(/^data:image\/(png|jpg);base64,/, '');
+            img.file(nameForFile, imgData, { base64: true });
+        });
+        // Add a file to the directory, in this case an image with data URI as contents
+        // Generate the zip file asynchronously
+        zip.generateAsync({ type: 'blob' }).then(function (content) {
+            // Force down of the Zip file
+            downloadFile(content, "bannermaker-" + bannerName + ".zip");
+        });
     }
 
     var canvascontainer = document.getElementById('canvascontainer');
@@ -965,9 +1040,7 @@
     });
     var bdSave = document.getElementById('bdSave');
     bdSave.addEventListener('click', function () {
-        canvasCreator.getCanvas().forEach(function (currentCanvas) {
-            SaveToDisk(currentCanvas);
-        });
+        saveToDisk(canvasCreator.getCanvas(), canvasCreator.bannerName);
     });
     var thing = document.getElementById('lineitems');
     var lineItems = new LineItems();

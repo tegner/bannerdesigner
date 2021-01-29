@@ -34,6 +34,7 @@ export const simpleTextStyler = {
   setFont: function (context) {
     this.font = context.font;
     this.baseSize = this.getFontSize(this.font);
+    console.log('setFont', this.font, this.baseSize);
     for (var i = 32; i < 256; i++) {
       this.sizes[i - 32] = context.measureText(String.fromCharCode(i), 0, 0).width / this.baseSize;
     }
@@ -73,6 +74,7 @@ export const simpleTextStyler = {
     }
     var colour = ctx.fillStyle;
     ctx.font = this.font;
+    console.log('drawtext ... ', ctx.font);
     len = text.length;
     subText = '';
     w = 0;

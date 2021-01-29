@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Banner designer</title>
 
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond" rel="stylesheet" />
+
     <link href="../css/style.css" rel="stylesheet" />
   </head>
   <body>
@@ -13,20 +16,20 @@
       <div class="canvascontainer" id="canvascontainer"></div>
       <div>
         <form id="bannerdesigner">
-          <div id="lineitems"></div>
           <div class="form-element padding-s--b">
-            <input class="form-input" name="tourname" type="text" value="" id="bdTourname" placeholder="Tourname" />
             <label class="form-label">Tourname</label>
+            <input class="form-input" name="tourname" type="text" value="" id="bdTourname" placeholder="Tourname" />
           </div>
           <div class="form-element padding-s--b">
-            <input class="form-input" name="artist" type="text" value="" id="bdArtist" placeholder="Artist" />
             <label class="form-label">Artist</label>
+            <input class="form-input" name="artist" type="text" value="" id="bdArtist" placeholder="Artist" />
           </div>
+          <div class="padding-l--tb" id="lineitems"></div>
           <div class="form-element padding-s--b">
             <div class="form-input form-input--select">
               <select>
-                <option>Rock</option>
-                <option>Indie</option>
+                <option>Classic</option>
+                <option>Modern</option>
               </select>
             </div>
             <label class="form-label">Tema</label>
@@ -44,6 +47,7 @@
         </div>
       </div>
     </div>
+    <script src="notjs/jszip.js"></script>
     <script src="notjs/bannerdesigner.js"></script>
   </body>
 </html>

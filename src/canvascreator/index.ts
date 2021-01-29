@@ -3,6 +3,7 @@ import { DragHandler } from '../draghandler';
 import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
 import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
+import { themes } from './themes';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -18,36 +19,41 @@ const sizeCanvas = (w, h, ratio = 4) => {
 type TCurrentCanvasInfo = ICanvasConfig & ICurrentCanvasConfig;
 
 export class CanvasCreator {
+  public bannerName: string;
+
   private container: HTMLElement;
   private containerWidth = 640;
   private canvasContainer = document.createElement('div');
   private canvasConfig: ICanvasTypesConfig = {
     square: {
+      fontSize: 36,
       header: 'Banner: Instagram',
       height: 900,
       imageConfig: {
         maxHeight: 0.5,
         maxWidth: 0.5,
       },
-      left: 10,
+      left: 20,
       ratio: 1 / 2.3,
-      top: 10,
+      top: 20,
       type: RATIOTYPES.square,
       width: 900,
     },
     tall: {
+      fontSize: 36,
       header: 'Banner: Skyskraper',
       height: 600,
       imageConfig: {
         maxWidth: 1,
       },
-      left: 10,
+      left: 20,
       ratio: 16 / 9,
-      top: 10,
+      top: 20,
       type: RATIOTYPES.tall,
       width: 300,
     },
     wide: {
+      fontSize: 55,
       header: 'Banner: Facebook',
       height: 700,
       imageConfig: {
@@ -57,26 +63,22 @@ export class CanvasCreator {
         tall: 1,
         wide: 1,
       },
-      left: 20,
+      left: 40,
       ratio: 7 / 19,
-      top: 20,
+      top: 40,
       type: RATIOTYPES.wide,
       width: 1900,
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
-  private fontsize = 32;
+  private fontsize = 64;
   private image;
   private imageHasChanged = false;
 
   private theme = {
-    artistColor: 'FFFFFF',
-    bgColor: '000000',
-    dateColor: '3333FF',
-    font: `${this.fontsize}px Arial`,
-    tournameColor: '3333FF',
-    venueColor: 'FFFFFF',
+    ...themes.classic,
   };
+
   private types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
   constructor(container) {
@@ -211,13 +213,14 @@ export class CanvasCreator {
     }
   }
 
-  private addText(stuff, current: TCurrentCanvasInfo) {
+  private async addText(stuff, current: TCurrentCanvasInfo) {
     const { artist, dates, tourname } = stuff;
 
     const { canvasContext, configName } = current;
     const cfg = this.canvasConfig[configName];
 
-    canvasContext.font = this.theme.font;
+    await (canvasContext.font = this.canvasFont(configName));
+    console.log('fontshit . configName', configName, this.canvasFont(configName));
     canvasContext.textAlign = 'left';
     canvasContext.textBaseline = 'top';
 
@@ -226,8 +229,10 @@ export class CanvasCreator {
     const headerString = `{#${this.theme.artistColor}${artist.toUpperCase()}}\n{#${
       this.theme.tournameColor
     }${tourname.toUpperCase()}}`;
+    console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
+    await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
 
-    simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, this.fontsize);
+    this.bannerName = `${artist.replace(/\s/g, '-')}_${tourname.replace(/\s/g, '-')}`;
 
     canvasContext.measureText(headerString).actualBoundingBoxAscent;
     this.addDates(dates, configName, tournameTop + this.fontsize * 2, current);
@@ -259,12 +264,13 @@ export class CanvasCreator {
     // this.addText(info, true);
   }
 
-  private addDates(datesInfo, cfgName, top, current: TCurrentCanvasInfo) {
+  private async addDates(datesInfo, cfgName, top, current: TCurrentCanvasInfo) {
     const cfg = this.canvasConfig[cfgName];
     const dateTexts = [];
     const { canvasContext } = current;
     canvasContext.textBaseline = 'alphabetic';
-    canvasContext.font = this.theme.font;
+    await (canvasContext.font = this.canvasFont(cfgName));
+    console.log('addDates', cfgName, this.canvasFont(cfgName));
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
@@ -298,12 +304,17 @@ export class CanvasCreator {
         );
       }
     }
+    console.log('canvasContext.font', canvasContext.font);
     simpleTextStyler.setFont(canvasContext);
     const datestexting = dateTexts.join('\n');
 
     const textTop = top + cfg.top + this.fontsize;
+    console.log('datetext', datestexting);
+    await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize);
+  }
 
-    simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, this.fontsize);
+  private canvasFont(cfgName: string) {
+    return `${this.canvasConfig[cfgName].fontSize}px ${this.theme.fontFamily}`;
   }
 
   private resetCanvas(currentCfg: TCurrentCanvasInfo) {

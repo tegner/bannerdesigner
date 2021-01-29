@@ -1,7 +1,7 @@
 import { CanvasCreator } from './canvascreator';
 
 import { LineItems } from './lineitem';
-import { SaveToDisk } from './util/savetodisk';
+import { saveToDisk } from './util/savetodisk';
 
 const canvascontainer = document.getElementById('canvascontainer');
 
@@ -18,9 +18,7 @@ bannerdesigner.addEventListener('submit', (ev) => {
 const bdSave = document.getElementById('bdSave');
 
 bdSave.addEventListener('click', () => {
-  canvasCreator.getCanvas().forEach((currentCanvas) => {
-    SaveToDisk(currentCanvas);
-  });
+  saveToDisk(canvasCreator.getCanvas(), canvasCreator.bannerName);
 });
 
 const thing = document.getElementById('lineitems');

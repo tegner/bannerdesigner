@@ -32,8 +32,10 @@ export interface ICanvasTypesConfig {
 }
 
 export interface ICanvasConfig {
+  fontSize: number;
   header: string;
   height: number;
+
   imageConfig: {
     maxHeight?: number;
     maxWidth?: number;

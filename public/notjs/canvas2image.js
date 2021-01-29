@@ -277,10 +277,10 @@ var convertToImage = function (canvas, width, height, type) {
     if (/bmp/.test(type)) {
       var data = getImageData(scaleCanvas(canvas, width, height));
       let strData = genBitmapImage(data);
-      return genImage(makeURI(strData, 'image/bmp'));
+      return makeURI(strData, 'image/bmp');
     } else {
       let strData = getDataURL(canvas, type, width, height);
-      return genImage(strData);
+      return strData;
     }
   }
 };
