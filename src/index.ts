@@ -6,14 +6,13 @@ import { saveToDisk } from './util/savetodisk';
 
 const canvascontainer = document.getElementById('canvascontainer');
 
-const canvasCreator = new CanvasCreator(canvascontainer);
-
 const bannerdesigner = document.getElementById('bannerdesigner') as HTMLFormElement;
+const canvasCreator = new CanvasCreator(canvascontainer, bannerdesigner);
 
 bannerdesigner.addEventListener('submit', (ev) => {
   ev.preventDefault();
-
-  canvasCreator.update(bannerdesigner.elements);
+  console.log('serial bitch=?!!!');
+  canvasCreator.update();
 });
 
 bannerdesigner.addEventListener('change', (ev) => {

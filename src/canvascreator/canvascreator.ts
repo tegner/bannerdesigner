@@ -16,14 +16,15 @@ export interface ICurrentCanvasConfig {
   canvas?: HTMLCanvasElement;
   canvasContext?: CanvasRenderingContext2D;
   configName?: string;
+  dragImage?: DragHandler;
   image?: {
-    dragImage?: DragHandler;
     image: HTMLImageElement;
     x: number;
     y: number;
     w: number;
     h: number;
   };
+  imageHasChanged?: boolean;
   scaleFactor?: number;
 }
 

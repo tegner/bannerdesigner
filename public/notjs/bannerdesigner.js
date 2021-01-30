@@ -88,15 +88,63 @@
         });
     }
 
+    var EventBus = /** @class */ (function () {
+        function EventBus(description) {
+            if (description === void 0) { description = ''; }
+            this.eventTarget = document.appendChild(document.createComment(description));
+        }
+        EventBus.prototype.on = function (type, listener) {
+            this.eventTarget.addEventListener(type, listener);
+        };
+        EventBus.prototype.once = function (type, listener) {
+            this.eventTarget.addEventListener(type, listener, { once: true });
+        };
+        EventBus.prototype.off = function (type, listener) {
+            this.eventTarget.removeEventListener(type, listener);
+        };
+        EventBus.prototype.emit = function (type, detail) {
+            return this.eventTarget.dispatchEvent(new CustomEvent(type, { detail: detail }));
+        };
+        return EventBus;
+    }());
+    // // Usage
+    // const myEventBus = new EventBus<string>('my-event-bus');
+    // myEventBus.on('event-name', ({ detail }) => {
+    //   console.log(detail);
+    // });
+    // myEventBus.once('event-name', ({ detail }) => {
+    //   console.log(detail);
+    // });
+    // myEventBus.emit('event-name', 'Hello'); // => Hello Hello
+    // myEventBus.emit('event-name', 'World'); // => World
+
+    var EVENTNAMES;
+    (function (EVENTNAMES) {
+        EVENTNAMES["dragstop"] = "dragstop";
+    })(EVENTNAMES || (EVENTNAMES = {}));
     var DragHandler = /** @class */ (function () {
         function DragHandler(current, scaleFactor) {
             var _this = this;
+            this.events = new EventBus('my-draghandler-eventbus');
             this.dragging = false;
             this.scaleFactor = scaleFactor;
             this.offsetX = current.canvas.offsetLeft;
             this.offsetY = current.canvas.offsetTop;
             this.current = current;
             this.imageInfo = current.image;
+            // listen for mouse events
+            current.canvas.removeEventListener('mousedown', function (mouseEv) {
+                _this.handleMouseDown(mouseEv);
+            });
+            current.canvas.removeEventListener('mousemove', function (mouseEv) {
+                _this.handleMouseMove(mouseEv);
+            });
+            current.canvas.removeEventListener('mouseout', function (mouseEv) {
+                _this.handleMouseOut(mouseEv);
+            });
+            current.canvas.removeEventListener('mouseup', function (mouseEv) {
+                _this.handleMouseUp(mouseEv);
+            });
             // listen for mouse events
             current.canvas.addEventListener('mousedown', function (mouseEv) {
                 _this.handleMouseDown(mouseEv);
@@ -146,20 +194,25 @@
             this.startX = mouseX;
             this.startY = mouseY;
             var _a = this.imageInfo, h = _a.h, image = _a.image, x = _a.x, y = _a.y, w = _a.w;
-            this.current.canvasContext.fillRect(x, y, x + w, y + h);
+            var _b = this.current, canvas = _b.canvas, canvasContext = _b.canvasContext;
+            canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+            canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+            canvasContext.fillRect(x, y, x + w, y + h);
             this.imageInfo.x += dx;
             this.imageInfo.y += dy;
-            this.current.canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
+            canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
         };
         // // also done dragging
         DragHandler.prototype.handleMouseOut = function (ev) {
             ev.preventDefault();
+            console.log('dragging shit.¨', this.dragging);
             this.dragging = false;
         };
         // // done dragging
         DragHandler.prototype.handleMouseUp = function (ev) {
             ev.preventDefault();
             this.dragging = false;
+            this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
         };
         return DragHandler;
     }());
@@ -220,7 +273,6 @@
         setFont: function (context) {
             this.font = context.font;
             this.baseSize = this.getFontSize(this.font);
-            console.log('setFont', this.font, this.baseSize);
             for (var i = 32; i < 256; i++) {
                 this.sizes[i - 32] = context.measureText(String.fromCharCode(i), 0, 0).width / this.baseSize;
             }
@@ -260,7 +312,6 @@
             }
             var colour = ctx.fillStyle;
             ctx.font = this.font;
-            console.log('drawtext ... ', ctx.font);
             len = text.length;
             subText = '';
             w = 0;
@@ -386,7 +437,7 @@
         return can;
     };
     var CanvasCreator = /** @class */ (function () {
-        function CanvasCreator(container) {
+        function CanvasCreator(container, bannerdesigner) {
             this.containerWidth = 640;
             this.canvasContainer = document.createElement('div');
             this.canvasConfig = {
@@ -436,9 +487,9 @@
                 },
             };
             this.currentCanvas = [];
-            this.imageHasChanged = false;
             this.theme = __assign({}, themes.classic);
             this.types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
+            this.form = bannerdesigner;
             this.container = container;
             this.containerWidth = container.clientWidth;
             this.canvasContainer.className = 'flex flex-wrap flex-start';
@@ -449,13 +500,13 @@
             return this.currentCanvas;
         };
         CanvasCreator.prototype.imageChanged = function (status) {
-            this.imageHasChanged = status;
+            this.currentCanvas.forEach(function (current) { return (current.imageHasChanged = status); });
         };
         CanvasCreator.prototype.setTheme = function (themeName) {
             this.theme = themes[themeName];
-            console.log(this.theme);
         };
-        CanvasCreator.prototype.update = function (eleList) {
+        CanvasCreator.prototype.update = function () {
+            var eleList = this.form.elements;
             var formElements = Array.from(eleList);
             var info = {
                 dates: {},
@@ -545,50 +596,59 @@
         };
         CanvasCreator.prototype.addImage = function (contentInfo, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var image, canvas, canvasContext, imageConfig, type, imageReturn, iWidth, iHeight, bigWidth, ratio, maxHeight, maxWidth, cImgMaxWidth, cImgMaxHeight, h, w, y, x, _a, image_1, x, y, w, h;
+                var image, canvas, canvasContext, imageConfig, type, imageHasChanged, imageReturn, iWidth, iHeight, bigWidth, ratio, maxHeight, maxWidth, cImgMaxWidth, cImgMaxHeight, h, w, y, x, _a, image_1, x, y, w, h;
+                var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
                             image = contentInfo.image;
                             canvas = current.canvas, canvasContext = current.canvasContext, imageConfig = current.imageConfig, type = current.type;
-                            if (!(image && this.imageHasChanged)) return [3 /*break*/, 2];
-                            this.imageChanged(false);
+                            imageHasChanged = current.imageHasChanged;
+                            console.log('omgageimage - imaeg', image);
+                            if (!(image && imageHasChanged)) return [3 /*break*/, 2];
+                            current.imageHasChanged = false;
                             return [4 /*yield*/, imageHandler(image)];
                         case 1:
                             imageReturn = _b.sent();
                             this.image = imageReturn;
                             if (current.image)
                                 delete current.image;
+                            iWidth = this.image.width;
+                            iHeight = this.image.height;
+                            bigWidth = iWidth > iHeight;
+                            ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
+                            maxHeight = imageConfig.maxHeight, maxWidth = imageConfig.maxWidth;
+                            cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
+                            cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
+                            h = cImgMaxHeight, w = cImgMaxWidth;
+                            if (iWidth > iHeight) {
+                                ratio = iHeight / iWidth;
+                                w = type === RATIOTYPES.wide ? w * ratio : w;
+                                h = type === RATIOTYPES.square ? w * maxWidth : h;
+                            }
+                            else if (iWidth < iHeight) {
+                                ratio = iWidth / iHeight;
+                                w = h * ratio;
+                            }
+                            else {
+                                w = h;
+                            }
+                            y = canvas.height - h, x = canvas.width - w;
+                            current.image = { image: this.image, x: x, y: y, w: w, h: h };
                             _b.label = 2;
                         case 2:
-                            if (this.image) {
-                                iWidth = this.image.width;
-                                iHeight = this.image.height;
-                                bigWidth = iWidth > iHeight;
-                                ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
-                                maxHeight = imageConfig.maxHeight, maxWidth = imageConfig.maxWidth;
-                                cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
-                                cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
-                                h = cImgMaxHeight, w = cImgMaxWidth;
-                                if (iWidth > iHeight) {
-                                    ratio = iHeight / iWidth;
-                                    w = type === RATIOTYPES.wide ? w * ratio : w;
-                                    h = type === RATIOTYPES.square ? w * maxWidth : h;
-                                }
-                                else if (iWidth < iHeight) {
-                                    ratio = iWidth / iHeight;
-                                    w = h * ratio;
-                                }
-                                else {
-                                    w = h;
-                                }
-                                y = canvas.height - h, x = canvas.width - w;
-                                current.image = { image: this.image, x: x, y: y, w: w, h: h };
-                            }
                             if (current.image) {
                                 _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
                                 canvasContext.drawImage(image_1, x, y, w, h);
-                                current.image.dragImage = new DragHandler(current, current.scaleFactor);
+                                if (current.dragImage)
+                                    delete current.dragImage;
+                                current.dragImage = new DragHandler(current, current.scaleFactor);
+                                current.dragImage.events.on(EVENTNAMES.dragstop, function (getBack) {
+                                    var detail = getBack.detail;
+                                    current.image = __assign(__assign({}, current.image), detail);
+                                    console.log('this.update! uojado+', current.image);
+                                    _this.update();
+                                });
                             }
                             return [2 /*return*/];
                     }
@@ -608,12 +668,10 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(configName))];
                         case 1:
                             _a.sent();
-                            console.log('fontshit . configName', configName, this.canvasFont(configName), canvasContext.font);
                             canvasContext.textAlign = 'left';
                             canvasContext.textBaseline = 'top';
                             tournameTop = cfg.top * 2;
                             headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
-                            console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
                             simpleTextStyler.setFont(canvasContext);
                             return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
                         case 2:
@@ -639,7 +697,6 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
                             _a.sent();
-                            console.log('addDates fontshit', cfgName, this.canvasFont(cfgName), canvasContext.font);
                             _loop_1 = function (dates) {
                                 if (datesInfo[dates]) {
                                     var dateText_1, ticketText_1, venueText_1;
@@ -672,11 +729,9 @@
                             for (dates in datesInfo) {
                                 _loop_1(dates);
                             }
-                            console.log('canvasContext.font', canvasContext.font);
                             simpleTextStyler.setFont(canvasContext);
                             datestexting = dateTexts.join('\n');
                             textTop = top + cfg.top + cfg.fontSize;
-                            console.log('datetext', datestexting);
                             return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize)];
                         case 2:
                             _a.sent();
@@ -689,7 +744,6 @@
             return this.canvasConfig[cfgName].fontSize + "px " + this.theme.fontFamily;
         };
         CanvasCreator.prototype.resetCanvas = function (currentCfg) {
-            console.log('RESET!!!', currentCfg);
             currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
             currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
             currentCfg.canvasContext.moveTo(0, 0);
@@ -1041,11 +1095,12 @@
     }
 
     var canvascontainer = document.getElementById('canvascontainer');
-    var canvasCreator = new CanvasCreator(canvascontainer);
     var bannerdesigner = document.getElementById('bannerdesigner');
+    var canvasCreator = new CanvasCreator(canvascontainer, bannerdesigner);
     bannerdesigner.addEventListener('submit', function (ev) {
         ev.preventDefault();
-        canvasCreator.update(bannerdesigner.elements);
+        console.log('serial bitch=?!!!');
+        canvasCreator.update();
     });
     bannerdesigner.addEventListener('change', function (ev) {
         console.log('it done changed', ev.target.value, ev);

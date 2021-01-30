@@ -1,5 +1,5 @@
 import { asyncForEach } from '../util/asyncforeach';
-import { DragHandler } from '../draghandler';
+import { DragHandler, EVENTNAMES } from '../draghandler';
 import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
 import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
@@ -71,8 +71,8 @@ export class CanvasCreator {
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
+  private form;
   private image;
-  private imageHasChanged = false;
 
   private theme = {
     ...themes.classic,
@@ -80,7 +80,8 @@ export class CanvasCreator {
 
   private types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
-  constructor(container) {
+  constructor(container, bannerdesigner) {
+    this.form = bannerdesigner;
     this.container = container;
     this.containerWidth = container.clientWidth;
     this.canvasContainer.className = 'flex flex-wrap flex-start';
@@ -94,15 +95,15 @@ export class CanvasCreator {
   }
 
   public imageChanged(status: boolean) {
-    this.imageHasChanged = status;
+    this.currentCanvas.forEach((current) => (current.imageHasChanged = status));
   }
 
   public setTheme(themeName: string) {
     this.theme = themes[themeName];
-    console.log(this.theme);
   }
 
-  public update(eleList: HTMLFormControlsCollection) {
+  public update() {
+    const eleList = this.form.elements;
     const formElements = Array.from(eleList);
 
     const info = {
@@ -197,16 +198,17 @@ export class CanvasCreator {
 
   private async addImage(contentInfo, current: TCurrentCanvasInfo) {
     const { image } = contentInfo;
-
     const { canvas, canvasContext, imageConfig, type } = current;
+    let { imageHasChanged } = current;
+    console.log('omgageimage - imaeg', image);
     let imageReturn;
-    if (image && this.imageHasChanged) {
-      this.imageChanged(false);
+    if (image && imageHasChanged) {
+      current.imageHasChanged = false;
+
       imageReturn = await imageHandler(image);
       this.image = imageReturn;
       if (current.image) delete current.image;
-    }
-    if (this.image) {
+
       const iWidth = this.image.width;
       const iHeight = this.image.height;
       const bigWidth = iWidth > iHeight;
@@ -237,8 +239,19 @@ export class CanvasCreator {
 
     if (current.image) {
       const { image, x, y, w, h } = current.image;
+
       canvasContext.drawImage(image, x, y, w, h);
-      current.image.dragImage = new DragHandler(current, current.scaleFactor);
+
+      if (current.dragImage) delete current.dragImage;
+
+      current.dragImage = new DragHandler(current, current.scaleFactor);
+
+      current.dragImage.events.on(EVENTNAMES.dragstop, (getBack: CustomEvent) => {
+        const { detail } = getBack;
+        current.image = { ...current.image, ...detail };
+        console.log('this.update! uojado+', current.image);
+        this.update();
+      });
     }
   }
 
@@ -250,7 +263,7 @@ export class CanvasCreator {
     const { fontSize } = cfg;
 
     await (canvasContext.font = this.canvasFont(configName));
-    console.log('fontshit . configName', configName, this.canvasFont(configName), canvasContext.font);
+
     canvasContext.textAlign = 'left';
     canvasContext.textBaseline = 'top';
 
@@ -259,7 +272,7 @@ export class CanvasCreator {
     const headerString = `{#${this.theme.artistColor}${artist.toUpperCase()}}\n{#${
       this.theme.tournameColor
     }${tourname.toUpperCase()}}`;
-    console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
+
     simpleTextStyler.setFont(canvasContext);
     await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
 
@@ -275,7 +288,7 @@ export class CanvasCreator {
     const { canvasContext } = current;
     canvasContext.textBaseline = 'alphabetic';
     await (canvasContext.font = this.canvasFont(cfgName));
-    console.log('addDates fontshit', cfgName, this.canvasFont(cfgName), canvasContext.font);
+
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
@@ -309,12 +322,12 @@ export class CanvasCreator {
         );
       }
     }
-    console.log('canvasContext.font', canvasContext.font);
+
     simpleTextStyler.setFont(canvasContext);
     const datestexting = dateTexts.join('\n');
 
     const textTop = top + cfg.top + cfg.fontSize;
-    console.log('datetext', datestexting);
+
     await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
   }
 
@@ -323,8 +336,6 @@ export class CanvasCreator {
   }
 
   private resetCanvas(currentCfg: TCurrentCanvasInfo) {
-    console.log('RESET!!!', currentCfg);
-
     currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
     currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
     currentCfg.canvasContext.moveTo(0, 0);
