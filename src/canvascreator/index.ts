@@ -200,39 +200,67 @@ export class CanvasCreator {
     const { image } = contentInfo;
     const { canvas, canvasContext, imageConfig, type } = current;
     let { imageHasChanged } = current;
-    console.log('omgageimage - imaeg', image);
+
     let imageReturn;
     if (image && imageHasChanged) {
       current.imageHasChanged = false;
 
       imageReturn = await imageHandler(image);
+      console.log('imageRetr', imageReturn);
       this.image = imageReturn;
       if (current.image) delete current.image;
 
       const iWidth = this.image.width;
       const iHeight = this.image.height;
-      const bigWidth = iWidth > iHeight;
 
-      let ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
+      console.log(imageConfig, type);
+      const cWidth = canvas.width;
+      const cHeight = canvas.height;
 
-      const { maxHeight, maxWidth } = imageConfig;
-      const cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
-      const cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
-      let h = cImgMaxHeight,
-        w = cImgMaxWidth;
-
+      let w = cWidth > iWidth ? cWidth : iWidth;
+      let h = cHeight > iHeight ? cHeight : iHeight;
+      let ratio = 1;
+      let imageType = 'square';
       if (iWidth > iHeight) {
+        console.log('image is a rect');
+        imageType = 'rect';
         ratio = iHeight / iWidth;
-        w = type === RATIOTYPES.wide ? w * ratio : w;
-        h = type === RATIOTYPES.square ? w * maxWidth : h;
+        if (type === RATIOTYPES.square) {
+          ratio = iWidth / cWidth;
+          w = cWidth * ratio;
+          h = cHeight;
+        } else if (type === RATIOTYPES.wide) {
+          ratio = iHeight / iWidth;
+          w = cWidth;
+          h = cWidth * ratio;
+          console.log('w', w, 'j', h, ratio);
+        }
       } else if (iWidth < iHeight) {
-        ratio = iWidth / iHeight;
-        w = h * ratio;
+        console.log('image is a tall rect');
+        imageType = 'tallrect';
+        if (type === RATIOTYPES.square) {
+          ratio = iHeight / cHeight;
+          w = cWidth;
+          h = cHeight * ratio;
+        } else if (type === RATIOTYPES.wide) {
+          ratio = iHeight / iWidth;
+          w = cWidth;
+          h = cWidth * ratio;
+        }
       } else {
-        w = h;
+        console.log('image is a quadrant');
+        if (type === RATIOTYPES.square) {
+          w = cWidth;
+          h = cHeight;
+        } else if (type === RATIOTYPES.wide) {
+          w = h = cWidth;
+        }
       }
-      const y = canvas.height - h,
-        x = canvas.width - w;
+
+      console.log(imageType, type, ratio);
+
+      const y = 0,
+        x = 0;
 
       current.image = { image: this.image, x, y, w, h };
     }
@@ -242,14 +270,17 @@ export class CanvasCreator {
 
       canvasContext.drawImage(image, x, y, w, h);
 
-      if (current.dragImage) delete current.dragImage;
+      if (current.dragImage) {
+        current.dragImage.setImage(current.image);
+        return;
+      }
 
       current.dragImage = new DragHandler(current, current.scaleFactor);
 
       current.dragImage.events.on(EVENTNAMES.dragstop, (getBack: CustomEvent) => {
         const { detail } = getBack;
         current.image = { ...current.image, ...detail };
-        console.log('this.update! uojado+', current.image);
+        console.log('drag events');
         this.update();
       });
     }

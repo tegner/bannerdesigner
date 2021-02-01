@@ -131,20 +131,7 @@
             this.offsetX = current.canvas.offsetLeft;
             this.offsetY = current.canvas.offsetTop;
             this.current = current;
-            this.imageInfo = current.image;
-            // listen for mouse events
-            current.canvas.removeEventListener('mousedown', function (mouseEv) {
-                _this.handleMouseDown(mouseEv);
-            });
-            current.canvas.removeEventListener('mousemove', function (mouseEv) {
-                _this.handleMouseMove(mouseEv);
-            });
-            current.canvas.removeEventListener('mouseout', function (mouseEv) {
-                _this.handleMouseOut(mouseEv);
-            });
-            current.canvas.removeEventListener('mouseup', function (mouseEv) {
-                _this.handleMouseUp(mouseEv);
-            });
+            this.setImage(current.image);
             // listen for mouse events
             current.canvas.addEventListener('mousedown', function (mouseEv) {
                 _this.handleMouseDown(mouseEv);
@@ -159,6 +146,15 @@
                 _this.handleMouseUp(mouseEv);
             });
         }
+        DragHandler.prototype.setImage = function (imageInfo) {
+            this.imageInfo = imageInfo;
+        };
+        DragHandler.prototype.dragStopped = function () {
+            var emitStopped = this.dragging;
+            this.dragging = false;
+            if (emitStopped)
+                this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+        };
         // test if x,y is inside the bounding box of texts[textIndex]
         DragHandler.prototype.imageHittest = function (x, y) {
             var _a = this.imageInfo, imageH = _a.h, imageX = _a.x, imageY = _a.y, imageW = _a.w;
@@ -202,17 +198,15 @@
             this.imageInfo.y += dy;
             canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
         };
-        // // also done dragging
+        // also done dragging
         DragHandler.prototype.handleMouseOut = function (ev) {
             ev.preventDefault();
-            console.log('dragging shit.¨', this.dragging);
-            this.dragging = false;
+            this.dragStopped();
         };
-        // // done dragging
+        // done dragging
         DragHandler.prototype.handleMouseUp = function (ev) {
             ev.preventDefault();
-            this.dragging = false;
-            this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+            this.dragStopped();
         };
         return DragHandler;
     }());
@@ -596,7 +590,7 @@
         };
         CanvasCreator.prototype.addImage = function (contentInfo, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var image, canvas, canvasContext, imageConfig, type, imageHasChanged, imageReturn, iWidth, iHeight, bigWidth, ratio, maxHeight, maxWidth, cImgMaxWidth, cImgMaxHeight, h, w, y, x, _a, image_1, x, y, w, h;
+                var image, canvas, canvasContext, imageConfig, type, imageHasChanged, imageReturn, iWidth, iHeight, cWidth, cHeight, w, h, ratio, imageType, y, x, _a, image_1, x, y, w, h;
                 var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
@@ -604,49 +598,81 @@
                             image = contentInfo.image;
                             canvas = current.canvas, canvasContext = current.canvasContext, imageConfig = current.imageConfig, type = current.type;
                             imageHasChanged = current.imageHasChanged;
-                            console.log('omgageimage - imaeg', image);
                             if (!(image && imageHasChanged)) return [3 /*break*/, 2];
                             current.imageHasChanged = false;
                             return [4 /*yield*/, imageHandler(image)];
                         case 1:
                             imageReturn = _b.sent();
+                            console.log('imageRetr', imageReturn);
                             this.image = imageReturn;
                             if (current.image)
                                 delete current.image;
                             iWidth = this.image.width;
                             iHeight = this.image.height;
-                            bigWidth = iWidth > iHeight;
-                            ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
-                            maxHeight = imageConfig.maxHeight, maxWidth = imageConfig.maxWidth;
-                            cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
-                            cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
-                            h = cImgMaxHeight, w = cImgMaxWidth;
+                            console.log(imageConfig, type);
+                            cWidth = canvas.width;
+                            cHeight = canvas.height;
+                            w = cWidth > iWidth ? cWidth : iWidth;
+                            h = cHeight > iHeight ? cHeight : iHeight;
+                            ratio = 1;
+                            imageType = 'square';
                             if (iWidth > iHeight) {
+                                console.log('image is a rect');
+                                imageType = 'rect';
                                 ratio = iHeight / iWidth;
-                                w = type === RATIOTYPES.wide ? w * ratio : w;
-                                h = type === RATIOTYPES.square ? w * maxWidth : h;
+                                if (type === RATIOTYPES.square) {
+                                    ratio = iWidth / cWidth;
+                                    w = cWidth * ratio;
+                                    h = cHeight;
+                                }
+                                else if (type === RATIOTYPES.wide) {
+                                    ratio = iHeight / iWidth;
+                                    w = cWidth;
+                                    h = cWidth * ratio;
+                                    console.log('w', w, 'j', h, ratio);
+                                }
                             }
                             else if (iWidth < iHeight) {
-                                ratio = iWidth / iHeight;
-                                w = h * ratio;
+                                console.log('image is a tall rect');
+                                imageType = 'tallrect';
+                                if (type === RATIOTYPES.square) {
+                                    ratio = iHeight / cHeight;
+                                    w = cWidth;
+                                    h = cHeight * ratio;
+                                }
+                                else if (type === RATIOTYPES.wide) {
+                                    ratio = iHeight / iWidth;
+                                    w = cWidth;
+                                    h = cWidth * ratio;
+                                }
                             }
                             else {
-                                w = h;
+                                console.log('image is a quadrant');
+                                if (type === RATIOTYPES.square) {
+                                    w = cWidth;
+                                    h = cHeight;
+                                }
+                                else if (type === RATIOTYPES.wide) {
+                                    w = h = cWidth;
+                                }
                             }
-                            y = canvas.height - h, x = canvas.width - w;
+                            console.log(imageType, type, ratio);
+                            y = 0, x = 0;
                             current.image = { image: this.image, x: x, y: y, w: w, h: h };
                             _b.label = 2;
                         case 2:
                             if (current.image) {
                                 _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
                                 canvasContext.drawImage(image_1, x, y, w, h);
-                                if (current.dragImage)
-                                    delete current.dragImage;
+                                if (current.dragImage) {
+                                    current.dragImage.setImage(current.image);
+                                    return [2 /*return*/];
+                                }
                                 current.dragImage = new DragHandler(current, current.scaleFactor);
                                 current.dragImage.events.on(EVENTNAMES.dragstop, function (getBack) {
                                     var detail = getBack.detail;
                                     current.image = __assign(__assign({}, current.image), detail);
-                                    console.log('this.update! uojado+', current.image);
+                                    console.log('drag events');
                                     _this.update();
                                 });
                             }

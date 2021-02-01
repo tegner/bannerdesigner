@@ -1,4 +1,4 @@
-import { ICurrentCanvasConfig } from '../canvascreator/canvascreator';
+import { ICanvasImage, ICurrentCanvasConfig } from '../canvascreator/canvascreator';
 import { EventBus } from '../eventbus';
 
 export enum EVENTNAMES {
@@ -29,21 +29,7 @@ export class DragHandler {
     this.offsetX = current.canvas.offsetLeft;
     this.offsetY = current.canvas.offsetTop;
     this.current = current;
-    this.imageInfo = current.image;
-
-    // listen for mouse events
-    current.canvas.removeEventListener('mousedown', (mouseEv: MouseEvent) => {
-      this.handleMouseDown(mouseEv);
-    });
-    current.canvas.removeEventListener('mousemove', (mouseEv: MouseEvent) => {
-      this.handleMouseMove(mouseEv);
-    });
-    current.canvas.removeEventListener('mouseout', (mouseEv: MouseEvent) => {
-      this.handleMouseOut(mouseEv);
-    });
-    current.canvas.removeEventListener('mouseup', (mouseEv: MouseEvent) => {
-      this.handleMouseUp(mouseEv);
-    });
+    this.setImage(current.image);
 
     // listen for mouse events
     current.canvas.addEventListener('mousedown', (mouseEv: MouseEvent) => {
@@ -58,6 +44,16 @@ export class DragHandler {
     current.canvas.addEventListener('mouseup', (mouseEv: MouseEvent) => {
       this.handleMouseUp(mouseEv);
     });
+  }
+
+  public setImage(imageInfo: ICanvasImage) {
+    this.imageInfo = imageInfo;
+  }
+
+  private dragStopped() {
+    const emitStopped = this.dragging;
+    this.dragging = false;
+    if (emitStopped) this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
   }
 
   // test if x,y is inside the bounding box of texts[textIndex]
@@ -115,18 +111,17 @@ export class DragHandler {
     canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
   }
 
-  // // also done dragging
+  // also done dragging
   private handleMouseOut(ev: MouseEvent) {
     ev.preventDefault();
-    console.log('dragging shit.¨', this.dragging);
-    this.dragging = false;
+
+    this.dragStopped();
   }
 
-  // // done dragging
+  // done dragging
   private handleMouseUp(ev: MouseEvent) {
     ev.preventDefault();
 
-    this.dragging = false;
-    this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+    this.dragStopped();
   }
 }
