@@ -100,13 +100,14 @@ export class CanvasCreator {
     this.theme = themes[themeName];
 
     const themeFont = document.createElement('div');
-    themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";_visibility: hidden;`);
+    themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";visibility: hidden;`);
     themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
     document.body.appendChild(themeFont);
   }
 
   public update() {
     const eleList = this.form.elements;
+
     const formElements = Array.from(eleList);
 
     const info = {
@@ -201,7 +202,7 @@ export class CanvasCreator {
 
   private async addImage(contentInfo, current: TCurrentCanvasInfo) {
     const { image } = contentInfo;
-    const { canvas, canvasContext, imageConfig, type } = current;
+    const { canvas, canvasContext, type } = current;
     let { imageHasChanged } = current;
 
     let imageReturn;
@@ -209,24 +210,21 @@ export class CanvasCreator {
       current.imageHasChanged = false;
 
       imageReturn = await imageHandler(image);
-      console.log('imageRetr', imageReturn);
+
       this.image = imageReturn;
       if (current.image) delete current.image;
 
       const iWidth = this.image.width;
       const iHeight = this.image.height;
 
-      console.log(imageConfig, type);
       const cWidth = canvas.width;
       const cHeight = canvas.height;
 
       let w = cWidth > iWidth ? cWidth : iWidth;
       let h = cHeight > iHeight ? cHeight : iHeight;
       let ratio = 1;
-      let imageType = 'square';
+
       if (iWidth > iHeight) {
-        console.log('image is a rect');
-        imageType = 'rect';
         ratio = iHeight / iWidth;
         if (type === RATIOTYPES.square) {
           ratio = iWidth / iHeight;
@@ -236,11 +234,8 @@ export class CanvasCreator {
           ratio = iHeight / iWidth;
           w = cWidth;
           h = cWidth * ratio;
-          console.log('w', w, 'j', h, ratio);
         }
       } else if (iWidth < iHeight) {
-        console.log('image is a tall rect');
-        imageType = 'tallrect';
         if (type === RATIOTYPES.square) {
           ratio = iHeight / cHeight;
           w = cWidth;
@@ -251,7 +246,6 @@ export class CanvasCreator {
           h = cWidth * ratio;
         }
       } else {
-        console.log('image is a quadrant');
         if (type === RATIOTYPES.square) {
           w = cWidth;
           h = cHeight;
@@ -259,8 +253,6 @@ export class CanvasCreator {
           w = h = cWidth;
         }
       }
-
-      console.log(imageType, type, ratio);
 
       const y = 0,
         x = 0;
@@ -283,7 +275,7 @@ export class CanvasCreator {
       current.dragImage.events.on(EVENTNAMES.dragstop, (getBack: CustomEvent) => {
         const { detail } = getBack;
         current.image = { ...current.image, ...detail };
-        console.log('drag events');
+
         this.update();
       });
     }
@@ -303,8 +295,8 @@ export class CanvasCreator {
 
     const tournameTop = cfg.top * 2;
 
-    const headerString = `{#${this.theme.artistColor}${artist.toUpperCase()}}\n{#${
-      this.theme.tournameColor
+    const headerString = `{${this.theme.artist}${artist.toUpperCase()}}\n{${
+      this.theme.tourname
     }${tourname.toUpperCase()}}`;
 
     simpleTextStyler.setFont(canvasContext);
@@ -351,9 +343,7 @@ export class CanvasCreator {
           }
         });
 
-        dateTexts.push(
-          `{#${this.theme.dateColor}${dateText}} {#${this.theme.venueColor}${venueText} {-${ticketText}}}`
-        );
+        dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
       }
     }
 
@@ -375,7 +365,7 @@ export class CanvasCreator {
     currentCfg.canvasContext.moveTo(0, 0);
     // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
     currentCfg.canvasContext.stroke();
-    currentCfg.canvasContext.fillStyle = `#${this.theme.bgColor};`;
+    currentCfg.canvasContext.fillStyle = `${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
   }
 }

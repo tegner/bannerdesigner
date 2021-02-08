@@ -13,16 +13,11 @@ const formElement = (name: string): string => `
 `;
 
 export function createForm(themes) {
+  const container = document.createDocumentFragment();
   const formEl = document.createElement('form');
   const canvascontainer = document.getElementById('canvascontainer');
 
   const canvasCreator = new CanvasCreator(canvascontainer, formEl);
-
-  formEl.addEventListener('submit', (ev) => {
-    ev.preventDefault();
-    console.log('serial bitch=?!!!');
-    canvasCreator.update();
-  });
 
   formEl.addEventListener('change', (ev) => {
     console.log('it done changed', (ev.target as HTMLInputElement).value, ev);
@@ -57,8 +52,8 @@ export function createForm(themes) {
   formEl.appendChild(colorPicker('venue'));
 
   /** Image */
-
   formEl.appendChild(imagePicker());
+  container.appendChild(formEl);
 
   /** Buttons */
   const buttonContainer = document.createElement('div');
@@ -68,6 +63,11 @@ export function createForm(themes) {
   updateButton.className = 'button';
   updateButton.value = 'submit';
   updateButton.innerText = 'Opdater';
+
+  updateButton.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    canvasCreator.update();
+  });
 
   const saveButton = document.createElement('button');
   saveButton.className = 'button button--submit';
@@ -80,7 +80,7 @@ export function createForm(themes) {
 
   buttonContainer.appendChild(updateButton);
   buttonContainer.appendChild(saveButton);
-  formEl.appendChild(buttonContainer);
+  container.appendChild(buttonContainer);
 
-  return formEl;
+  return container;
 }

@@ -11,40 +11,40 @@
   })(THEMENAMES || (THEMENAMES = {}));
   var themes = (_a = {},
       _a[THEMENAMES.classic] = {
-          artist: 'D9E4E1',
-          bgColor: '010E13',
+          artist: '#D9E4E1',
+          bgColor: '#010E13',
           colorPicks: ['#D9E4E1', '#010E13', '#D96E2F', '#2F9FD9', '#A775B2'],
-          date: 'D47843',
+          date: '#D47843',
           fontFamily: 'Crimson Text',
-          tourname: 'D47843',
-          venue: 'D9E4E1',
+          tourname: '#D47843',
+          venue: '#D9E4E1',
       },
       _a[THEMENAMES.modern] = {
-          artist: 'E5DADA',
-          bgColor: '000000',
+          artist: '#E5DADA',
+          bgColor: '#000000',
           colorPicks: ['#E5DADA', '#010E13', '#015EB6', '#4FC546', '#EB5450'],
-          date: '015EB6',
+          date: '#015EB6',
           fontFamily: 'Bebas Neue',
-          tourname: '015EB6',
-          venue: 'E5DADA',
+          tourname: '#015EB6',
+          venue: '#E5DADA',
       },
       _a[THEMENAMES.urban] = {
-          artist: 'E5DADA',
-          bgColor: '000000',
+          artist: '#E5DADA',
+          bgColor: '#000000',
           colorPicks: ['#E8EFED', '#010E13', '#F30000', '#F3C800', '#01EA85'],
-          date: '015EB6',
+          date: '#015EB6',
           fontFamily: 'Roboto',
-          tourname: '015EB6',
-          venue: 'E5DADA',
+          tourname: '#015EB6',
+          venue: '#E5DADA',
       },
       _a[THEMENAMES.writer] = {
-          artist: 'E5DADA',
-          bgColor: '000000',
+          artist: '#E5DADA',
+          bgColor: '#000000',
           colorPicks: ['#E8EFED', '#010E13', '#0E467E', '#BF8F28', '#3F8597'],
-          date: '015EB6',
+          date: '#015EB6',
           fontFamily: 'Noto Serif',
-          tourname: '015EB6',
-          venue: 'E5DADA',
+          tourname: '#015EB6',
+          venue: '#E5DADA',
       },
       _a);
 
@@ -542,7 +542,7 @@
       CanvasCreator.prototype.setTheme = function (themeName) {
           this.theme = themes[themeName];
           var themeFont = document.createElement('div');
-          themeFont.setAttribute('style', "font-family: \"" + this.theme.fontFamily + "\";_visibility: hidden;");
+          themeFont.setAttribute('style', "font-family: \"" + this.theme.fontFamily + "\";visibility: hidden;");
           themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
           document.body.appendChild(themeFont);
       };
@@ -637,35 +637,30 @@
       };
       CanvasCreator.prototype.addImage = function (contentInfo, current) {
           return __awaiter(this, void 0, void 0, function () {
-              var image, canvas, canvasContext, imageConfig, type, imageHasChanged, imageReturn, iWidth, iHeight, cWidth, cHeight, w, h, ratio, imageType, y, x, _a, image_1, x, y, w, h;
+              var image, canvas, canvasContext, type, imageHasChanged, imageReturn, iWidth, iHeight, cWidth, cHeight, w, h, ratio, y, x, _a, image_1, x, y, w, h;
               var _this = this;
               return __generator(this, function (_b) {
                   switch (_b.label) {
                       case 0:
                           image = contentInfo.image;
-                          canvas = current.canvas, canvasContext = current.canvasContext, imageConfig = current.imageConfig, type = current.type;
+                          canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
                           imageHasChanged = current.imageHasChanged;
                           if (!(image && imageHasChanged)) return [3 /*break*/, 2];
                           current.imageHasChanged = false;
                           return [4 /*yield*/, imageHandler(image)];
                       case 1:
                           imageReturn = _b.sent();
-                          console.log('imageRetr', imageReturn);
                           this.image = imageReturn;
                           if (current.image)
                               delete current.image;
                           iWidth = this.image.width;
                           iHeight = this.image.height;
-                          console.log(imageConfig, type);
                           cWidth = canvas.width;
                           cHeight = canvas.height;
                           w = cWidth > iWidth ? cWidth : iWidth;
                           h = cHeight > iHeight ? cHeight : iHeight;
                           ratio = 1;
-                          imageType = 'square';
                           if (iWidth > iHeight) {
-                              console.log('image is a rect');
-                              imageType = 'rect';
                               ratio = iHeight / iWidth;
                               if (type === RATIOTYPES.square) {
                                   ratio = iWidth / iHeight;
@@ -676,12 +671,9 @@
                                   ratio = iHeight / iWidth;
                                   w = cWidth;
                                   h = cWidth * ratio;
-                                  console.log('w', w, 'j', h, ratio);
                               }
                           }
                           else if (iWidth < iHeight) {
-                              console.log('image is a tall rect');
-                              imageType = 'tallrect';
                               if (type === RATIOTYPES.square) {
                                   ratio = iHeight / cHeight;
                                   w = cWidth;
@@ -694,7 +686,6 @@
                               }
                           }
                           else {
-                              console.log('image is a quadrant');
                               if (type === RATIOTYPES.square) {
                                   w = cWidth;
                                   h = cHeight;
@@ -703,7 +694,6 @@
                                   w = h = cWidth;
                               }
                           }
-                          console.log(imageType, type, ratio);
                           y = 0, x = 0;
                           current.image = { image: this.image, x: x, y: y, w: w, h: h };
                           _b.label = 2;
@@ -719,7 +709,6 @@
                               current.dragImage.events.on(EVENTNAMES.dragstop, function (getBack) {
                                   var detail = getBack.detail;
                                   current.image = __assign(__assign({}, current.image), detail);
-                                  console.log('drag events');
                                   _this.update();
                               });
                           }
@@ -744,7 +733,7 @@
                           canvasContext.textAlign = 'left';
                           canvasContext.textBaseline = 'top';
                           tournameTop = cfg.top * 2;
-                          headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
+                          headerString = "{" + this.theme.artist + artist.toUpperCase() + "}\n{" + this.theme.tourname + tourname.toUpperCase() + "}";
                           simpleTextStyler.setFont(canvasContext);
                           return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
                       case 2:
@@ -795,7 +784,7 @@
                                           }
                                       }
                                   });
-                                  dateTexts.push("{#" + this_1.theme.dateColor + dateText_1 + "} {#" + this_1.theme.venueColor + venueText_1 + " {-" + ticketText_1 + "}}");
+                                  dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
                               }
                           };
                           this_1 = this;
@@ -822,7 +811,7 @@
           currentCfg.canvasContext.moveTo(0, 0);
           // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
           currentCfg.canvasContext.stroke();
-          currentCfg.canvasContext.fillStyle = "#" + this.theme.bgColor + ";";
+          currentCfg.canvasContext.fillStyle = this.theme.bgColor + ";";
           currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
       };
       return CanvasCreator;
@@ -1228,14 +1217,10 @@
 
   var formElement = function (name) { return "\n  <div class=\"form-element padding-s--b\">\n    <label class=\"form-label\">" + name + "</label>\n    <input class=\"form-input\" name=\"" + name.toLocaleLowerCase() + "\" type=\"text\" value=\"\" id=\"bdTourname\" placeholder=\"" + name + "\" />\n  </div>\n"; };
   function createForm(themes) {
+      var container = document.createDocumentFragment();
       var formEl = document.createElement('form');
       var canvascontainer = document.getElementById('canvascontainer');
       var canvasCreator = new CanvasCreator(canvascontainer, formEl);
-      formEl.addEventListener('submit', function (ev) {
-          ev.preventDefault();
-          console.log('serial bitch=?!!!');
-          canvasCreator.update();
-      });
       formEl.addEventListener('change', function (ev) {
           console.log('it done changed', ev.target.value, ev);
           if (ev.target.nodeName === 'SELECT') {
@@ -1264,6 +1249,7 @@
       formEl.appendChild(colorPicker('venue'));
       /** Image */
       formEl.appendChild(imagePicker());
+      container.appendChild(formEl);
       /** Buttons */
       var buttonContainer = document.createElement('div');
       buttonContainer.className = 'flex flex-justify--between form-element';
@@ -1271,6 +1257,10 @@
       updateButton.className = 'button';
       updateButton.value = 'submit';
       updateButton.innerText = 'Opdater';
+      updateButton.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          canvasCreator.update();
+      });
       var saveButton = document.createElement('button');
       saveButton.className = 'button button--submit';
       saveButton.value = 'submit';
@@ -1280,11 +1270,10 @@
       });
       buttonContainer.appendChild(updateButton);
       buttonContainer.appendChild(saveButton);
-      formEl.appendChild(buttonContainer);
-      return formEl;
+      container.appendChild(buttonContainer);
+      return container;
   }
 
-  // const bannerdesigner = document.getElementById('bannerdesigner') as HTMLFormElement;
   var thing = document.getElementById('app');
   thing.appendChild(createForm(themes));
 
