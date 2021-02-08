@@ -38,6 +38,9 @@ export class DragHandler {
     current.canvas.addEventListener('mousemove', (mouseEv: MouseEvent) => {
       this.handleMouseMove(mouseEv);
     });
+    current.canvas.addEventListener('mouseenter', (mouseEv: MouseEvent) => {
+      this.handleMouseEnter(mouseEv);
+    });
     current.canvas.addEventListener('mouseout', (mouseEv: MouseEvent) => {
       this.handleMouseOut(mouseEv);
     });
@@ -53,7 +56,10 @@ export class DragHandler {
   private dragStopped() {
     const emitStopped = this.dragging;
     this.dragging = false;
-    if (emitStopped) this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+    if (emitStopped) {
+      this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+      this.current.canvas.style.cursor = 'default';
+    }
   }
 
   // test if x,y is inside the bounding box of texts[textIndex]
@@ -78,6 +84,19 @@ export class DragHandler {
     // Put your mousedown stuff here
 
     this.dragging = this.imageHittest(this.startX, this.startY);
+  }
+
+  private handleMouseEnter(ev: MouseEvent) {
+    ev.preventDefault();
+    console.log('enter');
+    this.startX = ev.clientX - this.offsetX;
+    this.startY = ev.clientY - this.offsetY;
+
+    // Put your mousedown stuff here
+
+    if (this.imageHittest(this.startX, this.startY)) {
+      this.current.canvas.style.cursor = 'pointer';
+    }
   }
 
   // handle mousemove events

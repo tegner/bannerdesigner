@@ -3,7 +3,7 @@ import { DragHandler, EVENTNAMES } from '../draghandler';
 import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
 import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
-import { themes } from './themes';
+import { THEMENAMES, themes } from './themes';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -74,9 +74,7 @@ export class CanvasCreator {
   private form;
   private image;
 
-  private theme = {
-    ...themes.classic,
-  };
+  private theme;
 
   private types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
@@ -86,7 +84,7 @@ export class CanvasCreator {
     this.containerWidth = container.clientWidth;
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
-
+    this.setTheme(THEMENAMES.classic);
     this.addAll();
   }
 
@@ -100,6 +98,11 @@ export class CanvasCreator {
 
   public setTheme(themeName: string) {
     this.theme = themes[themeName];
+
+    const themeFont = document.createElement('div');
+    themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";_visibility: hidden;`);
+    themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
+    document.body.appendChild(themeFont);
   }
 
   public update() {
@@ -226,9 +229,9 @@ export class CanvasCreator {
         imageType = 'rect';
         ratio = iHeight / iWidth;
         if (type === RATIOTYPES.square) {
-          ratio = iWidth / cWidth;
-          w = cWidth * ratio;
+          ratio = iWidth / iHeight;
           h = cHeight;
+          w = cWidth * ratio;
         } else if (type === RATIOTYPES.wide) {
           ratio = iHeight / iWidth;
           w = cWidth;

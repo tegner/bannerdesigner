@@ -638,3 +638,15 @@ h5 {
 .fs--small {
   font-size: .75em;
 }
+
+.colorpicker {
+  position: relative;
+}
+
+.colorsquare {
+  content: "";
+  display: inline-block;
+  margin-right: 5px;
+  width: 30px;
+  height: 30px;
+}
