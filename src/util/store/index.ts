@@ -1,14 +1,13 @@
 import actions from './actions';
 import mutations from './mutations';
-// import state from './state.js';
 import { Store } from './store';
 
-const state = {
-  items: [],
-};
+import state from '../initialstate';
 
-export default new Store({
+const store = new Store({
   actions,
   mutations,
   state,
 });
+
+export default store;

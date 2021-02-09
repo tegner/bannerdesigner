@@ -3,7 +3,11 @@ import { DragHandler, EVENTNAMES } from '../draghandler';
 import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
 import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
-import { THEMENAMES, themes } from './themes';
+import { themes } from './themes';
+
+import store from '../util/store';
+import { eventhandler } from '../util/eventhandler';
+import { STOREACTIONS } from '../util/store/actions';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -73,9 +77,9 @@ export class CanvasCreator {
   private currentCanvas: TCurrentCanvasInfo[] = [];
   private form;
   private image;
-
+  private imageHasChanged = false;
+  private state;
   private theme;
-
   private types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
   constructor(container, bannerdesigner) {
@@ -84,8 +88,17 @@ export class CanvasCreator {
     this.containerWidth = container.clientWidth;
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
-    this.setTheme(THEMENAMES.classic);
+    this.state = { ...store.state };
+    this.setTheme(this.state.theme);
     this.addAll();
+
+    eventhandler.subscribe('theme', (state) => {
+      this.setTheme(state.theme);
+    });
+
+    eventhandler.subscribe('imageChange', (state) => {
+      this.imageChanged(state.imageChange);
+    });
   }
 
   public getCanvas(): TCurrentCanvasInfo[] {
@@ -93,16 +106,23 @@ export class CanvasCreator {
   }
 
   public imageChanged(status: boolean) {
-    this.currentCanvas.forEach((current) => (current.imageHasChanged = status));
+    this.imageHasChanged = status;
   }
 
   public setTheme(themeName: string) {
     this.theme = themes[themeName];
 
-    const themeFont = document.createElement('div');
-    themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";visibility: hidden;`);
-    themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
-    document.body.appendChild(themeFont);
+    if (!this.theme.loaded) {
+      const themeFont = document.createElement('div');
+      themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";_visibility: hidden;`);
+      themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
+      document.body.appendChild(themeFont);
+
+      setTimeout(() => {
+        this.update();
+        this.theme.loaded = true;
+      }, 200);
+    }
   }
 
   public update() {
@@ -198,17 +218,18 @@ export class CanvasCreator {
 
       this.addText(contentInfo, current);
     });
+
+    if (this.imageHasChanged) store.dispatch(STOREACTIONS.imageChange, false);
   }
 
   private async addImage(contentInfo, current: TCurrentCanvasInfo) {
     const { image } = contentInfo;
     const { canvas, canvasContext, type } = current;
-    let { imageHasChanged } = current;
+
+    const { imageHasChanged } = this;
 
     let imageReturn;
     if (image && imageHasChanged) {
-      current.imageHasChanged = false;
-
       imageReturn = await imageHandler(image);
 
       this.image = imageReturn;

@@ -1,3 +1,6 @@
+import store from '../util/store';
+import { STOREACTIONS } from '../util/store/actions';
+
 export function imagePicker(): HTMLDivElement {
   const fileElement = document.createElement('div');
   fileElement.className = 'form-element padding-s--b';
@@ -26,6 +29,9 @@ export function imagePicker(): HTMLDivElement {
   imageFileElement.addEventListener('change', () => {
     const splitValue = imageFileElement.value.split('\\');
     imageFileValue.innerHTML = splitValue[splitValue.length - 1];
+    console.log('imageHasChanged!');
+
+    store.dispatch(STOREACTIONS.imageChange, true);
   });
 
   return fileElement;

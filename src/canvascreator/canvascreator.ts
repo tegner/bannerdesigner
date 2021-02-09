@@ -26,7 +26,6 @@ export interface ICurrentCanvasConfig {
   configName?: string;
   dragImage?: DragHandler;
   image?: ICanvasImage;
-  imageHasChanged?: boolean;
   scaleFactor?: number;
 }
 

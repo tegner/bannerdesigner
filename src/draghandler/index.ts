@@ -87,7 +87,7 @@ export class DragHandler {
 
   private handleMouseEnter(ev: MouseEvent) {
     ev.preventDefault();
-    console.log('enter');
+
     this.startX = ev.clientX - this.offsetX;
     this.startY = ev.clientY - this.offsetY;
 

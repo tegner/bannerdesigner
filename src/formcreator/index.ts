@@ -1,9 +1,11 @@
 import { CanvasCreator } from '../canvascreator';
 import { saveToDisk } from '../util/savetodisk';
-import { colorPicker } from './colorpicker';
+import { ColorPicker } from './colorpicker';
 import { imagePicker } from './imagepicker';
-import { themePicker } from './themepicker';
+import { ThemePicker } from './themepicker';
 import { TourDates } from './tourdates';
+
+import store from '../util/store';
 
 const formElement = (name: string): string => `
   <div class="form-element padding-s--b">
@@ -12,7 +14,7 @@ const formElement = (name: string): string => `
   </div>
 `;
 
-export function createForm(themes) {
+export function createForm() {
   const container = document.createDocumentFragment();
   const formEl = document.createElement('form');
   const canvascontainer = document.getElementById('canvascontainer');
@@ -20,9 +22,8 @@ export function createForm(themes) {
   const canvasCreator = new CanvasCreator(canvascontainer, formEl);
 
   formEl.addEventListener('change', (ev) => {
-    console.log('it done changed', (ev.target as HTMLInputElement).value, ev);
     if ((ev.target as HTMLInputElement).nodeName === 'SELECT') {
-      canvasCreator.setTheme((ev.target as HTMLInputElement).value);
+      store.dispatch('setTheme', (ev.target as HTMLInputElement).value);
     }
   });
 
@@ -41,15 +42,12 @@ export function createForm(themes) {
   formEl.appendChild(tourDates.render());
 
   /** Themes */
-  const themeContainer = document.createElement('div');
-  themeContainer.innerHTML = themePicker(themes);
-  formEl.appendChild(themeContainer);
+  const themePicker = new ThemePicker();
+  formEl.appendChild(themePicker.render());
 
   /** Colors */
-  formEl.appendChild(colorPicker('artist'));
-  formEl.appendChild(colorPicker('date'));
-  formEl.appendChild(colorPicker('tourname'));
-  formEl.appendChild(colorPicker('venue'));
+  const colorPicker = new ColorPicker(['artist', 'date', 'tourname', 'venue']);
+  formEl.appendChild(colorPicker.render());
 
   /** Image */
   formEl.appendChild(imagePicker());
