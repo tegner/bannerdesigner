@@ -82,7 +82,6 @@ export class DragHandler {
     this.startY = ev.clientY - this.offsetY;
 
     // Put your mousedown stuff here
-
     this.dragging = this.imageHittest(this.startX, this.startY);
   }
 
@@ -92,8 +91,7 @@ export class DragHandler {
     this.startX = ev.clientX - this.offsetX;
     this.startY = ev.clientY - this.offsetY;
 
-    // Put your mousedown stuff here
-
+    // Put your MouseEnter stuff here
     if (this.imageHittest(this.startX, this.startY)) {
       this.current.canvas.style.cursor = 'pointer';
     }
