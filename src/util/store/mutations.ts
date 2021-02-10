@@ -1,23 +1,25 @@
+import { STATENAMES } from '../initialstate';
 import { STOREACTIONS } from './actions';
 
 export default {
-  addItem(state, payload) {
-    state.items.push(payload);
-
-    return state;
-  },
-  clearItem(state, payload) {
-    state.items.splice(payload.index, 1);
-
+  [STOREACTIONS.alterTheme](state, payload) {
+    console.log('payload', payload, state.theme);
+    state.theme = { ...state.theme, ...payload };
+    console.log('payload state after', state.theme);
     return state;
   },
   [STOREACTIONS.imageChange](state, payload) {
-    state.imageChange = payload;
+    state[STATENAMES.imageChange] = payload;
 
     return state;
   },
   [STOREACTIONS.setTheme](state, payload) {
-    state.theme = payload;
+    state[STATENAMES.theme] = payload;
+
+    return state;
+  },
+  [STOREACTIONS.setThemeName](state, payload) {
+    state[STATENAMES.themeName] = payload;
 
     return state;
   },

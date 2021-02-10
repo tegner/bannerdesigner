@@ -65,28 +65,18 @@
         }
     }
 
-    function asyncForEach(array, callback) {
-        return __awaiter(this, void 0, void 0, function () {
-            var index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!(index < array.length)) return [3 /*break*/, 4];
-                        return [4 /*yield*/, callback(array[index], index, array)];
-                    case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3:
-                        index++;
-                        return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        });
-    }
+    var RATIOTYPES;
+    (function (RATIOTYPES) {
+        RATIOTYPES["square"] = "square";
+        RATIOTYPES["tall"] = "tall";
+        RATIOTYPES["wide"] = "wide";
+    })(RATIOTYPES || (RATIOTYPES = {}));
+    var DATEINFOTYPES;
+    (function (DATEINFOTYPES) {
+        DATEINFOTYPES["date"] = "date";
+        DATEINFOTYPES["venue"] = "venue";
+        DATEINFOTYPES["tickets"] = "tickets";
+    })(DATEINFOTYPES || (DATEINFOTYPES = {}));
 
     var EventBus = /** @class */ (function () {
         function EventBus(description) {
@@ -401,20 +391,30 @@
         },
     };
 
-    var RATIOTYPES;
-    (function (RATIOTYPES) {
-        RATIOTYPES["square"] = "square";
-        RATIOTYPES["tall"] = "tall";
-        RATIOTYPES["wide"] = "wide";
-    })(RATIOTYPES || (RATIOTYPES = {}));
-    var DATEINFOTYPES;
-    (function (DATEINFOTYPES) {
-        DATEINFOTYPES["date"] = "date";
-        DATEINFOTYPES["venue"] = "venue";
-        DATEINFOTYPES["tickets"] = "tickets";
-    })(DATEINFOTYPES || (DATEINFOTYPES = {}));
-
     var _a;
+    var STOREACTIONS;
+    (function (STOREACTIONS) {
+        STOREACTIONS["alterTheme"] = "alterTheme";
+        STOREACTIONS["imageChange"] = "imageChange";
+        STOREACTIONS["setTheme"] = "setTheme";
+        STOREACTIONS["setThemeName"] = "setThemeName";
+    })(STOREACTIONS || (STOREACTIONS = {}));
+    var actions = (_a = {},
+        _a[STOREACTIONS.alterTheme] = function (context, payload) {
+            context.commit(STOREACTIONS.alterTheme, payload);
+        },
+        _a[STOREACTIONS.imageChange] = function (context, payload) {
+            context.commit(STOREACTIONS.imageChange, payload);
+        },
+        _a[STOREACTIONS.setTheme] = function (context, payload) {
+            context.commit(STOREACTIONS.setTheme, payload);
+        },
+        _a[STOREACTIONS.setThemeName] = function (context, payload) {
+            context.commit(STOREACTIONS.setThemeName, payload);
+        },
+        _a);
+
+    var _a$1;
     var THEMENAMES;
     (function (THEMENAMES) {
         THEMENAMES["classic"] = "classic";
@@ -422,8 +422,8 @@
         THEMENAMES["urban"] = "urban";
         THEMENAMES["writer"] = "writer";
     })(THEMENAMES || (THEMENAMES = {}));
-    var themes = (_a = {},
-        _a[THEMENAMES.classic] = {
+    var themes = (_a$1 = {},
+        _a$1[THEMENAMES.classic] = {
             artist: '#D9E4E1',
             bgColor: '#010E13',
             colorPicks: ['#D9E4E1', '#010E13', '#D96E2F', '#2F9FD9', '#A775B2'],
@@ -433,7 +433,7 @@
             tourname: '#D47843',
             venue: '#D9E4E1',
         },
-        _a[THEMENAMES.modern] = {
+        _a$1[THEMENAMES.modern] = {
             artist: '#E5DADA',
             bgColor: '#000000',
             colorPicks: ['#E5DADA', '#010E13', '#015EB6', '#4FC546', '#EB5450'],
@@ -443,7 +443,7 @@
             tourname: '#015EB6',
             venue: '#E5DADA',
         },
-        _a[THEMENAMES.urban] = {
+        _a$1[THEMENAMES.urban] = {
             artist: '#E8EFED',
             bgColor: '#000000',
             colorPicks: ['#E8EFED', '#010E13', '#F30000', '#F3C800', '#01EA85'],
@@ -453,7 +453,7 @@
             tourname: '#F30000',
             venue: '#E8EFED',
         },
-        _a[THEMENAMES.writer] = {
+        _a$1[THEMENAMES.writer] = {
             artist: '#E8EFED',
             bgColor: '#000000',
             colorPicks: ['#E8EFED', '#010E13', '#0E467E', '#BF8F28', '#3F8597'],
@@ -463,50 +463,43 @@
             tourname: '#0E467E',
             venue: '#E8EFED',
         },
-        _a);
-
-    var _a$1;
-    var STOREACTIONS;
-    (function (STOREACTIONS) {
-        STOREACTIONS["imageChange"] = "imageChange";
-        STOREACTIONS["setTheme"] = "setTheme";
-    })(STOREACTIONS || (STOREACTIONS = {}));
-    var actions = (_a$1 = {
-            addItem: function (context, payload) {
-                context.commit('addItem', payload);
-            },
-            clearItem: function (context, payload) {
-                context.commit('clearItem', payload);
-            }
-        },
-        _a$1[STOREACTIONS.imageChange] = function (context, payload) {
-            context.commit('imageChange', payload);
-        },
-        _a$1[STOREACTIONS.setTheme] = function (context, payload) {
-            context.commit('setTheme', payload);
-        },
         _a$1);
 
     var _a$2;
-    var mutations = (_a$2 = {
-            addItem: function (state, payload) {
-                state.items.push(payload);
-                return state;
-            },
-            clearItem: function (state, payload) {
-                state.items.splice(payload.index, 1);
-                return state;
-            }
-        },
-        _a$2[STOREACTIONS.imageChange] = function (state, payload) {
-            state.imageChange = payload;
-            return state;
-        },
-        _a$2[STOREACTIONS.setTheme] = function (state, payload) {
-            state.theme = payload;
-            return state;
-        },
+    var STATENAMES;
+    (function (STATENAMES) {
+        STATENAMES["imageChange"] = "imageChange";
+        STATENAMES["theme"] = "theme";
+        STATENAMES["themeName"] = "themeName";
+    })(STATENAMES || (STATENAMES = {}));
+    var defaultTheme = THEMENAMES.modern;
+    var state = (_a$2 = {},
+        _a$2[STATENAMES.imageChange] = false,
+        _a$2[STATENAMES.theme] = themes[defaultTheme],
+        _a$2[STATENAMES.themeName] = defaultTheme,
         _a$2);
+
+    var _a$3;
+    var mutations = (_a$3 = {},
+        _a$3[STOREACTIONS.alterTheme] = function (state, payload) {
+            console.log('payload', payload, state.theme);
+            state.theme = __assign(__assign({}, state.theme), payload);
+            console.log('payload state after', state.theme);
+            return state;
+        },
+        _a$3[STOREACTIONS.imageChange] = function (state, payload) {
+            state[STATENAMES.imageChange] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.setTheme] = function (state, payload) {
+            state[STATENAMES.theme] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.setThemeName] = function (state, payload) {
+            state[STATENAMES.themeName] = payload;
+            return state;
+        },
+        _a$3);
 
     var PubSub = /** @class */ (function () {
         function PubSub() {
@@ -625,22 +618,34 @@
         return Store;
     }());
 
-    var _a$3;
-    var STATENAMES;
-    (function (STATENAMES) {
-        STATENAMES["imageChange"] = "imageChange";
-        STATENAMES["theme"] = "theme";
-    })(STATENAMES || (STATENAMES = {}));
-    var state = (_a$3 = {},
-        _a$3[STATENAMES.imageChange] = false,
-        _a$3[STATENAMES.theme] = THEMENAMES.modern,
-        _a$3);
-
     var store = new Store({
         actions: actions,
         mutations: mutations,
         state: state,
     });
+
+    function asyncForEach(array, callback) {
+        return __awaiter(this, void 0, void 0, function () {
+            var index;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(index < array.length)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, callback(array[index], index, array)];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3:
+                        index++;
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    }
 
     var eventhandler = new PubSub();
     var HandlingStateChange = /** @class */ (function () {
@@ -648,7 +653,9 @@
             var _this = this;
             this.state = __assign({}, store.state);
             store.events.subscribe('stateChange', function (newState, key) {
-                if (_this.state[key] !== newState[key]) {
+                console.log('newState[key]', newState[key]);
+                if (_this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key])) {
+                    console.log('newState[key] ... slipped in here', key);
                     eventhandler.publish(key, newState);
                     _this.state = __assign({}, newState);
                 }
@@ -679,10 +686,6 @@
                     fontSize: 45,
                     header: 'Banner: Instagram',
                     height: 900,
-                    imageConfig: {
-                        maxHeight: 0.5,
-                        maxWidth: 0.5,
-                    },
                     left: 20,
                     ratio: 1 / 2.3,
                     top: 20,
@@ -693,9 +696,6 @@
                     fontSize: 36,
                     header: 'Banner: Skyskraper',
                     height: 600,
-                    imageConfig: {
-                        maxWidth: 1,
-                    },
                     left: 20,
                     ratio: 16 / 9,
                     top: 20,
@@ -706,13 +706,6 @@
                     fontSize: 55,
                     header: 'Banner: Facebook',
                     height: 700,
-                    imageConfig: {
-                        base: 'height',
-                        maxHeight: 1,
-                        square: 1,
-                        tall: 1,
-                        wide: 1,
-                    },
                     left: 30,
                     ratio: 7 / 19,
                     top: 30,
@@ -729,13 +722,22 @@
             this.canvasContainer.className = 'flex flex-wrap flex-start';
             this.container.appendChild(this.canvasContainer);
             this.state = __assign({}, store.state);
+            // this.setTheme(this.state.themeName);
             this.setTheme(this.state.theme);
             this.addAll();
-            eventhandler.subscribe('theme', function (state) {
-                _this.setTheme(state.theme);
+            eventhandler.subscribe(STOREACTIONS.setTheme, function (state) {
+                console.log('theme theme theme', state);
+                _this.setTheme(state[STATENAMES.theme]);
             });
-            eventhandler.subscribe('imageChange', function (state) {
-                _this.imageChanged(state.imageChange);
+            eventhandler.subscribe(STOREACTIONS.alterTheme, function (state) {
+                console.log('alter theme alter theme theme', state);
+                _this.setTheme(state[STATENAMES.theme]);
+            });
+            // eventhandler.subscribe(STOREACTIONS.setThemeName, (state) => {
+            //   this.setTheme(state[STATENAMES.themeName]);
+            // });
+            eventhandler.subscribe([STATENAMES.imageChange], function (state) {
+                _this.imageChanged(state[STATENAMES.imageChange]);
             });
         }
         CanvasCreator.prototype.getCanvas = function () {
@@ -744,12 +746,15 @@
         CanvasCreator.prototype.imageChanged = function (status) {
             this.imageHasChanged = status;
         };
-        CanvasCreator.prototype.setTheme = function (themeName) {
+        CanvasCreator.prototype.setTheme = function (theme) {
             var _this = this;
-            this.theme = themes[themeName];
+            // (themeName: string) {
+            // this.theme = themes[themeName];
+            this.theme = theme;
+            console.log('theme', theme);
             if (!this.theme.loaded) {
                 var themeFont = document.createElement('div');
-                themeFont.setAttribute('style', "font-family: \"" + this.theme.fontFamily + "\";_visibility: hidden;");
+                themeFont.setAttribute('style', "font-family: \"" + this.theme.fontFamily + "\";visibility: hidden;");
                 themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
                 document.body.appendChild(themeFont);
                 setTimeout(function () {
@@ -946,6 +951,7 @@
                             canvasContext.textAlign = 'left';
                             canvasContext.textBaseline = 'top';
                             tournameTop = cfg.top * 2;
+                            console.log('this.theme', this.theme, this.theme.artist);
                             headerString = "{" + this.theme.artist + artist.toUpperCase() + "}\n{" + this.theme.tourname + tourname.toUpperCase() + "}";
                             simpleTextStyler.setFont(canvasContext);
                             return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
@@ -1323,14 +1329,28 @@
     }
 
     // import store from '../util/store';
-    var colorSquare = function (colorName) { return "<div class=\"colorsquare\" style=\"background: " + colorName + ";\"></div>"; };
-    function colorPicking(theme) {
+    var colorSquare = function (colorName) {
+        return "<div class=\"colorsquare\" data-color=\"" + colorName + "\"><span style=\"background: " + colorName + ";\"></span></div>";
+    };
+    function colorPicking(theme, name) {
         var colorPickingEl = document.createElement('div');
+        colorPickingEl.className = 'colorpicking';
         var colorSquares = [];
         theme.colorPicks.forEach(function (color) {
             colorSquares.push(colorSquare(color));
         });
         colorPickingEl.innerHTML = colorSquares.join('');
+        console.log(colorPickingEl.children);
+        var childrenArray = Array.from(colorPickingEl.children);
+        childrenArray.forEach(function (child) {
+            child.addEventListener('click', function (ev) {
+                var _a;
+                ev.preventDefault();
+                ev.stopPropagation();
+                console.log('color?', child.dataset.color, name);
+                store.dispatch(STOREACTIONS.alterTheme, (_a = {}, _a[name] = child.dataset.color, _a));
+            });
+        });
         return colorPickingEl;
     }
     var ColorPicker = /** @class */ (function () {
@@ -1339,7 +1359,7 @@
             this.colorPickerFrag = document.createElement('div');
             this.names = names;
             this.state = __assign({}, store.state);
-            eventhandler.subscribe('theme', function (state) {
+            eventhandler.subscribe('themeName', function (state) {
                 _this.state = __assign({}, state);
                 _this.render();
             });
@@ -1349,12 +1369,13 @@
             while (this.colorPickerFrag.firstChild) {
                 this.colorPickerFrag.firstChild.remove();
             }
+            var theme = themes[this.state.themeName];
             this.names.forEach(function (name) {
                 var colorPickerEl = document.createElement('div');
                 colorPickerEl.className = 'colorpicker';
-                colorPickerEl.innerHTML = colorSquare(themes[_this.state.theme][name]) + " " + name;
+                colorPickerEl.innerHTML = colorSquare(theme[name]) + " " + name;
                 colorPickerEl.addEventListener('click', function () {
-                    colorPickerEl.appendChild(colorPicking(themes[_this.state.theme]));
+                    colorPickerEl.appendChild(colorPicking(theme, name));
                 });
                 _this.colorPickerFrag.appendChild(colorPickerEl);
             });
@@ -1469,7 +1490,8 @@
         var canvasCreator = new CanvasCreator(canvascontainer, formEl);
         formEl.addEventListener('change', function (ev) {
             if (ev.target.nodeName === 'SELECT') {
-                store.dispatch('setTheme', ev.target.value);
+                store.dispatch(STOREACTIONS.setThemeName, ev.target.value);
+                store.dispatch(STOREACTIONS.setTheme, themes[ev.target.value]);
             }
         });
         /** TourName */

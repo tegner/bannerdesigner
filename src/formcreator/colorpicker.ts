@@ -1,12 +1,15 @@
-import { IThemeObject, THEMENAMES, themes } from '../canvascreator/themes';
+import { IThemeObject, themes } from '../canvascreator/themes';
 import { eventhandler } from '../util/eventhandler';
 import store from '../util/store';
+import { STOREACTIONS } from '../util/store/actions';
 // import store from '../util/store';
 
-const colorSquare = (colorName: string): string => `<div class="colorsquare" style="background: ${colorName};"></div>`;
+const colorSquare = (colorName: string): string =>
+  `<div class="colorsquare" data-color="${colorName}"><span style="background: ${colorName};"></span></div>`;
 
-function colorPicking(theme: IThemeObject) {
+function colorPicking(theme: IThemeObject, name) {
   const colorPickingEl = document.createElement('div');
+  colorPickingEl.className = 'colorpicking';
   const colorSquares: string[] = [];
   theme.colorPicks.forEach((color) => {
     colorSquares.push(colorSquare(color));
@@ -14,19 +17,18 @@ function colorPicking(theme: IThemeObject) {
 
   colorPickingEl.innerHTML = colorSquares.join('');
 
-  return colorPickingEl;
-}
-
-export function colorPicker(name: string) {
-  const colorPickerEl = document.createElement('div');
-  colorPickerEl.className = 'colorpicker';
-  colorPickerEl.innerHTML = `${colorSquare(themes[THEMENAMES.classic][name])} ${name}`;
-
-  colorPickerEl.addEventListener('click', () => {
-    colorPickerEl.appendChild(colorPicking(themes[THEMENAMES.classic]));
+  console.log(colorPickingEl.children);
+  const childrenArray = Array.from(colorPickingEl.children);
+  childrenArray.forEach((child: HTMLDivElement) => {
+    child.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      console.log('color?', child.dataset.color, name);
+      store.dispatch(STOREACTIONS.alterTheme, { [name]: child.dataset.color });
+    });
   });
 
-  return colorPickerEl;
+  return colorPickingEl;
 }
 
 export class ColorPicker {
@@ -38,7 +40,7 @@ export class ColorPicker {
     this.names = names;
     this.state = { ...store.state };
 
-    eventhandler.subscribe('theme', (state) => {
+    eventhandler.subscribe('themeName', (state) => {
       this.state = { ...state };
       this.render();
     });
@@ -48,14 +50,15 @@ export class ColorPicker {
     while (this.colorPickerFrag.firstChild) {
       this.colorPickerFrag.firstChild.remove();
     }
+    const theme = themes[this.state.themeName];
 
     this.names.forEach((name) => {
       const colorPickerEl = document.createElement('div');
       colorPickerEl.className = 'colorpicker';
-      colorPickerEl.innerHTML = `${colorSquare(themes[this.state.theme][name])} ${name}`;
+      colorPickerEl.innerHTML = `${colorSquare(theme[name])} ${name}`;
 
       colorPickerEl.addEventListener('click', () => {
-        colorPickerEl.appendChild(colorPicking(themes[this.state.theme]));
+        colorPickerEl.appendChild(colorPicking(theme, name));
       });
       this.colorPickerFrag.appendChild(colorPickerEl);
     });

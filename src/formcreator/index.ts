@@ -6,6 +6,8 @@ import { ThemePicker } from './themepicker';
 import { TourDates } from './tourdates';
 
 import store from '../util/store';
+import { STOREACTIONS } from '../util/store/actions';
+import { themes } from '../canvascreator/themes';
 
 const formElement = (name: string): string => `
   <div class="form-element padding-s--b">
@@ -23,7 +25,8 @@ export function createForm() {
 
   formEl.addEventListener('change', (ev) => {
     if ((ev.target as HTMLInputElement).nodeName === 'SELECT') {
-      store.dispatch('setTheme', (ev.target as HTMLInputElement).value);
+      store.dispatch(STOREACTIONS.setThemeName, (ev.target as HTMLInputElement).value);
+      store.dispatch(STOREACTIONS.setTheme, themes[(ev.target as HTMLInputElement).value]);
     }
   });
 

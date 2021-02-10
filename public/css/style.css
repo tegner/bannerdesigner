@@ -639,14 +639,41 @@ h5 {
   font-size: .75em;
 }
 
+/**
+* colorpicking
+*/
 .colorpicker {
   position: relative;
 }
 
 .colorsquare {
-  content: "";
+  border: 1px solid #000;
+  cursor: pointer;
   display: inline-block;
+  line-height: 0;
   margin-right: 5px;
-  width: 30px;
-  height: 30px;
+  padding: 2px;
+  width: 25px;
+  height: 25px;
+}
+
+.colorsquare span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.colorsquare:last-child {
+  margin: 0;
+}
+
+.colorpicking {
+  position: absolute;
+  top: -20px;
+
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 5px;
+  line-height: 0;
+  padding: 5px;
 }

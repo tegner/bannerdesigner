@@ -10,7 +10,9 @@ class HandlingStateChange {
     this.state = { ...store.state };
 
     store.events.subscribe('stateChange', (newState, key) => {
-      if (this.state[key] !== newState[key]) {
+      console.log('newState[key]', newState[key]);
+      if (this.state[key] !== newState[key] && JSON.stringify(this.state[key]) !== JSON.stringify(newState[key])) {
+        console.log('newState[key] ... slipped in here', key);
         eventhandler.publish(key, newState);
         this.state = { ...newState };
       }

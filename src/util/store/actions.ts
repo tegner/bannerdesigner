@@ -1,19 +1,21 @@
 export enum STOREACTIONS {
+  alterTheme = 'alterTheme',
   imageChange = 'imageChange',
   setTheme = 'setTheme',
+  setThemeName = 'setThemeName',
 }
 
 export default {
-  addItem(context, payload) {
-    context.commit('addItem', payload);
-  },
-  clearItem(context, payload) {
-    context.commit('clearItem', payload);
+  [STOREACTIONS.alterTheme](context, payload) {
+    context.commit(STOREACTIONS.alterTheme, payload);
   },
   [STOREACTIONS.imageChange](context, payload) {
-    context.commit('imageChange', payload);
+    context.commit(STOREACTIONS.imageChange, payload);
   },
   [STOREACTIONS.setTheme](context, payload) {
-    context.commit('setTheme', payload);
+    context.commit(STOREACTIONS.setTheme, payload);
+  },
+  [STOREACTIONS.setThemeName](context, payload) {
+    context.commit(STOREACTIONS.setThemeName, payload);
   },
 };

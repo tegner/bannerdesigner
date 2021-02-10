@@ -1,13 +1,15 @@
-import { asyncForEach } from '../util/asyncforeach';
+import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
+import { IThemeObject /** themes */ } from './themes';
+
 import { DragHandler, EVENTNAMES } from '../draghandler';
 import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
-import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
-import { themes } from './themes';
 
 import store from '../util/store';
+import { asyncForEach } from '../util/asyncforeach';
 import { eventhandler } from '../util/eventhandler';
 import { STOREACTIONS } from '../util/store/actions';
+import { IStoreState, STATENAMES } from '../util/initialstate';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -26,17 +28,13 @@ export class CanvasCreator {
   public bannerName: string;
 
   private container: HTMLElement;
-  private containerWidth = 640;
+  private containerWidth: number = 640;
   private canvasContainer = document.createElement('div');
   private canvasConfig: ICanvasTypesConfig = {
     square: {
       fontSize: 45,
       header: 'Banner: Instagram',
       height: 900,
-      imageConfig: {
-        maxHeight: 0.5,
-        maxWidth: 0.5,
-      },
       left: 20,
       ratio: 1 / 2.3,
       top: 20,
@@ -47,9 +45,6 @@ export class CanvasCreator {
       fontSize: 36,
       header: 'Banner: Skyskraper',
       height: 600,
-      imageConfig: {
-        maxWidth: 1,
-      },
       left: 20,
       ratio: 16 / 9,
       top: 20,
@@ -60,13 +55,6 @@ export class CanvasCreator {
       fontSize: 55,
       header: 'Banner: Facebook',
       height: 700,
-      imageConfig: {
-        base: 'height',
-        maxHeight: 1,
-        square: 1,
-        tall: 1,
-        wide: 1,
-      },
       left: 30,
       ratio: 7 / 19,
       top: 30,
@@ -75,12 +63,12 @@ export class CanvasCreator {
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
-  private form;
-  private image;
+  private form: HTMLFormElement;
+  private image: HTMLImageElement;
   private imageHasChanged = false;
-  private state;
-  private theme;
-  private types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
+  private state: IStoreState;
+  private theme: IThemeObject;
+  private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
   constructor(container, bannerdesigner) {
     this.form = bannerdesigner;
@@ -89,15 +77,26 @@ export class CanvasCreator {
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
     this.state = { ...store.state };
+    // this.setTheme(this.state.themeName);
     this.setTheme(this.state.theme);
     this.addAll();
 
-    eventhandler.subscribe('theme', (state) => {
-      this.setTheme(state.theme);
+    eventhandler.subscribe(STOREACTIONS.setTheme, (state) => {
+      console.log('theme theme theme', state);
+      this.setTheme(state[STATENAMES.theme]);
     });
 
-    eventhandler.subscribe('imageChange', (state) => {
-      this.imageChanged(state.imageChange);
+    eventhandler.subscribe(STOREACTIONS.alterTheme, (state) => {
+      console.log('alter theme alter theme theme', state);
+      this.setTheme(state[STATENAMES.theme]);
+    });
+
+    // eventhandler.subscribe(STOREACTIONS.setThemeName, (state) => {
+    //   this.setTheme(state[STATENAMES.themeName]);
+    // });
+
+    eventhandler.subscribe([STATENAMES.imageChange], (state) => {
+      this.imageChanged(state[STATENAMES.imageChange]);
     });
   }
 
@@ -109,12 +108,14 @@ export class CanvasCreator {
     this.imageHasChanged = status;
   }
 
-  public setTheme(themeName: string) {
-    this.theme = themes[themeName];
-
+  public setTheme(theme: IThemeObject) {
+    // (themeName: string) {
+    // this.theme = themes[themeName];
+    this.theme = theme;
+    console.log('theme', theme);
     if (!this.theme.loaded) {
       const themeFont = document.createElement('div');
-      themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";_visibility: hidden;`);
+      themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";visibility: hidden;`);
       themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
       document.body.appendChild(themeFont);
 
@@ -315,7 +316,7 @@ export class CanvasCreator {
     canvasContext.textBaseline = 'top';
 
     const tournameTop = cfg.top * 2;
-
+    console.log('this.theme', this.theme, this.theme.artist);
     const headerString = `{${this.theme.artist}${artist.toUpperCase()}}\n{${
       this.theme.tourname
     }${tourname.toUpperCase()}}`;
