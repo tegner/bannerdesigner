@@ -12,7 +12,7 @@ function themeList(themes: IThemeObject, currentTheme: string): string {
 }
 
 export const themePicker = (themes, currentTheme) => `
-  <div class="form-element padding-s--b">
+  <div class="form-element">
     <label class="form-label">Tema</label>
     <div class="form-input form-input--select">
       <select>
@@ -28,9 +28,10 @@ export class ThemePicker {
   }
 
   public render() {
-    const arg = document.createElement('div');
-    arg.innerHTML = themePicker(themes, 'modern');
+    const themePickerDiv = document.createElement('div');
+    themePickerDiv.className = 'form-element';
+    themePickerDiv.innerHTML = themePicker(themes, 'modern');
 
-    return arg;
+    return themePickerDiv;
   }
 }

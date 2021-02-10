@@ -3,7 +3,7 @@ import { STOREACTIONS } from '../util/store/actions';
 
 export function imagePicker(): HTMLDivElement {
   const fileElement = document.createElement('div');
-  fileElement.className = 'form-element padding-s--b';
+  fileElement.className = 'form-element flex flex-align--center';
 
   /** Actual file picker  */
   const imageFileElement = document.createElement('input');
@@ -13,11 +13,12 @@ export function imagePicker(): HTMLDivElement {
 
   /** Button */
   const imageButton = document.createElement('button');
-  imageButton.className = 'button';
+  imageButton.className = 'button button--file';
   imageButton.innerText = 'Vælg billede';
   fileElement.appendChild(imageButton);
 
   const imageFileValue = document.createElement('small');
+  imageFileValue.className = 'file-value';
   fileElement.appendChild(imageFileValue);
 
   /** eventlisteners */

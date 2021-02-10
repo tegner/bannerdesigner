@@ -10,16 +10,18 @@ import { STOREACTIONS } from '../util/store/actions';
 import { themes } from '../canvascreator/themes';
 
 const formElement = (name: string): string => `
-  <div class="form-element padding-s--b">
+  <div class="form-element">
     <label class="form-label">${name}</label>
     <input class="form-input" name="${name.toLocaleLowerCase()}" type="text" value="" id="bdTourname" placeholder="${name}" />
   </div>
 `;
 
 export function createForm() {
+  const canvascontainer = document.getElementById('canvascontainer');
+
   const container = document.createDocumentFragment();
   const formEl = document.createElement('form');
-  const canvascontainer = document.getElementById('canvascontainer');
+  formEl.className = 'form-container';
 
   const canvasCreator = new CanvasCreator(canvascontainer, formEl);
 
@@ -30,36 +32,30 @@ export function createForm() {
     }
   });
 
+  /**
+   * TEXT controls
+   */
+  const textContainer = document.createElement('div');
+  textContainer.className = 'form-area';
+  formEl.appendChild(textContainer);
+
   /** TourName */
   const tourNameContainer = document.createElement('div');
   tourNameContainer.innerHTML = formElement('Tourname');
-  formEl.appendChild(tourNameContainer);
+  textContainer.appendChild(tourNameContainer);
 
   /** ArtistName */
   const artistNameContainer = document.createElement('div');
   artistNameContainer.innerHTML = formElement('Artist');
-  formEl.appendChild(artistNameContainer);
+  textContainer.appendChild(artistNameContainer);
 
   /** TourDates */
   const tourDates = new TourDates();
-  formEl.appendChild(tourDates.render());
+  textContainer.appendChild(tourDates.render());
 
-  /** Themes */
-  const themePicker = new ThemePicker();
-  formEl.appendChild(themePicker.render());
-
-  /** Colors */
-  const colorPicker = new ColorPicker(['artist', 'date', 'tourname', 'venue']);
-  formEl.appendChild(colorPicker.render());
-
-  /** Image */
-  formEl.appendChild(imagePicker());
-  container.appendChild(formEl);
-
-  /** Buttons */
-  const buttonContainer = document.createElement('div');
-  buttonContainer.className = 'flex flex-justify--between form-element';
-
+  /**
+   * update button
+   */
   const updateButton = document.createElement('button');
   updateButton.className = 'button';
   updateButton.value = 'submit';
@@ -69,6 +65,40 @@ export function createForm() {
     ev.preventDefault();
     canvasCreator.update();
   });
+  textContainer.appendChild(updateButton);
+
+  /**
+   * THEME controls
+   */
+  const themeContainer = document.createElement('div');
+  themeContainer.className = 'form-area';
+  formEl.appendChild(themeContainer);
+
+  /** Themes */
+  const themePicker = new ThemePicker();
+  themeContainer.appendChild(themePicker.render());
+
+  /** Colors */
+  const colorPicker = new ColorPicker(['artist', 'date', 'tourname', 'venue']);
+  themeContainer.appendChild(colorPicker.render());
+
+  /**
+   * IMAGE controls
+   */
+  const imageContainer = document.createElement('div');
+  imageContainer.className = 'form-area';
+  formEl.appendChild(imageContainer);
+  /** Image */
+  imageContainer.appendChild(imagePicker());
+
+  /**
+   * Add form element to container
+   */
+  container.appendChild(formEl);
+
+  /** Buttons */
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'flex flex-justify--between form-element';
 
   const saveButton = document.createElement('button');
   saveButton.className = 'button button--submit';
@@ -79,7 +109,6 @@ export function createForm() {
     saveToDisk(canvasCreator.getCanvas(), canvasCreator.bannerName);
   });
 
-  buttonContainer.appendChild(updateButton);
   buttonContainer.appendChild(saveButton);
   container.appendChild(buttonContainer);
 

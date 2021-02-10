@@ -81,22 +81,19 @@ export class CanvasCreator {
     this.setTheme(this.state.theme);
     this.addAll();
 
-    eventhandler.subscribe(STOREACTIONS.setTheme, (state) => {
+    eventhandler.subscribe(STATENAMES.themeName, (state) => {
       console.log('theme theme theme', state);
       this.setTheme(state[STATENAMES.theme]);
     });
 
-    eventhandler.subscribe(STOREACTIONS.alterTheme, (state) => {
+    eventhandler.subscribe(STATENAMES.theme, (state) => {
       console.log('alter theme alter theme theme', state);
       this.setTheme(state[STATENAMES.theme]);
     });
 
-    // eventhandler.subscribe(STOREACTIONS.setThemeName, (state) => {
-    //   this.setTheme(state[STATENAMES.themeName]);
-    // });
-
     eventhandler.subscribe([STATENAMES.imageChange], (state) => {
       this.imageChanged(state[STATENAMES.imageChange]);
+      this.update();
     });
   }
 
@@ -109,8 +106,6 @@ export class CanvasCreator {
   }
 
   public setTheme(theme: IThemeObject) {
-    // (themeName: string) {
-    // this.theme = themes[themeName];
     this.theme = theme;
     console.log('theme', theme);
     if (!this.theme.loaded) {
@@ -123,6 +118,8 @@ export class CanvasCreator {
         this.update();
         this.theme.loaded = true;
       }, 200);
+    } else {
+      this.update();
     }
   }
 

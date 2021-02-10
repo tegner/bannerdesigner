@@ -3,9 +3,9 @@ import { STOREACTIONS } from './actions';
 
 export default {
   [STOREACTIONS.alterTheme](state, payload) {
-    console.log('payload', payload, state.theme);
+    // console.log('payload', payload, state.theme);
     state.theme = { ...state.theme, ...payload };
-    console.log('payload state after', state.theme);
+    // console.log('payload state after', state.theme);
     return state;
   },
   [STOREACTIONS.imageChange](state, payload) {

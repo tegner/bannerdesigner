@@ -1,68 +1,112 @@
-import { IThemeObject, themes } from '../canvascreator/themes';
+import { IThemeObject } from '../canvascreator/themes';
 import { eventhandler } from '../util/eventhandler';
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
-// import store from '../util/store';
+
+class Fuse {
+  private el;
+  private timer;
+
+  constructor() {}
+
+  public light(el?: HTMLDivElement, timer = 500) {
+    if (el) this.el = el;
+
+    this.timer = setTimeout(() => {
+      this.el.remove();
+    }, timer);
+  }
+
+  public off() {
+    clearTimeout(this.timer);
+  }
+}
 
 const colorSquare = (colorName: string): string =>
   `<div class="colorsquare" data-color="${colorName}"><span style="background: ${colorName};"></span></div>`;
 
-function colorPicking(theme: IThemeObject, name) {
-  const colorPickingEl = document.createElement('div');
-  colorPickingEl.className = 'colorpicking';
-  const colorSquares: string[] = [];
-  theme.colorPicks.forEach((color) => {
-    colorSquares.push(colorSquare(color));
-  });
-
-  colorPickingEl.innerHTML = colorSquares.join('');
-
-  console.log(colorPickingEl.children);
-  const childrenArray = Array.from(colorPickingEl.children);
-  childrenArray.forEach((child: HTMLDivElement) => {
-    child.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      console.log('color?', child.dataset.color, name);
-      store.dispatch(STOREACTIONS.alterTheme, { [name]: child.dataset.color });
-    });
-  });
-
-  return colorPickingEl;
-}
-
 export class ColorPicker {
-  private colorPickerFrag = document.createElement('div');
+  private colorPickerDiv = document.createElement('div');
+  private fuse;
   private names: string[];
   private state;
+  private theme;
 
   constructor(names: string[]) {
     this.names = names;
     this.state = { ...store.state };
+    this.theme = this.state.theme;
+
+    this.colorPickerDiv.className = 'form-element colorpicker-layout';
 
     eventhandler.subscribe('themeName', (state) => {
       this.state = { ...state };
+      this.theme = this.state.theme;
+
       this.render();
     });
+
+    eventhandler.subscribe('theme', (state) => {
+      this.state = { ...state };
+      this.theme = this.state.theme;
+
+      this.render();
+    });
+
+    this.fuse = new Fuse();
+  }
+
+  private colorPicking(theme: IThemeObject, name: string) {
+    const colorPickingEl = document.createElement('div');
+    colorPickingEl.className = 'colorpicking';
+    const colorSquares: string[] = [];
+    theme.colorPicks.forEach((color) => {
+      colorSquares.push(colorSquare(color));
+    });
+
+    colorPickingEl.innerHTML = colorSquares.join('');
+
+    const childrenArray = Array.from(colorPickingEl.children);
+    childrenArray.forEach((child: HTMLDivElement) => {
+      child.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        store.dispatch(STOREACTIONS.alterTheme, { [name]: child.dataset.color });
+        colorPickingEl.remove();
+      });
+    });
+
+    this.fuse.light(colorPickingEl, 100000);
+
+    colorPickingEl.addEventListener('mouseenter', () => {
+      this.fuse.off();
+    });
+
+    colorPickingEl.addEventListener('mouseleave', () => {
+      this.fuse.light();
+    });
+
+    return colorPickingEl;
   }
 
   render() {
-    while (this.colorPickerFrag.firstChild) {
-      this.colorPickerFrag.firstChild.remove();
+    while (this.colorPickerDiv.firstChild) {
+      this.colorPickerDiv.firstChild.remove();
     }
-    const theme = themes[this.state.themeName];
+    const { theme } = this;
 
     this.names.forEach((name) => {
       const colorPickerEl = document.createElement('div');
-      colorPickerEl.className = 'colorpicker';
+      colorPickerEl.className = `colorpicker colorpicker--${name}`;
       colorPickerEl.innerHTML = `${colorSquare(theme[name])} ${name}`;
 
       colorPickerEl.addEventListener('click', () => {
-        colorPickerEl.appendChild(colorPicking(theme, name));
+        colorPickerEl.appendChild(this.colorPicking(theme, name));
       });
-      this.colorPickerFrag.appendChild(colorPickerEl);
+      this.colorPickerDiv.appendChild(colorPickerEl);
     });
 
-    return this.colorPickerFrag;
+    return this.colorPickerDiv;
   }
 }

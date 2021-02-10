@@ -1,29 +1,31 @@
 const createLine = (idx: number) => `
-  <div class="flex-item line-item date">
-    <input data-line="${idx}" type="text" name="date-${idx}" id="bdDate-${idx}" />
+  <div class="line-item date margin-s--r">
+    <input class="form-input form-input--small" data-line="${idx}" type="text" name="date-${idx}" id="bdDate-${idx}" />
   </div>
-  <div class="flex-item line-item venue">
-    <input data-line="${idx}" type="text" name="venue-${idx}" id="bdVenue-${idx}" />
+  <div class="line-item venue">
+    <input class="form-input form-input--small" data-line="${idx}" type="text" name="venue-${idx}" id="bdVenue-${idx}" />
   </div>
-  <div class="flex-item line-item radio">
-    <input data-line="${idx}" type="radio" name="tickets-${idx}" value="reg" checked hidden />
+  <input data-line="${idx}" type="radio" name="tickets-${idx}" value="reg" checked hidden />
+  <label class="flex-item line-item radio">
     <input data-line="${idx}" type="radio" name="tickets-${idx}" value="few" />
-  </div>
-  <div class="flex-item line-item radio">
+  </label>
+  <label class="flex-item line-item radio">
     <input data-line="${idx}" type="radio" name="tickets-${idx}" value="soldout" />
-  </div>
+  </label>
   `;
 
 const createHeader = () => `
+  <div class="flex width-1of1">
+    <div class="form-label date margin-s--r">Datoer</div>
+    <div class="form-label venue">Spillested</div>
+    <div class="flex-item radio fs--smaller">Få bil.</div>
+    <div class="flex-item radio fs--smaller">Udsolgt</div>
+  </div>
   <div class="flex-item delete-item"></div>
-  <div class="flex-item date">Datoer</div>
-  <div class="flex-item venue">Spillested</div>
-  <div class="flex-item radio fs--small">Få bil.</div>
-  <div class="flex-item radio fs--small">Udsolgt</div>
   `;
 
 export class TourDates {
-  private container = document.createDocumentFragment();
+  private container = document.createElement('div');
   private counter = 0;
   private lineContainer = document.createElement('div');
 
@@ -31,21 +33,22 @@ export class TourDates {
 
   private addItem() {
     const lineItem = document.createElement('div');
-    lineItem.className = 'flex';
+    lineItem.className = 'flex margin-s--b';
     lineItem.id = `line-${this.counter}`;
 
-    const deleteItem = document.createElement('div');
-    deleteItem.className = 'flex-item line-item delete-item';
-    deleteItem.innerHTML = '&times;';
-    deleteItem.addEventListener('click', () => {
-      lineItem.remove();
-    });
-    lineItem.appendChild(deleteItem);
-
     const lineItemInput = document.createElement('div');
-    lineItemInput.className = 'flex';
+    lineItemInput.className = 'flex width-1of1';
     lineItemInput.innerHTML = createLine(this.counter);
     lineItem.appendChild(lineItemInput);
+    const deleteItem = document.createElement('div');
+    deleteItem.className = 'flex-item line-item delete-item';
+    if (this.counter !== 0) {
+      deleteItem.innerHTML = '&times;';
+      deleteItem.addEventListener('click', () => {
+        lineItem.remove();
+      });
+    }
+    lineItem.appendChild(deleteItem);
 
     this.lineContainer.appendChild(lineItem);
     this.counter++;
@@ -57,7 +60,7 @@ export class TourDates {
     this.addItem();
 
     const header = document.createElement('div');
-    header.className = 'flex fs--small';
+    header.className = 'flex';
     header.innerHTML = createHeader();
 
     const addButton = document.createElement('div');
@@ -67,6 +70,7 @@ export class TourDates {
       this.addItem();
     });
 
+    this.container.className = 'form-element';
     this.container.appendChild(header);
     this.container.appendChild(this.lineContainer);
     this.container.appendChild(addButton);

@@ -99,6 +99,10 @@ h5 {
   align-self: center;
 }
 
+.width-1of1 {
+  width: 100%;
+}
+
 :root {
   --color--focus: var(--color--blue);
   --form-border-radius: var(--border-radius--small);
@@ -111,7 +115,9 @@ h5 {
 .form-element {
   position: relative;
 
+  font-size: .8rem;
   margin-top: 10px;
+  padding-bottom: 5px;
 }
 
 .form-group .form-element + .form-element {
@@ -132,12 +138,17 @@ h5 {
   box-sizing: border-box;
   line-height: 30px;
   padding: 5px;
+  width: 100%;
   height: 30px;
+}
+
+.form-input--small {
+  line-height: 20px;
+  height: 20px;
 }
 
 .form-label {
   display: block;
-  font-size: .7em;
 }
 
 .form-element--icon {
@@ -199,6 +210,8 @@ h5 {
   border-radius: 36px;
   cursor: pointer;
   padding: 5px 10px;
+
+  flex-shrink: 0;
 }
 
 .button:hover {
@@ -209,15 +222,16 @@ h5 {
   background: darkgreen;
   border: 1px solid darkgreen;
   color: #fff;
+  font-size: 1.2rem;
+  line-height: 1.2em;
+  padding: 7px 15px;
 }
 
 .button--submit:hover {
-  background: lightgreen;
-  color: #000;
+  background: green;
 }
 
 /* margin */
-
 .margin-none {
   margin: 0;
 }
@@ -585,16 +599,16 @@ h5 {
 }
 
 .date {
-  width: 40px;
+  width: 60px;
 }
 
 .radio {
   white-space: nowrap;
-  min-width: 20px;
+  min-width: 30px;
 }
 
 .venue {
-  min-width: 180px;
+  min-width: 200px;
 }
 
 .button-add {
@@ -604,14 +618,17 @@ h5 {
   font-size: 20px;
   font-weight: bold;
   line-height: 18px;
+  margin: 10px;
   text-align: center;
   width: 20px;
   height: 20px;
 }
 
 .delete-item {
+  color: #900;
   cursor: pointer;
   font-size: 18px;
+  font-weight: bold;
   line-height: 18px;
   width: 12px;
 }
@@ -636,14 +653,55 @@ h5 {
 * font-size
 */
 .fs--small {
-  font-size: .75em;
+  font-size: .8rem;
+}
+
+.fs--smaller {
+  font-size: .8em;
+}
+
+/**
+*
+*/
+.form-container {
+  max-width: 380px;
+}
+
+.form-area {
+  margin-bottom: 30px;
+}
+
+/**
+*
+*/
+.file-value {
+  flex-grow: 0;
+  overflow: hidden;
+  padding-left: 5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  flex-shrink: 1;
 }
 
 /**
 * colorpicking
 */
+.colorpicker-layout {
+  display: grid;
+}
+
+.colorpicker--tourname {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .colorpicker {
   position: relative;
+
+  align-items: center;
+  display: flex;
+  margin-bottom: 5px;
 }
 
 .colorsquare {
@@ -653,8 +711,8 @@ h5 {
   line-height: 0;
   margin-right: 5px;
   padding: 2px;
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
 }
 
 .colorsquare span {
@@ -663,17 +721,20 @@ h5 {
   height: 100%;
 }
 
-.colorsquare:last-child {
-  margin: 0;
-}
-
 .colorpicking {
   position: absolute;
-  top: -20px;
+  top: -40px;
+  z-index: 1;
 
   background: #fff;
   border: 1px solid #000;
   border-radius: 5px;
   line-height: 0;
-  padding: 5px;
+  padding: 5px 0 5px 5px;
+  width: 180px;
+}
+
+.colorpicking .colorsquare {
+  width: 25px;
+  height: 25px;
 }

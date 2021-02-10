@@ -482,9 +482,9 @@
     var _a$3;
     var mutations = (_a$3 = {},
         _a$3[STOREACTIONS.alterTheme] = function (state, payload) {
-            console.log('payload', payload, state.theme);
+            // console.log('payload', payload, state.theme);
             state.theme = __assign(__assign({}, state.theme), payload);
-            console.log('payload state after', state.theme);
+            // console.log('payload state after', state.theme);
             return state;
         },
         _a$3[STOREACTIONS.imageChange] = function (state, payload) {
@@ -550,7 +550,7 @@
                     // Set the value as we would normally
                     state[key] = value;
                     // Trace out to the console. This will be grouped by the related action
-                    console.log("stateChange: " + String(key) + ": " + value + " . this.events " + _this.events);
+                    // console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
                     // Publish the change event for the components that are listening
                     if (_this.status === 'resting') {
                         _this.events.publish('stateChange', _this.state, key);
@@ -582,13 +582,13 @@
                 return false;
             }
             // Create a console group which will contain the logs from our Proxy etc
-            console.groupCollapsed("ACTION: " + actionKey);
+            // console.groupCollapsed(`ACTION: ${actionKey}`);
             // Let anything that's watching the status know that we're dispatching an action
             this.status = 'action';
             // Actually call the action and pass it the Store context and whatever payload was passed
             this.actions[actionKey](this, payload);
             // Close our console group to keep things nice and neat
-            console.groupEnd();
+            // console.groupEnd();
             return true;
         };
         /**
@@ -604,7 +604,7 @@
             // Run a quick check to see if this mutation actually exists
             // before trying to run it
             if (typeof this.mutations[mutationKey] !== 'function') {
-                console.log("Mutation \"" + mutationKey + "\" doesn't exist");
+                // console.log(`Mutation "${mutationKey}" doesn't exist`);
                 return false;
             }
             // Let anything that's watching the status know that we're mutating state
@@ -653,10 +653,10 @@
             var _this = this;
             this.state = __assign({}, store.state);
             store.events.subscribe('stateChange', function (newState, key) {
-                console.log('newState[key]', newState[key]);
+                // console.log('newState[key]', newState[key]);
                 if (_this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key])) {
-                    console.log('newState[key] ... slipped in here', key);
-                    eventhandler.publish(key, newState);
+                    // console.log('newState[key] ... slipped in here', key, newState);
+                    eventhandler.publish(key, __assign({}, newState));
                     _this.state = __assign({}, newState);
                 }
             });
@@ -725,19 +725,17 @@
             // this.setTheme(this.state.themeName);
             this.setTheme(this.state.theme);
             this.addAll();
-            eventhandler.subscribe(STOREACTIONS.setTheme, function (state) {
+            eventhandler.subscribe(STATENAMES.themeName, function (state) {
                 console.log('theme theme theme', state);
                 _this.setTheme(state[STATENAMES.theme]);
             });
-            eventhandler.subscribe(STOREACTIONS.alterTheme, function (state) {
+            eventhandler.subscribe(STATENAMES.theme, function (state) {
                 console.log('alter theme alter theme theme', state);
                 _this.setTheme(state[STATENAMES.theme]);
             });
-            // eventhandler.subscribe(STOREACTIONS.setThemeName, (state) => {
-            //   this.setTheme(state[STATENAMES.themeName]);
-            // });
             eventhandler.subscribe([STATENAMES.imageChange], function (state) {
                 _this.imageChanged(state[STATENAMES.imageChange]);
+                _this.update();
             });
         }
         CanvasCreator.prototype.getCanvas = function () {
@@ -748,8 +746,6 @@
         };
         CanvasCreator.prototype.setTheme = function (theme) {
             var _this = this;
-            // (themeName: string) {
-            // this.theme = themes[themeName];
             this.theme = theme;
             console.log('theme', theme);
             if (!this.theme.loaded) {
@@ -761,6 +757,9 @@
                     _this.update();
                     _this.theme.loaded = true;
                 }, 200);
+            }
+            else {
+                this.update();
             }
         };
         CanvasCreator.prototype.update = function () {
@@ -1328,65 +1327,97 @@
         });
     }
 
-    // import store from '../util/store';
+    var Fuse = /** @class */ (function () {
+        function Fuse() {
+        }
+        Fuse.prototype.light = function (el, timer) {
+            var _this = this;
+            if (timer === void 0) { timer = 500; }
+            if (el)
+                this.el = el;
+            this.timer = setTimeout(function () {
+                _this.el.remove();
+            }, timer);
+        };
+        Fuse.prototype.off = function () {
+            clearTimeout(this.timer);
+        };
+        return Fuse;
+    }());
     var colorSquare = function (colorName) {
         return "<div class=\"colorsquare\" data-color=\"" + colorName + "\"><span style=\"background: " + colorName + ";\"></span></div>";
     };
-    function colorPicking(theme, name) {
-        var colorPickingEl = document.createElement('div');
-        colorPickingEl.className = 'colorpicking';
-        var colorSquares = [];
-        theme.colorPicks.forEach(function (color) {
-            colorSquares.push(colorSquare(color));
-        });
-        colorPickingEl.innerHTML = colorSquares.join('');
-        console.log(colorPickingEl.children);
-        var childrenArray = Array.from(colorPickingEl.children);
-        childrenArray.forEach(function (child) {
-            child.addEventListener('click', function (ev) {
-                var _a;
-                ev.preventDefault();
-                ev.stopPropagation();
-                console.log('color?', child.dataset.color, name);
-                store.dispatch(STOREACTIONS.alterTheme, (_a = {}, _a[name] = child.dataset.color, _a));
-            });
-        });
-        return colorPickingEl;
-    }
     var ColorPicker = /** @class */ (function () {
         function ColorPicker(names) {
             var _this = this;
-            this.colorPickerFrag = document.createElement('div');
+            this.colorPickerDiv = document.createElement('div');
             this.names = names;
             this.state = __assign({}, store.state);
+            this.theme = this.state.theme;
+            this.colorPickerDiv.className = 'form-element colorpicker-layout';
             eventhandler.subscribe('themeName', function (state) {
                 _this.state = __assign({}, state);
+                _this.theme = _this.state.theme;
                 _this.render();
             });
+            eventhandler.subscribe('theme', function (state) {
+                _this.state = __assign({}, state);
+                _this.theme = _this.state.theme;
+                _this.render();
+            });
+            this.fuse = new Fuse();
         }
+        ColorPicker.prototype.colorPicking = function (theme, name) {
+            var _this = this;
+            var colorPickingEl = document.createElement('div');
+            colorPickingEl.className = 'colorpicking';
+            var colorSquares = [];
+            theme.colorPicks.forEach(function (color) {
+                colorSquares.push(colorSquare(color));
+            });
+            colorPickingEl.innerHTML = colorSquares.join('');
+            var childrenArray = Array.from(colorPickingEl.children);
+            childrenArray.forEach(function (child) {
+                child.addEventListener('click', function (ev) {
+                    var _a;
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    store.dispatch(STOREACTIONS.alterTheme, (_a = {}, _a[name] = child.dataset.color, _a));
+                    colorPickingEl.remove();
+                });
+            });
+            this.fuse.light(colorPickingEl, 100000);
+            colorPickingEl.addEventListener('mouseenter', function () {
+                _this.fuse.off();
+            });
+            colorPickingEl.addEventListener('mouseleave', function () {
+                _this.fuse.light();
+            });
+            return colorPickingEl;
+        };
         ColorPicker.prototype.render = function () {
             var _this = this;
-            while (this.colorPickerFrag.firstChild) {
-                this.colorPickerFrag.firstChild.remove();
+            while (this.colorPickerDiv.firstChild) {
+                this.colorPickerDiv.firstChild.remove();
             }
-            var theme = themes[this.state.themeName];
+            var theme = this.theme;
             this.names.forEach(function (name) {
                 var colorPickerEl = document.createElement('div');
-                colorPickerEl.className = 'colorpicker';
+                colorPickerEl.className = "colorpicker colorpicker--" + name;
                 colorPickerEl.innerHTML = colorSquare(theme[name]) + " " + name;
                 colorPickerEl.addEventListener('click', function () {
-                    colorPickerEl.appendChild(colorPicking(theme, name));
+                    colorPickerEl.appendChild(_this.colorPicking(theme, name));
                 });
-                _this.colorPickerFrag.appendChild(colorPickerEl);
+                _this.colorPickerDiv.appendChild(colorPickerEl);
             });
-            return this.colorPickerFrag;
+            return this.colorPickerDiv;
         };
         return ColorPicker;
     }());
 
     function imagePicker() {
         var fileElement = document.createElement('div');
-        fileElement.className = 'form-element padding-s--b';
+        fileElement.className = 'form-element flex flex-align--center';
         /** Actual file picker  */
         var imageFileElement = document.createElement('input');
         imageFileElement.type = 'file';
@@ -1394,10 +1425,11 @@
         fileElement.appendChild(imageFileElement);
         /** Button */
         var imageButton = document.createElement('button');
-        imageButton.className = 'button';
+        imageButton.className = 'button button--file';
         imageButton.innerText = 'Vælg billede';
         fileElement.appendChild(imageButton);
         var imageFileValue = document.createElement('small');
+        imageFileValue.className = 'file-value';
         fileElement.appendChild(imageFileValue);
         /** eventlisteners */
         imageButton.addEventListener('click', function (ev) {
@@ -1422,42 +1454,45 @@
         }
         return themeOption.join('');
     }
-    var themePicker = function (themes, currentTheme) { return "\n  <div class=\"form-element padding-s--b\">\n    <label class=\"form-label\">Tema</label>\n    <div class=\"form-input form-input--select\">\n      <select>\n        " + themeList(themes, currentTheme) + "\n      </select>\n    </div>\n  </div>\n"; };
+    var themePicker = function (themes, currentTheme) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Tema</label>\n    <div class=\"form-input form-input--select\">\n      <select>\n        " + themeList(themes, currentTheme) + "\n      </select>\n    </div>\n  </div>\n"; };
     var ThemePicker = /** @class */ (function () {
         function ThemePicker() {
             // eventhandler;
         }
         ThemePicker.prototype.render = function () {
-            var arg = document.createElement('div');
-            arg.innerHTML = themePicker(themes, 'modern');
-            return arg;
+            var themePickerDiv = document.createElement('div');
+            themePickerDiv.className = 'form-element';
+            themePickerDiv.innerHTML = themePicker(themes, 'modern');
+            return themePickerDiv;
         };
         return ThemePicker;
     }());
 
-    var createLine = function (idx) { return "\n  <div class=\"flex-item line-item date\">\n    <input data-line=\"" + idx + "\" type=\"text\" name=\"date-" + idx + "\" id=\"bdDate-" + idx + "\" />\n  </div>\n  <div class=\"flex-item line-item venue\">\n    <input data-line=\"" + idx + "\" type=\"text\" name=\"venue-" + idx + "\" id=\"bdVenue-" + idx + "\" />\n  </div>\n  <div class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"reg\" checked hidden />\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"few\" />\n  </div>\n  <div class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"soldout\" />\n  </div>\n  "; };
-    var createHeader = function () { return "\n  <div class=\"flex-item delete-item\"></div>\n  <div class=\"flex-item date\">Datoer</div>\n  <div class=\"flex-item venue\">Spillested</div>\n  <div class=\"flex-item radio fs--small\">F\u00E5 bil.</div>\n  <div class=\"flex-item radio fs--small\">Udsolgt</div>\n  "; };
+    var createLine = function (idx) { return "\n  <div class=\"line-item date margin-s--r\">\n    <input class=\"form-input form-input--small\" data-line=\"" + idx + "\" type=\"text\" name=\"date-" + idx + "\" id=\"bdDate-" + idx + "\" />\n  </div>\n  <div class=\"line-item venue\">\n    <input class=\"form-input form-input--small\" data-line=\"" + idx + "\" type=\"text\" name=\"venue-" + idx + "\" id=\"bdVenue-" + idx + "\" />\n  </div>\n  <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"reg\" checked hidden />\n  <label class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"few\" />\n  </label>\n  <label class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"soldout\" />\n  </label>\n  "; };
+    var createHeader = function () { return "\n  <div class=\"flex width-1of1\">\n    <div class=\"form-label date margin-s--r\">Datoer</div>\n    <div class=\"form-label venue\">Spillested</div>\n    <div class=\"flex-item radio fs--smaller\">F\u00E5 bil.</div>\n    <div class=\"flex-item radio fs--smaller\">Udsolgt</div>\n  </div>\n  <div class=\"flex-item delete-item\"></div>\n  "; };
     var TourDates = /** @class */ (function () {
         function TourDates() {
-            this.container = document.createDocumentFragment();
+            this.container = document.createElement('div');
             this.counter = 0;
             this.lineContainer = document.createElement('div');
         }
         TourDates.prototype.addItem = function () {
             var lineItem = document.createElement('div');
-            lineItem.className = 'flex';
+            lineItem.className = 'flex margin-s--b';
             lineItem.id = "line-" + this.counter;
-            var deleteItem = document.createElement('div');
-            deleteItem.className = 'flex-item line-item delete-item';
-            deleteItem.innerHTML = '&times;';
-            deleteItem.addEventListener('click', function () {
-                lineItem.remove();
-            });
-            lineItem.appendChild(deleteItem);
             var lineItemInput = document.createElement('div');
-            lineItemInput.className = 'flex';
+            lineItemInput.className = 'flex width-1of1';
             lineItemInput.innerHTML = createLine(this.counter);
             lineItem.appendChild(lineItemInput);
+            var deleteItem = document.createElement('div');
+            deleteItem.className = 'flex-item line-item delete-item';
+            if (this.counter !== 0) {
+                deleteItem.innerHTML = '&times;';
+                deleteItem.addEventListener('click', function () {
+                    lineItem.remove();
+                });
+            }
+            lineItem.appendChild(deleteItem);
             this.lineContainer.appendChild(lineItem);
             this.counter++;
         };
@@ -1466,7 +1501,7 @@
             var _this = this;
             this.addItem();
             var header = document.createElement('div');
-            header.className = 'flex fs--small';
+            header.className = 'flex';
             header.innerHTML = createHeader();
             var addButton = document.createElement('div');
             addButton.className = 'button-add';
@@ -1474,6 +1509,7 @@
             addButton.addEventListener('click', function () {
                 _this.addItem();
             });
+            this.container.className = 'form-element';
             this.container.appendChild(header);
             this.container.appendChild(this.lineContainer);
             this.container.appendChild(addButton);
@@ -1482,11 +1518,12 @@
         return TourDates;
     }());
 
-    var formElement = function (name) { return "\n  <div class=\"form-element padding-s--b\">\n    <label class=\"form-label\">" + name + "</label>\n    <input class=\"form-input\" name=\"" + name.toLocaleLowerCase() + "\" type=\"text\" value=\"\" id=\"bdTourname\" placeholder=\"" + name + "\" />\n  </div>\n"; };
+    var formElement = function (name) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">" + name + "</label>\n    <input class=\"form-input\" name=\"" + name.toLocaleLowerCase() + "\" type=\"text\" value=\"\" id=\"bdTourname\" placeholder=\"" + name + "\" />\n  </div>\n"; };
     function createForm() {
+        var canvascontainer = document.getElementById('canvascontainer');
         var container = document.createDocumentFragment();
         var formEl = document.createElement('form');
-        var canvascontainer = document.getElementById('canvascontainer');
+        formEl.className = 'form-container';
         var canvasCreator = new CanvasCreator(canvascontainer, formEl);
         formEl.addEventListener('change', function (ev) {
             if (ev.target.nodeName === 'SELECT') {
@@ -1494,29 +1531,26 @@
                 store.dispatch(STOREACTIONS.setTheme, themes[ev.target.value]);
             }
         });
+        /**
+         * TEXT controls
+         */
+        var textContainer = document.createElement('div');
+        textContainer.className = 'form-area';
+        formEl.appendChild(textContainer);
         /** TourName */
         var tourNameContainer = document.createElement('div');
         tourNameContainer.innerHTML = formElement('Tourname');
-        formEl.appendChild(tourNameContainer);
+        textContainer.appendChild(tourNameContainer);
         /** ArtistName */
         var artistNameContainer = document.createElement('div');
         artistNameContainer.innerHTML = formElement('Artist');
-        formEl.appendChild(artistNameContainer);
+        textContainer.appendChild(artistNameContainer);
         /** TourDates */
         var tourDates = new TourDates();
-        formEl.appendChild(tourDates.render());
-        /** Themes */
-        var themePicker = new ThemePicker();
-        formEl.appendChild(themePicker.render());
-        /** Colors */
-        var colorPicker = new ColorPicker(['artist', 'date', 'tourname', 'venue']);
-        formEl.appendChild(colorPicker.render());
-        /** Image */
-        formEl.appendChild(imagePicker());
-        container.appendChild(formEl);
-        /** Buttons */
-        var buttonContainer = document.createElement('div');
-        buttonContainer.className = 'flex flex-justify--between form-element';
+        textContainer.appendChild(tourDates.render());
+        /**
+         * update button
+         */
         var updateButton = document.createElement('button');
         updateButton.className = 'button';
         updateButton.value = 'submit';
@@ -1525,6 +1559,34 @@
             ev.preventDefault();
             canvasCreator.update();
         });
+        textContainer.appendChild(updateButton);
+        /**
+         * THEME controls
+         */
+        var themeContainer = document.createElement('div');
+        themeContainer.className = 'form-area';
+        formEl.appendChild(themeContainer);
+        /** Themes */
+        var themePicker = new ThemePicker();
+        themeContainer.appendChild(themePicker.render());
+        /** Colors */
+        var colorPicker = new ColorPicker(['artist', 'date', 'tourname', 'venue']);
+        themeContainer.appendChild(colorPicker.render());
+        /**
+         * IMAGE controls
+         */
+        var imageContainer = document.createElement('div');
+        imageContainer.className = 'form-area';
+        formEl.appendChild(imageContainer);
+        /** Image */
+        imageContainer.appendChild(imagePicker());
+        /**
+         * Add form element to container
+         */
+        container.appendChild(formEl);
+        /** Buttons */
+        var buttonContainer = document.createElement('div');
+        buttonContainer.className = 'flex flex-justify--between form-element';
         var saveButton = document.createElement('button');
         saveButton.className = 'button button--submit';
         saveButton.value = 'submit';
@@ -1532,7 +1594,6 @@
         saveButton.addEventListener('click', function () {
             saveToDisk(canvasCreator.getCanvas(), canvasCreator.bannerName);
         });
-        buttonContainer.appendChild(updateButton);
         buttonContainer.appendChild(saveButton);
         container.appendChild(buttonContainer);
         return container;

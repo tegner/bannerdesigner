@@ -40,7 +40,7 @@ export class Store {
         state[key] = value;
 
         // Trace out to the console. This will be grouped by the related action
-        console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
+        // console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
 
         // Publish the change event for the components that are listening
         if (this.status === 'resting') {
@@ -78,7 +78,7 @@ export class Store {
     }
 
     // Create a console group which will contain the logs from our Proxy etc
-    console.groupCollapsed(`ACTION: ${actionKey}`);
+    // console.groupCollapsed(`ACTION: ${actionKey}`);
 
     // Let anything that's watching the status know that we're dispatching an action
     this.status = 'action';
@@ -87,7 +87,7 @@ export class Store {
     this.actions[actionKey](this, payload);
 
     // Close our console group to keep things nice and neat
-    console.groupEnd();
+    // console.groupEnd();
 
     return true;
   }
@@ -105,7 +105,7 @@ export class Store {
     // Run a quick check to see if this mutation actually exists
     // before trying to run it
     if (typeof this.mutations[mutationKey] !== 'function') {
-      console.log(`Mutation "${mutationKey}" doesn't exist`);
+      // console.log(`Mutation "${mutationKey}" doesn't exist`);
       return false;
     }
 
