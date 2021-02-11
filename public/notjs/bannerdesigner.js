@@ -276,7 +276,9 @@
             }
             this.spaceSize = this.sizes[0];
         },
-        drawText: function (context, text, x, y, size) {
+        drawText: function (context, text, x, y, size, dir) {
+            if (dir)
+                console.log('simplestyler.drawtext . dir', dir, x);
             var i, len, subText;
             var w, scale;
             var xx, 
@@ -315,78 +317,162 @@
             w = 0;
             i = 0;
             scale = size / this.baseSize;
-            while (i < len) {
-                var c = text[i];
-                var cc = text.charCodeAt(i);
-                if (cc < 256) {
-                    // only ascii
-                    if (this.controlChars.indexOf(c) > -1) {
-                        if (subText !== '') {
-                            scale = size / this.baseSize;
-                            renderText(subText);
-                            x += w;
-                            w = 0;
-                            subText = '';
+            console.log('what the shit? dir ', dir !== 'right');
+            if (dir !== 'right') {
+                while (i < len) {
+                    var c = text[i];
+                    var cc = text.charCodeAt(i);
+                    if (cc < 256) {
+                        // only ascii
+                        if (this.controlChars.indexOf(c) > -1) {
+                            if (subText !== '') {
+                                scale = size / this.baseSize;
+                                renderText(subText);
+                                x += w;
+                                w = 0;
+                                subText = '';
+                            }
+                            if (c === '\n') {
+                                // return move to new line
+                                x = xx;
+                                y += size;
+                            }
+                            else if (c === '\t') {
+                                // tab move to next tab
+                                x = this.getNextTab(x - xx) + xx;
+                            }
+                            else if (c === '{') {
+                                // Text format delimiter
+                                state.push({
+                                    size: size,
+                                    colour: colour,
+                                    x: x,
+                                    y: y,
+                                });
+                                i += 1;
+                                var t = text[i];
+                                if (t === '+') {
+                                    // Increase size
+                                    size *= 1 / (3 / 4);
+                                }
+                                else if (t === '-') {
+                                    // decrease size
+                                    size *= 3 / 4;
+                                }
+                                else if (t === 's') {
+                                    // sub script
+                                    y += size * (1 / 3);
+                                    size *= 2 / 3;
+                                }
+                                else if (t === 'S') {
+                                    // super script
+                                    y -= size * (1 / 3);
+                                    size *= 2 / 3;
+                                }
+                                else if (t === '#') {
+                                    colour = text.substr(i, 7);
+                                    i += 6;
+                                }
+                            }
+                            else if (c === '}') {
+                                var s = state.pop();
+                                y = s.y;
+                                size = s.size;
+                                colour = s.colour;
+                                scale = size / this.baseSize;
+                            }
                         }
-                        if (c === '\n') {
-                            // return move to new line
-                            x = xx;
-                            y += size;
-                        }
-                        else if (c === '\t') {
-                            // tab move to next tab
-                            x = this.getNextTab(x - xx) + xx;
-                        }
-                        else if (c === '{') {
-                            // Text format delimiter
-                            state.push({
-                                size: size,
-                                colour: colour,
-                                x: x,
-                                y: y,
-                            });
-                            i += 1;
-                            var t = text[i];
-                            if (t === '+') {
-                                // Increase size
-                                size *= 1 / (3 / 4);
-                            }
-                            else if (t === '-') {
-                                // decrease size
-                                size *= 3 / 4;
-                            }
-                            else if (t === 's') {
-                                // sub script
-                                y += size * (1 / 3);
-                                size *= 2 / 3;
-                            }
-                            else if (t === 'S') {
-                                // super script
-                                y -= size * (1 / 3);
-                                size *= 2 / 3;
-                            }
-                            else if (t === '#') {
-                                colour = text.substr(i, 7);
-                                i += 6;
-                            }
-                        }
-                        else if (c === '}') {
-                            var s = state.pop();
-                            y = s.y;
-                            size = s.size;
-                            colour = s.colour;
-                            scale = size / this.baseSize;
+                        else {
+                            subText += c;
+                            w += this.sizes[cc - 32] * size;
                         }
                     }
-                    else {
-                        subText += c;
-                        w += this.sizes[cc - 32] * size;
-                    }
+                    i += 1;
                 }
-                i += 1;
+                if (subText !== '') {
+                    renderText(subText);
+                }
             }
-            if (subText !== '') {
-                renderText(subText);
+            else {
+                var j = len;
+                console.log('wah wah', j);
+                while (j > 0) {
+                    var c = text[j];
+                    var cc = text.charCodeAt(j);
+                    console.log('we running through c', c, 'cc', cc, ' - i', i);
+                    if (cc < 256) {
+                        // only ascii
+                        if (this.controlChars.indexOf(c) > -1) {
+                            if (subText !== '') {
+                                scale = size / this.baseSize;
+                                renderText(subText);
+                                x += w;
+                                w = 0;
+                                subText = '';
+                            }
+                            if (c === '\n') {
+                                // return move to new line
+                                x = xx;
+                                y += size;
+                            }
+                            else if (c === '\t') {
+                                // tab move to next tab
+                                x = this.getNextTab(x - xx) + xx;
+                            }
+                            else if (c === '}') {
+                                console.log('yes? Hello?');
+                                // Text format delimiter
+                                state.push({
+                                    size: size,
+                                    colour: colour,
+                                    x: x,
+                                    y: y,
+                                });
+                                j--;
+                                var t = text[j];
+                                if (t === '+') {
+                                    // Increase size
+                                    size *= 1 / (3 / 4);
+                                }
+                                else if (t === '-') {
+                                    console.log('DEcREASE"!');
+                                    // decrease size
+                                    size *= 3 / 4;
+                                }
+                                else if (t === 's') {
+                                    // sub script
+                                    y += size * (1 / 3);
+                                    size *= 2 / 3;
+                                }
+                                else if (t === 'S') {
+                                    // super script
+                                    y -= size * (1 / 3);
+                                    size *= 2 / 3;
+                                }
+                                else if (t === '#') {
+                                    colour = text.substr(j, 7);
+                                    i += 6;
+                                }
+                            }
+                            else if (c === '{') {
+                                console.log('what the what the what? the hat?!');
+                                var s = state.pop();
+                                y = s.y;
+                                size = s.size;
+                                colour = s.colour;
+                                scale = size / this.baseSize;
+                            }
+                        }
+                        else {
+                            subText += c;
+                            w += this.sizes[cc - 32] * size;
+                        }
+                    }
+                    j--;
+                }
+                if (subText !== '') {
+                    renderText(subText);
+                }
             }
         },
     };
@@ -960,6 +1046,7 @@
                         case 0:
                             artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
                             canvasContext = current.canvasContext, configName = current.configName, fontSize = current.fontSize, top = current.top, xPos = current.xPos;
+                            console.log('addText xPos', xPos);
                             // const cfg = this.canvasConfig[configName];
                             // const { fontSize } = cfg;
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(configName))];
@@ -987,7 +1074,7 @@
         };
         CanvasCreator.prototype.addDates = function (datesInfo, cfgName, topParam, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var dateTexts, canvasContext, fontSize, top, xPos, _loop_1, this_1, dates, datestexting, textTop;
+                var dateTexts, canvasContext, fontSize, top, xPos, dir, _loop_1, this_1, dates, datestexting, textTop;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -997,6 +1084,7 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
                             _a.sent();
+                            dir = this.state.textpos;
                             _loop_1 = function (dates) {
                                 if (datesInfo[dates]) {
                                     var dateText_1, ticketText_1, venueText_1;
@@ -1022,7 +1110,22 @@
                                             }
                                         }
                                     });
-                                    dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
+                                    // const finalDateText =
+                                    //   dir === 'right'
+                                    //     ? `{${ticketText} ${this.theme.venue}${venueText}} {${this.theme.date}${dateText}}`
+                                    //     : `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`;
+                                    var finalDateText = '';
+                                    if (dateText_1) {
+                                        finalDateText = dir !== 'right' ? "{" + this_1.theme.date + dateText_1 + "}" : "{" + dateText_1 + this_1.theme.date + "#}";
+                                    }
+                                    if (venueText_1 && !ticketText_1) {
+                                        finalDateText = "{" + this_1.theme.venue + venueText_1 + "}";
+                                    }
+                                    else if (venueText_1) {
+                                        finalDateText = "{" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}";
+                                    }
+                                    // const finalDateText = `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`;
+                                    dateTexts.push(finalDateText);
                                 }
                             };
                             this_1 = this;
@@ -1032,7 +1135,7 @@
                             simpleTextStyler.setFont(canvasContext);
                             datestexting = dateTexts.join('\n');
                             textTop = topParam + top + fontSize;
-                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, xPos, textTop, fontSize)];
+                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, xPos, textTop, fontSize, dir)];
                         case 2:
                             _a.sent();
                             return [2 /*return*/];
@@ -1055,10 +1158,9 @@
         CanvasCreator.prototype.setXPos = function () {
             var _this = this;
             this.currentCanvas.forEach(function (canvasObject) {
-                console.log('name name name', canvasObject);
                 canvasObject.xPos = _this.state.textpos === 'right' ? canvasObject.width - canvasObject.left : canvasObject.left;
-                console.log('name name name', canvasObject.xPos);
             });
+            this.update();
         };
         return CanvasCreator;
     }());

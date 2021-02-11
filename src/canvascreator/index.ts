@@ -313,6 +313,7 @@ export class CanvasCreator {
     const { artist, dates, tourname } = stuff;
 
     const { canvasContext, configName, fontSize, top, xPos } = current;
+    console.log('addText xPos', xPos);
     // const cfg = this.canvasConfig[configName];
     // const { fontSize } = cfg;
 
@@ -342,7 +343,7 @@ export class CanvasCreator {
     const { canvasContext, fontSize, top, xPos } = current;
     canvasContext.textBaseline = 'alphabetic';
     await (canvasContext.font = this.canvasFont(cfgName));
-
+    const dir = this.state.textpos;
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
@@ -371,7 +372,23 @@ export class CanvasCreator {
           }
         });
 
-        dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
+        // const finalDateText =
+        //   dir === 'right'
+        //     ? `{${ticketText} ${this.theme.venue}${venueText}} {${this.theme.date}${dateText}}`
+        //     : `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`;
+        let finalDateText = '';
+        if (dateText) {
+          finalDateText = dir !== 'right' ? `{${this.theme.date}${dateText}}` : `{${dateText}${this.theme.date}#}`;
+        }
+        if (venueText && !ticketText) {
+          finalDateText = `{${this.theme.venue}${venueText}}`;
+        } else if (venueText) {
+          finalDateText = `{${this.theme.venue}${venueText} {-${ticketText}}}`;
+        }
+
+        // const finalDateText = `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`;
+
+        dateTexts.push(finalDateText);
       }
     }
 
@@ -380,7 +397,7 @@ export class CanvasCreator {
 
     const textTop = topParam + top + fontSize;
 
-    await simpleTextStyler.drawText(canvasContext, datestexting, xPos, textTop, fontSize);
+    await simpleTextStyler.drawText(canvasContext, datestexting, xPos, textTop, fontSize, dir);
   }
 
   private canvasFont(cfgName: string) {
@@ -399,9 +416,8 @@ export class CanvasCreator {
 
   private setXPos() {
     this.currentCanvas.forEach((canvasObject) => {
-      console.log('name name name', canvasObject);
       canvasObject.xPos = this.state.textpos === 'right' ? canvasObject.width - canvasObject.left : canvasObject.left;
-      console.log('name name name', canvasObject.xPos);
     });
+    this.update();
   }
 }
