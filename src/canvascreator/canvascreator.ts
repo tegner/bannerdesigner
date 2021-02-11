@@ -12,18 +12,20 @@ export enum DATEINFOTYPES {
   tickets = 'tickets',
 }
 
+export interface ICanvasImage {
+  image: HTMLImageElement;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface ICurrentCanvasConfig {
   canvas?: HTMLCanvasElement;
   canvasContext?: CanvasRenderingContext2D;
   configName?: string;
-  image?: {
-    dragImage?: DragHandler;
-    image: HTMLImageElement;
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  };
+  dragImage?: DragHandler;
+  image?: ICanvasImage;
   scaleFactor?: number;
 }
 
@@ -36,11 +38,6 @@ export interface ICanvasConfig {
   header: string;
   height: number;
 
-  imageConfig: {
-    maxHeight?: number;
-    maxWidth?: number;
-    [id: string]: number | string;
-  };
   left: number;
   ratio: number;
   top: number;

@@ -6,54 +6,16 @@
     <title>Banner designer</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet" />
 
     <link href="css/style.css" rel="stylesheet" />
-    <style>
-      h1 {
-        font-family: "Bebas Neue";
-      }
-      .garamond {
-        font-family: "Cormorant Garamond";
-      }
-    </style>
   </head>
   <body>
     <div class="masthead"><div>Bannermaker</div></div>
     <div class="flex padding-l--rl">
       <div class="canvascontainer" id="canvascontainer"></div>
-      <div>
-        <form id="bannerdesigner">
-          <div class="form-element padding-s--b">
-            <label class="form-label">Tourname</label>
-            <input class="form-input" name="tourname" type="text" value="" id="bdTourname" placeholder="Tourname" />
-          </div>
-          <div class="form-element padding-s--b">
-            <label class="form-label">Artist</label>
-            <input class="form-input" name="artist" type="text" value="" id="bdArtist" placeholder="Artist" />
-          </div>
-          <div class="padding-l--tb" id="lineitems"></div>
-          <div class="form-element padding-s--b">
-            <label class="form-label">Tema</label>
-            <div class="form-input form-input--select">
-              <select>
-                <option value="classic">Classic</option>
-                <option value="modern">Modern</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-element padding-s--b" id="fileElement">
-            <input type="file" id="bdFile" style="display: none" />
-
-            <button class="button" id="fileElementBtn">Vælg billede</button>
-            <small id="fileElementValue"></small>
-          </div>
-        </form>
-        <div class="flex flex-justify--between form-element">
-          <button class="button" id="bdUpdate" form="bannerdesigner" value="submit">opdater</button>
-          <button class="button button--submit" id="bdSave">Gem</button>
-        </div>
-      </div>
+      <div id="app"></div>
     </div>
     <script src="notjs/jszip.js"></script>
     <script src="notjs/bannerdesigner.js"></script>

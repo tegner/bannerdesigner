@@ -65,44 +65,72 @@
         }
     }
 
-    function asyncForEach(array, callback) {
-        return __awaiter(this, void 0, void 0, function () {
-            var index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!(index < array.length)) return [3 /*break*/, 4];
-                        return [4 /*yield*/, callback(array[index], index, array)];
-                    case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3:
-                        index++;
-                        return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        });
-    }
+    var RATIOTYPES;
+    (function (RATIOTYPES) {
+        RATIOTYPES["square"] = "square";
+        RATIOTYPES["tall"] = "tall";
+        RATIOTYPES["wide"] = "wide";
+    })(RATIOTYPES || (RATIOTYPES = {}));
+    var DATEINFOTYPES;
+    (function (DATEINFOTYPES) {
+        DATEINFOTYPES["date"] = "date";
+        DATEINFOTYPES["venue"] = "venue";
+        DATEINFOTYPES["tickets"] = "tickets";
+    })(DATEINFOTYPES || (DATEINFOTYPES = {}));
 
+    var EventBus = /** @class */ (function () {
+        function EventBus(description) {
+            if (description === void 0) { description = ''; }
+            this.eventTarget = document.appendChild(document.createComment(description));
+        }
+        EventBus.prototype.on = function (type, listener) {
+            this.eventTarget.addEventListener(type, listener);
+        };
+        EventBus.prototype.once = function (type, listener) {
+            this.eventTarget.addEventListener(type, listener, { once: true });
+        };
+        EventBus.prototype.off = function (type, listener) {
+            this.eventTarget.removeEventListener(type, listener);
+        };
+        EventBus.prototype.emit = function (type, detail) {
+            return this.eventTarget.dispatchEvent(new CustomEvent(type, { detail: detail }));
+        };
+        return EventBus;
+    }());
+    // // Usage
+    // const myEventBus = new EventBus<string>('my-event-bus');
+    // myEventBus.on('event-name', ({ detail }) => {
+    //   console.log(detail);
+    // });
+    // myEventBus.once('event-name', ({ detail }) => {
+    //   console.log(detail);
+    // });
+    // myEventBus.emit('event-name', 'Hello'); // => Hello Hello
+    // myEventBus.emit('event-name', 'World'); // => World
+
+    var EVENTNAMES;
+    (function (EVENTNAMES) {
+        EVENTNAMES["dragstop"] = "dragstop";
+    })(EVENTNAMES || (EVENTNAMES = {}));
     var DragHandler = /** @class */ (function () {
         function DragHandler(current, scaleFactor) {
             var _this = this;
+            this.events = new EventBus('my-draghandler-eventbus');
             this.dragging = false;
             this.scaleFactor = scaleFactor;
             this.offsetX = current.canvas.offsetLeft;
             this.offsetY = current.canvas.offsetTop;
             this.current = current;
-            this.imageInfo = current.image;
+            this.setImage(current.image);
             // listen for mouse events
             current.canvas.addEventListener('mousedown', function (mouseEv) {
                 _this.handleMouseDown(mouseEv);
             });
             current.canvas.addEventListener('mousemove', function (mouseEv) {
                 _this.handleMouseMove(mouseEv);
+            });
+            current.canvas.addEventListener('mouseenter', function (mouseEv) {
+                _this.handleMouseEnter(mouseEv);
             });
             current.canvas.addEventListener('mouseout', function (mouseEv) {
                 _this.handleMouseOut(mouseEv);
@@ -111,6 +139,17 @@
                 _this.handleMouseUp(mouseEv);
             });
         }
+        DragHandler.prototype.setImage = function (imageInfo) {
+            this.imageInfo = imageInfo;
+        };
+        DragHandler.prototype.dragStopped = function () {
+            var emitStopped = this.dragging;
+            this.dragging = false;
+            if (emitStopped) {
+                this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+                this.current.canvas.style.cursor = 'default';
+            }
+        };
         // test if x,y is inside the bounding box of texts[textIndex]
         DragHandler.prototype.imageHittest = function (x, y) {
             var _a = this.imageInfo, imageH = _a.h, imageX = _a.x, imageY = _a.y, imageW = _a.w;
@@ -129,6 +168,15 @@
             // Put your mousedown stuff here
             this.dragging = this.imageHittest(this.startX, this.startY);
         };
+        DragHandler.prototype.handleMouseEnter = function (ev) {
+            ev.preventDefault();
+            this.startX = ev.clientX - this.offsetX;
+            this.startY = ev.clientY - this.offsetY;
+            // Put your MouseEnter stuff here
+            if (this.imageHittest(this.startX, this.startY)) {
+                this.current.canvas.style.cursor = 'pointer';
+            }
+        };
         // handle mousemove events
         // calc how far the mouse has been dragged since
         // the last mousemove event and move the selected text
@@ -146,20 +194,23 @@
             this.startX = mouseX;
             this.startY = mouseY;
             var _a = this.imageInfo, h = _a.h, image = _a.image, x = _a.x, y = _a.y, w = _a.w;
-            this.current.canvasContext.fillRect(x, y, x + w, y + h);
+            var _b = this.current, canvas = _b.canvas, canvasContext = _b.canvasContext;
+            canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+            canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+            canvasContext.fillRect(x, y, x + w, y + h);
             this.imageInfo.x += dx;
             this.imageInfo.y += dy;
-            this.current.canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
+            canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
         };
-        // // also done dragging
+        // also done dragging
         DragHandler.prototype.handleMouseOut = function (ev) {
             ev.preventDefault();
-            this.dragging = false;
+            this.dragStopped();
         };
-        // // done dragging
+        // done dragging
         DragHandler.prototype.handleMouseUp = function (ev) {
             ev.preventDefault();
-            this.dragging = false;
+            this.dragStopped();
         };
         return DragHandler;
     }());
@@ -220,7 +271,6 @@
         setFont: function (context) {
             this.font = context.font;
             this.baseSize = this.getFontSize(this.font);
-            console.log('setFont', this.font, this.baseSize);
             for (var i = 32; i < 256; i++) {
                 this.sizes[i - 32] = context.measureText(String.fromCharCode(i), 0, 0).width / this.baseSize;
             }
@@ -260,7 +310,6 @@
             }
             var colour = ctx.fillStyle;
             ctx.font = this.font;
-            console.log('drawtext ... ', ctx.font);
             len = text.length;
             subText = '';
             w = 0;
@@ -342,37 +391,279 @@
         },
     };
 
-    var RATIOTYPES;
-    (function (RATIOTYPES) {
-        RATIOTYPES["square"] = "square";
-        RATIOTYPES["tall"] = "tall";
-        RATIOTYPES["wide"] = "wide";
-    })(RATIOTYPES || (RATIOTYPES = {}));
-    var DATEINFOTYPES;
-    (function (DATEINFOTYPES) {
-        DATEINFOTYPES["date"] = "date";
-        DATEINFOTYPES["venue"] = "venue";
-        DATEINFOTYPES["tickets"] = "tickets";
-    })(DATEINFOTYPES || (DATEINFOTYPES = {}));
+    var _a;
+    var STOREACTIONS;
+    (function (STOREACTIONS) {
+        STOREACTIONS["alterTheme"] = "alterTheme";
+        STOREACTIONS["imageChange"] = "imageChange";
+        STOREACTIONS["setTheme"] = "setTheme";
+        STOREACTIONS["setThemeName"] = "setThemeName";
+    })(STOREACTIONS || (STOREACTIONS = {}));
+    var actions = (_a = {},
+        _a[STOREACTIONS.alterTheme] = function (context, payload) {
+            context.commit(STOREACTIONS.alterTheme, payload);
+        },
+        _a[STOREACTIONS.imageChange] = function (context, payload) {
+            context.commit(STOREACTIONS.imageChange, payload);
+        },
+        _a[STOREACTIONS.setTheme] = function (context, payload) {
+            context.commit(STOREACTIONS.setTheme, payload);
+        },
+        _a[STOREACTIONS.setThemeName] = function (context, payload) {
+            context.commit(STOREACTIONS.setThemeName, payload);
+        },
+        _a);
 
-    var themes = {
-        classic: {
-            artistColor: 'D9E4E1',
-            bgColor: '000000',
-            dateColor: 'D47843',
-            fontFamily: 'Cormorant Garamond',
-            tournameColor: 'D47843',
-            venueColor: 'D9E4E1',
+    var _a$1;
+    var THEMENAMES;
+    (function (THEMENAMES) {
+        THEMENAMES["classic"] = "classic";
+        THEMENAMES["modern"] = "modern";
+        THEMENAMES["urban"] = "urban";
+        THEMENAMES["writer"] = "writer";
+    })(THEMENAMES || (THEMENAMES = {}));
+    var themes = (_a$1 = {},
+        _a$1[THEMENAMES.classic] = {
+            artist: '#D9E4E1',
+            bgColor: '#010E13',
+            colorPicks: ['#D9E4E1', '#010E13', '#D96E2F', '#2F9FD9', '#A775B2'],
+            date: '#D47843',
+            fontFamily: 'Crimson Text',
+            loaded: false,
+            tourname: '#D47843',
+            venue: '#D9E4E1',
         },
-        modern: {
-            artistColor: 'E5DADA',
-            bgColor: '000000',
-            dateColor: '015EB6',
+        _a$1[THEMENAMES.modern] = {
+            artist: '#E5DADA',
+            bgColor: '#000000',
+            colorPicks: ['#E5DADA', '#010E13', '#015EB6', '#4FC546', '#EB5450'],
+            date: '#015EB6',
             fontFamily: 'Bebas Neue',
-            tournameColor: '015EB6',
-            venueColor: 'E5DADA',
+            loaded: false,
+            tourname: '#015EB6',
+            venue: '#E5DADA',
         },
-    };
+        _a$1[THEMENAMES.urban] = {
+            artist: '#E8EFED',
+            bgColor: '#000000',
+            colorPicks: ['#E8EFED', '#010E13', '#F30000', '#F3C800', '#01EA85'],
+            date: '#F30000',
+            fontFamily: 'Roboto',
+            loaded: false,
+            tourname: '#F30000',
+            venue: '#E8EFED',
+        },
+        _a$1[THEMENAMES.writer] = {
+            artist: '#E8EFED',
+            bgColor: '#000000',
+            colorPicks: ['#E8EFED', '#010E13', '#0E467E', '#BF8F28', '#3F8597'],
+            date: '#0E467E',
+            fontFamily: 'Noto Serif',
+            loaded: false,
+            tourname: '#0E467E',
+            venue: '#E8EFED',
+        },
+        _a$1);
+
+    var _a$2;
+    var STATENAMES;
+    (function (STATENAMES) {
+        STATENAMES["imageChange"] = "imageChange";
+        STATENAMES["theme"] = "theme";
+        STATENAMES["themeName"] = "themeName";
+    })(STATENAMES || (STATENAMES = {}));
+    var defaultTheme = THEMENAMES.modern;
+    var state = (_a$2 = {},
+        _a$2[STATENAMES.imageChange] = false,
+        _a$2[STATENAMES.theme] = themes[defaultTheme],
+        _a$2[STATENAMES.themeName] = defaultTheme,
+        _a$2);
+
+    var _a$3;
+    var mutations = (_a$3 = {},
+        _a$3[STOREACTIONS.alterTheme] = function (state, payload) {
+            // console.log('payload', payload, state.theme);
+            state.theme = __assign(__assign({}, state.theme), payload);
+            // console.log('payload state after', state.theme);
+            return state;
+        },
+        _a$3[STOREACTIONS.imageChange] = function (state, payload) {
+            state[STATENAMES.imageChange] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.setTheme] = function (state, payload) {
+            state[STATENAMES.theme] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.setThemeName] = function (state, payload) {
+            state[STATENAMES.themeName] = payload;
+            return state;
+        },
+        _a$3);
+
+    var PubSub = /** @class */ (function () {
+        function PubSub() {
+            this.events = {};
+        }
+        PubSub.prototype.publish = function (event, data, key) {
+            if (data === void 0) { data = {}; }
+            var self = this;
+            if (!self.events[event]) {
+                return [];
+            }
+            return self.events[event].map(function (callback) { return callback(data, key); });
+        };
+        PubSub.prototype.subscribe = function (event, callback) {
+            var self = this;
+            if (!self.events[event]) {
+                self.events[event] = [];
+            }
+            return self.events[event].push(callback);
+        };
+        return PubSub;
+    }());
+
+    var Store = /** @class */ (function () {
+        function Store(params) {
+            var _this = this;
+            // Add some default objects to hold our actions, mutations and state
+            this.actions = {};
+            this.mutations = {};
+            this.state = {};
+            // A status enum to set during actions and mutations
+            this.status = 'resting';
+            // Attach our PubSub module as an `events` element
+            this.events = new PubSub();
+            // Look in the passed params object for actions and mutations
+            // that might have been passed in
+            if (params.hasOwnProperty('actions')) {
+                this.actions = params.actions;
+            }
+            if (params.hasOwnProperty('mutations')) {
+                this.mutations = params.mutations;
+            }
+            // Set our state to be a Proxy. We are setting the default state by
+            // checking the params and defaulting to an empty object if no default
+            // state is passed in
+            this.state = new Proxy(params.state || {}, {
+                set: function (state, key, value) {
+                    // Set the value as we would normally
+                    state[key] = value;
+                    // Trace out to the console. This will be grouped by the related action
+                    // console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
+                    // Publish the change event for the components that are listening
+                    if (_this.status === 'resting') {
+                        _this.events.publish('stateChange', _this.state, key);
+                    }
+                    // Give the user a little telling off if they set a value directly
+                    if (_this.status !== 'mutation') {
+                        console.warn("You should use a mutation to set " + String(key));
+                    }
+                    // Reset the status ready for the next operation
+                    _this.status = 'resting';
+                    return true;
+                },
+            });
+        }
+        /**
+         * A dispatcher for actions that looks in the actions
+         * collection and runs the action if it can find it
+         *
+         * @param {string} actionKey
+         * @param {mixed} payload
+         * @returns {boolean}
+         * @memberof Store
+         */
+        Store.prototype.dispatch = function (actionKey, payload) {
+            // Run a quick check to see if the action actually exists
+            // before we try to run it
+            if (typeof this.actions[actionKey] !== 'function') {
+                console.error("Action \"" + actionKey + " doesn't exist.");
+                return false;
+            }
+            // Create a console group which will contain the logs from our Proxy etc
+            // console.groupCollapsed(`ACTION: ${actionKey}`);
+            // Let anything that's watching the status know that we're dispatching an action
+            this.status = 'action';
+            // Actually call the action and pass it the Store context and whatever payload was passed
+            this.actions[actionKey](this, payload);
+            // Close our console group to keep things nice and neat
+            // console.groupEnd();
+            return true;
+        };
+        /**
+         * Look for a mutation and modify the state object
+         * if that mutation exists by calling it
+         *
+         * @param {string} mutationKey
+         * @param {mixed} payload
+         * @returns {boolean}
+         * @memberof Store
+         */
+        Store.prototype.commit = function (mutationKey, payload) {
+            // Run a quick check to see if this mutation actually exists
+            // before trying to run it
+            if (typeof this.mutations[mutationKey] !== 'function') {
+                // console.log(`Mutation "${mutationKey}" doesn't exist`);
+                return false;
+            }
+            // Let anything that's watching the status know that we're mutating state
+            this.status = 'mutation';
+            // Get a new version of the state by running the mutation and storing the result of it
+            var newState = this.mutations[mutationKey](this.state, payload);
+            // Merge the old and new together to create a new state and set it
+            this.state = Object.assign(this.state, newState);
+            return true;
+        };
+        return Store;
+    }());
+
+    var store = new Store({
+        actions: actions,
+        mutations: mutations,
+        state: state,
+    });
+
+    function asyncForEach(array, callback) {
+        return __awaiter(this, void 0, void 0, function () {
+            var index;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(index < array.length)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, callback(array[index], index, array)];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3:
+                        index++;
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    }
+
+    var eventhandler = new PubSub();
+    var HandlingStateChange = /** @class */ (function () {
+        function HandlingStateChange() {
+            var _this = this;
+            this.state = __assign({}, store.state);
+            store.events.subscribe('stateChange', function (newState, key) {
+                // console.log('newState[key]', newState[key]);
+                if (_this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key])) {
+                    // console.log('newState[key] ... slipped in here', key, newState);
+                    eventhandler.publish(key, __assign({}, newState));
+                    _this.state = __assign({}, newState);
+                }
+            });
+        }
+        return HandlingStateChange;
+    }());
+    new HandlingStateChange();
 
     var sizeCanvas = function (w, h, ratio) {
         if (ratio === void 0) { ratio = 4; }
@@ -386,7 +677,8 @@
         return can;
     };
     var CanvasCreator = /** @class */ (function () {
-        function CanvasCreator(container) {
+        function CanvasCreator(container, bannerdesigner) {
+            var _this = this;
             this.containerWidth = 640;
             this.canvasContainer = document.createElement('div');
             this.canvasConfig = {
@@ -394,10 +686,6 @@
                     fontSize: 45,
                     header: 'Banner: Instagram',
                     height: 900,
-                    imageConfig: {
-                        maxHeight: 0.5,
-                        maxWidth: 0.5,
-                    },
                     left: 20,
                     ratio: 1 / 2.3,
                     top: 20,
@@ -408,9 +696,6 @@
                     fontSize: 36,
                     header: 'Banner: Skyskraper',
                     height: 600,
-                    imageConfig: {
-                        maxWidth: 1,
-                    },
                     left: 20,
                     ratio: 16 / 9,
                     top: 20,
@@ -421,13 +706,6 @@
                     fontSize: 55,
                     header: 'Banner: Facebook',
                     height: 700,
-                    imageConfig: {
-                        base: 'height',
-                        maxHeight: 1,
-                        square: 1,
-                        tall: 1,
-                        wide: 1,
-                    },
                     left: 30,
                     ratio: 7 / 19,
                     top: 30,
@@ -437,13 +715,28 @@
             };
             this.currentCanvas = [];
             this.imageHasChanged = false;
-            this.theme = __assign({}, themes.classic);
             this.types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
+            this.form = bannerdesigner;
             this.container = container;
             this.containerWidth = container.clientWidth;
             this.canvasContainer.className = 'flex flex-wrap flex-start';
             this.container.appendChild(this.canvasContainer);
+            this.state = __assign({}, store.state);
+            // this.setTheme(this.state.themeName);
+            this.setTheme(this.state.theme);
             this.addAll();
+            eventhandler.subscribe(STATENAMES.themeName, function (state) {
+                console.log('theme theme theme', state);
+                _this.setTheme(state[STATENAMES.theme]);
+            });
+            eventhandler.subscribe(STATENAMES.theme, function (state) {
+                console.log('alter theme alter theme theme', state);
+                _this.setTheme(state[STATENAMES.theme]);
+            });
+            eventhandler.subscribe([STATENAMES.imageChange], function (state) {
+                _this.imageChanged(state[STATENAMES.imageChange]);
+                _this.update();
+            });
         }
         CanvasCreator.prototype.getCanvas = function () {
             return this.currentCanvas;
@@ -451,11 +744,26 @@
         CanvasCreator.prototype.imageChanged = function (status) {
             this.imageHasChanged = status;
         };
-        CanvasCreator.prototype.setTheme = function (themeName) {
-            this.theme = themes[themeName];
-            console.log(this.theme);
+        CanvasCreator.prototype.setTheme = function (theme) {
+            var _this = this;
+            this.theme = theme;
+            console.log('theme', theme);
+            if (!this.theme.loaded) {
+                var themeFont = document.createElement('div');
+                themeFont.setAttribute('style', "font-family: \"" + this.theme.fontFamily + "\";visibility: hidden;");
+                themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
+                document.body.appendChild(themeFont);
+                setTimeout(function () {
+                    _this.update();
+                    _this.theme.loaded = true;
+                }, 200);
+            }
+            else {
+                this.update();
+            }
         };
-        CanvasCreator.prototype.update = function (eleList) {
+        CanvasCreator.prototype.update = function () {
+            var eleList = this.form.elements;
             var formElements = Array.from(eleList);
             var info = {
                 dates: {},
@@ -538,6 +846,8 @@
                             }); })];
                         case 1:
                             _a.sent();
+                            if (this.imageHasChanged)
+                                store.dispatch(STOREACTIONS.imageChange, false);
                             return [2 /*return*/];
                     }
                 });
@@ -545,50 +855,79 @@
         };
         CanvasCreator.prototype.addImage = function (contentInfo, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var image, canvas, canvasContext, imageConfig, type, imageReturn, iWidth, iHeight, bigWidth, ratio, maxHeight, maxWidth, cImgMaxWidth, cImgMaxHeight, h, w, y, x, _a, image_1, x, y, w, h;
+                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, iWidth, iHeight, cWidth, cHeight, w, h, ratio, y, x, _a, image_1, x, y, w, h;
+                var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
                             image = contentInfo.image;
-                            canvas = current.canvas, canvasContext = current.canvasContext, imageConfig = current.imageConfig, type = current.type;
-                            if (!(image && this.imageHasChanged)) return [3 /*break*/, 2];
-                            this.imageChanged(false);
+                            canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
+                            imageHasChanged = this.imageHasChanged;
+                            if (!(image && imageHasChanged)) return [3 /*break*/, 2];
                             return [4 /*yield*/, imageHandler(image)];
                         case 1:
                             imageReturn = _b.sent();
                             this.image = imageReturn;
                             if (current.image)
                                 delete current.image;
+                            iWidth = this.image.width;
+                            iHeight = this.image.height;
+                            cWidth = canvas.width;
+                            cHeight = canvas.height;
+                            w = cWidth > iWidth ? cWidth : iWidth;
+                            h = cHeight > iHeight ? cHeight : iHeight;
+                            ratio = 1;
+                            if (iWidth > iHeight) {
+                                ratio = iHeight / iWidth;
+                                if (type === RATIOTYPES.square) {
+                                    ratio = iWidth / iHeight;
+                                    h = cHeight;
+                                    w = cWidth * ratio;
+                                }
+                                else if (type === RATIOTYPES.wide) {
+                                    ratio = iHeight / iWidth;
+                                    w = cWidth;
+                                    h = cWidth * ratio;
+                                }
+                            }
+                            else if (iWidth < iHeight) {
+                                if (type === RATIOTYPES.square) {
+                                    ratio = iHeight / cHeight;
+                                    w = cWidth;
+                                    h = cHeight * ratio;
+                                }
+                                else if (type === RATIOTYPES.wide) {
+                                    ratio = iHeight / iWidth;
+                                    w = cWidth;
+                                    h = cWidth * ratio;
+                                }
+                            }
+                            else {
+                                if (type === RATIOTYPES.square) {
+                                    w = cWidth;
+                                    h = cHeight;
+                                }
+                                else if (type === RATIOTYPES.wide) {
+                                    w = h = cWidth;
+                                }
+                            }
+                            y = 0, x = 0;
+                            current.image = { image: this.image, x: x, y: y, w: w, h: h };
                             _b.label = 2;
                         case 2:
-                            if (this.image) {
-                                iWidth = this.image.width;
-                                iHeight = this.image.height;
-                                bigWidth = iWidth > iHeight;
-                                ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
-                                maxHeight = imageConfig.maxHeight, maxWidth = imageConfig.maxWidth;
-                                cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
-                                cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
-                                h = cImgMaxHeight, w = cImgMaxWidth;
-                                if (iWidth > iHeight) {
-                                    ratio = iHeight / iWidth;
-                                    w = type === RATIOTYPES.wide ? w * ratio : w;
-                                    h = type === RATIOTYPES.square ? w * maxWidth : h;
-                                }
-                                else if (iWidth < iHeight) {
-                                    ratio = iWidth / iHeight;
-                                    w = h * ratio;
-                                }
-                                else {
-                                    w = h;
-                                }
-                                y = canvas.height - h, x = canvas.width - w;
-                                current.image = { image: this.image, x: x, y: y, w: w, h: h };
-                            }
                             if (current.image) {
                                 _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
                                 canvasContext.drawImage(image_1, x, y, w, h);
-                                current.image.dragImage = new DragHandler(current, current.scaleFactor);
+                                if (current.dragImage) {
+                                    current.dragImage.setImage(current.image);
+                                    return [2 /*return*/];
+                                }
+                                current.dragImage = new DragHandler(current, current.scaleFactor);
+                                current.dragImage.events.on(EVENTNAMES.dragstop, function (getBack) {
+                                    var detail = getBack.detail;
+                                    current.image = __assign(__assign({}, current.image), detail);
+                                    _this.update();
+                                });
                             }
                             return [2 /*return*/];
                     }
@@ -608,12 +947,11 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(configName))];
                         case 1:
                             _a.sent();
-                            console.log('fontshit . configName', configName, this.canvasFont(configName), canvasContext.font);
                             canvasContext.textAlign = 'left';
                             canvasContext.textBaseline = 'top';
                             tournameTop = cfg.top * 2;
-                            headerString = "{#" + this.theme.artistColor + artist.toUpperCase() + "}\n{#" + this.theme.tournameColor + tourname.toUpperCase() + "}";
-                            console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
+                            console.log('this.theme', this.theme, this.theme.artist);
+                            headerString = "{" + this.theme.artist + artist.toUpperCase() + "}\n{" + this.theme.tourname + tourname.toUpperCase() + "}";
                             simpleTextStyler.setFont(canvasContext);
                             return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
                         case 2:
@@ -639,7 +977,6 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
                             _a.sent();
-                            console.log('addDates fontshit', cfgName, this.canvasFont(cfgName), canvasContext.font);
                             _loop_1 = function (dates) {
                                 if (datesInfo[dates]) {
                                     var dateText_1, ticketText_1, venueText_1;
@@ -665,18 +1002,16 @@
                                             }
                                         }
                                     });
-                                    dateTexts.push("{#" + this_1.theme.dateColor + dateText_1 + "} {#" + this_1.theme.venueColor + venueText_1 + " {-" + ticketText_1 + "}}");
+                                    dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
                                 }
                             };
                             this_1 = this;
                             for (dates in datesInfo) {
                                 _loop_1(dates);
                             }
-                            console.log('canvasContext.font', canvasContext.font);
                             simpleTextStyler.setFont(canvasContext);
                             datestexting = dateTexts.join('\n');
                             textTop = top + cfg.top + cfg.fontSize;
-                            console.log('datetext', datestexting);
                             return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize)];
                         case 2:
                             _a.sent();
@@ -689,63 +1024,15 @@
             return this.canvasConfig[cfgName].fontSize + "px " + this.theme.fontFamily;
         };
         CanvasCreator.prototype.resetCanvas = function (currentCfg) {
-            console.log('RESET!!!', currentCfg);
             currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
             currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
             currentCfg.canvasContext.moveTo(0, 0);
             // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
             currentCfg.canvasContext.stroke();
-            currentCfg.canvasContext.fillStyle = "#" + this.theme.bgColor + ";";
+            currentCfg.canvasContext.fillStyle = this.theme.bgColor + ";";
             currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
         };
         return CanvasCreator;
-    }());
-
-    var createLine = function (idx) { return "\n  <div class=\"flex-item line-item date\">\n    <input data-line=\"" + idx + "\" type=\"text\" name=\"date-" + idx + "\" id=\"bdDate-" + idx + "\" />\n  </div>\n  <div class=\"flex-item line-item venue\">\n    <input data-line=\"" + idx + "\" type=\"text\" name=\"venue-" + idx + "\" id=\"bdVenue-" + idx + "\" />\n  </div>\n  <div class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"reg\" checked hidden />\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"few\" />\n  </div>\n  <div class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"soldout\" />\n  </div>\n  "; };
-    var createHeader = function () { return "\n  <div class=\"flex-item delete-item\"></div>\n  <div class=\"flex-item date\">Datoer</div>\n  <div class=\"flex-item venue\">Spillested</div>\n  <div class=\"flex-item radio fs--small\">F\u00E5 bil.</div>\n  <div class=\"flex-item radio fs--small\">Udsolgt</div>\n  "; };
-    var LineItems = /** @class */ (function () {
-        function LineItems() {
-            this.container = document.createDocumentFragment();
-            this.counter = 0;
-            this.lineContainer = document.createElement('div');
-        }
-        LineItems.prototype.addItem = function () {
-            var lineItem = document.createElement('div');
-            lineItem.className = 'flex';
-            lineItem.id = "line-" + this.counter;
-            var deleteItem = document.createElement('div');
-            deleteItem.className = 'flex-item line-item delete-item';
-            deleteItem.innerHTML = '&times;';
-            deleteItem.addEventListener('click', function () {
-                lineItem.remove();
-            });
-            lineItem.appendChild(deleteItem);
-            var lineItemInput = document.createElement('div');
-            lineItemInput.className = 'flex';
-            lineItemInput.innerHTML = createLine(this.counter);
-            lineItem.appendChild(lineItemInput);
-            this.lineContainer.appendChild(lineItem);
-            this.counter++;
-        };
-        // private deleteItem() {}
-        LineItems.prototype.render = function () {
-            var _this = this;
-            this.addItem();
-            var header = document.createElement('div');
-            header.className = 'flex fs--small';
-            header.innerHTML = createHeader();
-            var addButton = document.createElement('div');
-            addButton.className = 'button-add';
-            addButton.innerHTML = '+';
-            addButton.addEventListener('click', function () {
-                _this.addItem();
-            });
-            this.container.appendChild(header);
-            this.container.appendChild(this.lineContainer);
-            this.container.appendChild(addButton);
-            return this.container;
-        };
-        return LineItems;
     }());
 
     /* modified version of: https://github.com/hongru/canvas2image/blob/master/canvas2image.js */
@@ -1040,46 +1327,279 @@
         });
     }
 
-    var canvascontainer = document.getElementById('canvascontainer');
-    var canvasCreator = new CanvasCreator(canvascontainer);
-    var bannerdesigner = document.getElementById('bannerdesigner');
-    bannerdesigner.addEventListener('submit', function (ev) {
-        ev.preventDefault();
-        canvasCreator.update(bannerdesigner.elements);
-    });
-    bannerdesigner.addEventListener('change', function (ev) {
-        console.log('it done changed', ev.target.value, ev);
-        if (ev.target.nodeName === 'SELECT') {
-            canvasCreator.setTheme(ev.target.value);
+    var Fuse = /** @class */ (function () {
+        function Fuse() {
         }
-    });
-    var bdSave = document.getElementById('bdSave');
-    bdSave.addEventListener('click', function () {
-        saveToDisk(canvasCreator.getCanvas(), canvasCreator.bannerName);
-    });
-    var thing = document.getElementById('lineitems');
-    var lineItems = new LineItems();
-    thing.appendChild(lineItems.render());
-    var fileElementBtn = document.getElementById('fileElementBtn');
-    var fileElementValue = document.getElementById('fileElementValue');
-    var bdFile = document.getElementById('bdFile');
-    bdFile.addEventListener('change', function () {
-        canvasCreator.imageChanged(true);
-        var splitValue = bdFile.value.split('\\');
-        fileElementValue.innerHTML = splitValue[splitValue.length - 1];
-    });
-    fileElementBtn.addEventListener('click', function (ev) {
-        ev.preventDefault();
-        bdFile.click();
-    });
-    for (var theme in themes) {
-        if (theme) {
-            console.log('theme', theme, themes[theme].fontFamily);
-            var themeFont = document.createElement('div');
-            themeFont.setAttribute('style', "font-family: \"" + themes[theme].fontFamily + "\";visibility: hidden;");
-            themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
-            document.body.appendChild(themeFont);
+        Fuse.prototype.light = function (el, timer) {
+            var _this = this;
+            if (timer === void 0) { timer = 500; }
+            if (el)
+                this.el = el;
+            this.timer = setTimeout(function () {
+                _this.el.remove();
+            }, timer);
+        };
+        Fuse.prototype.off = function () {
+            clearTimeout(this.timer);
+        };
+        return Fuse;
+    }());
+    var colorSquare = function (colorName) {
+        return "<div class=\"colorsquare\" data-color=\"" + colorName + "\"><span style=\"background: " + colorName + ";\"></span></div>";
+    };
+    var ColorPicker = /** @class */ (function () {
+        function ColorPicker(names) {
+            var _this = this;
+            this.colorPickerDiv = document.createElement('div');
+            this.names = names;
+            this.state = __assign({}, store.state);
+            this.theme = this.state.theme;
+            this.colorPickerDiv.className = 'form-element colorpicker-layout';
+            eventhandler.subscribe('themeName', function (state) {
+                _this.state = __assign({}, state);
+                _this.theme = _this.state.theme;
+                _this.render();
+            });
+            eventhandler.subscribe('theme', function (state) {
+                _this.state = __assign({}, state);
+                _this.theme = _this.state.theme;
+                _this.render();
+            });
+            this.fuse = new Fuse();
         }
+        ColorPicker.prototype.colorPicking = function (theme, name) {
+            var _this = this;
+            var colorPickingEl = document.createElement('div');
+            colorPickingEl.className = 'colorpicking';
+            var colorSquares = [];
+            theme.colorPicks.forEach(function (color) {
+                colorSquares.push(colorSquare(color));
+            });
+            colorPickingEl.innerHTML = colorSquares.join('');
+            var childrenArray = Array.from(colorPickingEl.children);
+            childrenArray.forEach(function (child) {
+                child.addEventListener('click', function (ev) {
+                    var _a;
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    store.dispatch(STOREACTIONS.alterTheme, (_a = {}, _a[name] = child.dataset.color, _a));
+                    colorPickingEl.remove();
+                });
+            });
+            this.fuse.light(colorPickingEl, 100000);
+            colorPickingEl.addEventListener('mouseenter', function () {
+                _this.fuse.off();
+            });
+            colorPickingEl.addEventListener('mouseleave', function () {
+                _this.fuse.light();
+            });
+            return colorPickingEl;
+        };
+        ColorPicker.prototype.render = function () {
+            var _this = this;
+            while (this.colorPickerDiv.firstChild) {
+                this.colorPickerDiv.firstChild.remove();
+            }
+            var theme = this.theme;
+            this.names.forEach(function (name) {
+                var colorPickerEl = document.createElement('div');
+                colorPickerEl.className = "colorpicker colorpicker--" + name;
+                colorPickerEl.innerHTML = colorSquare(theme[name]) + " " + name;
+                colorPickerEl.addEventListener('click', function () {
+                    colorPickerEl.appendChild(_this.colorPicking(theme, name));
+                });
+                _this.colorPickerDiv.appendChild(colorPickerEl);
+            });
+            return this.colorPickerDiv;
+        };
+        return ColorPicker;
+    }());
+
+    function imagePicker() {
+        var fileElement = document.createElement('div');
+        fileElement.className = 'form-element flex flex-align--center';
+        /** Actual file picker  */
+        var imageFileElement = document.createElement('input');
+        imageFileElement.type = 'file';
+        imageFileElement.style.display = 'none';
+        fileElement.appendChild(imageFileElement);
+        /** Button */
+        var imageButton = document.createElement('button');
+        imageButton.className = 'button button--file';
+        imageButton.innerText = 'Vælg billede';
+        fileElement.appendChild(imageButton);
+        var imageFileValue = document.createElement('small');
+        imageFileValue.className = 'file-value';
+        fileElement.appendChild(imageFileValue);
+        /** eventlisteners */
+        imageButton.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            imageFileElement.click();
+        });
+        imageFileElement.addEventListener('change', function () {
+            var splitValue = imageFileElement.value.split('\\');
+            imageFileValue.innerHTML = splitValue[splitValue.length - 1];
+            console.log('imageHasChanged!');
+            store.dispatch(STOREACTIONS.imageChange, true);
+        });
+        return fileElement;
     }
+
+    function themeList(themes, currentTheme) {
+        var themeOption = [];
+        for (var key in themes) {
+            if (themes[key]) {
+                themeOption.push("<option " + (key === currentTheme ? 'selected=true' : '') + " value=\"" + key + "\">" + key + "</option>");
+            }
+        }
+        return themeOption.join('');
+    }
+    var themePicker = function (themes, currentTheme) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Tema</label>\n    <div class=\"form-input form-input--select\">\n      <select>\n        " + themeList(themes, currentTheme) + "\n      </select>\n    </div>\n  </div>\n"; };
+    var ThemePicker = /** @class */ (function () {
+        function ThemePicker() {
+            // eventhandler;
+        }
+        ThemePicker.prototype.render = function () {
+            var themePickerDiv = document.createElement('div');
+            themePickerDiv.className = 'form-element';
+            themePickerDiv.innerHTML = themePicker(themes, 'modern');
+            return themePickerDiv;
+        };
+        return ThemePicker;
+    }());
+
+    var createLine = function (idx) { return "\n  <div class=\"line-item date margin-s--r\">\n    <input class=\"form-input form-input--small\" data-line=\"" + idx + "\" type=\"text\" name=\"date-" + idx + "\" id=\"bdDate-" + idx + "\" />\n  </div>\n  <div class=\"line-item venue\">\n    <input class=\"form-input form-input--small\" data-line=\"" + idx + "\" type=\"text\" name=\"venue-" + idx + "\" id=\"bdVenue-" + idx + "\" />\n  </div>\n  <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"reg\" checked hidden />\n  <label class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"few\" />\n  </label>\n  <label class=\"flex-item line-item radio\">\n    <input data-line=\"" + idx + "\" type=\"radio\" name=\"tickets-" + idx + "\" value=\"soldout\" />\n  </label>\n  "; };
+    var createHeader = function () { return "\n  <div class=\"flex width-1of1\">\n    <div class=\"form-label date margin-s--r\">Datoer</div>\n    <div class=\"form-label venue\">Spillested</div>\n    <div class=\"flex-item radio fs--smaller\">F\u00E5 bil.</div>\n    <div class=\"flex-item radio fs--smaller\">Udsolgt</div>\n  </div>\n  <div class=\"flex-item delete-item\"></div>\n  "; };
+    var TourDates = /** @class */ (function () {
+        function TourDates() {
+            this.container = document.createElement('div');
+            this.counter = 0;
+            this.lineContainer = document.createElement('div');
+        }
+        TourDates.prototype.addItem = function () {
+            var lineItem = document.createElement('div');
+            lineItem.className = 'flex margin-s--b';
+            lineItem.id = "line-" + this.counter;
+            var lineItemInput = document.createElement('div');
+            lineItemInput.className = 'flex width-1of1';
+            lineItemInput.innerHTML = createLine(this.counter);
+            lineItem.appendChild(lineItemInput);
+            var deleteItem = document.createElement('div');
+            deleteItem.className = 'flex-item line-item delete-item';
+            if (this.counter !== 0) {
+                deleteItem.innerHTML = '&times;';
+                deleteItem.addEventListener('click', function () {
+                    lineItem.remove();
+                });
+            }
+            lineItem.appendChild(deleteItem);
+            this.lineContainer.appendChild(lineItem);
+            this.counter++;
+        };
+        // private deleteItem() {}
+        TourDates.prototype.render = function () {
+            var _this = this;
+            this.addItem();
+            var header = document.createElement('div');
+            header.className = 'flex';
+            header.innerHTML = createHeader();
+            var addButton = document.createElement('div');
+            addButton.className = 'button-add';
+            addButton.innerHTML = '+';
+            addButton.addEventListener('click', function () {
+                _this.addItem();
+            });
+            this.container.className = 'form-element';
+            this.container.appendChild(header);
+            this.container.appendChild(this.lineContainer);
+            this.container.appendChild(addButton);
+            return this.container;
+        };
+        return TourDates;
+    }());
+
+    var formElement = function (name) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">" + name + "</label>\n    <input class=\"form-input\" name=\"" + name.toLocaleLowerCase() + "\" type=\"text\" value=\"\" id=\"bdTourname\" placeholder=\"" + name + "\" />\n  </div>\n"; };
+    function createForm() {
+        var canvascontainer = document.getElementById('canvascontainer');
+        var container = document.createDocumentFragment();
+        var formEl = document.createElement('form');
+        formEl.className = 'form-container';
+        var canvasCreator = new CanvasCreator(canvascontainer, formEl);
+        formEl.addEventListener('change', function (ev) {
+            if (ev.target.nodeName === 'SELECT') {
+                store.dispatch(STOREACTIONS.setThemeName, ev.target.value);
+                store.dispatch(STOREACTIONS.setTheme, themes[ev.target.value]);
+            }
+        });
+        /**
+         * TEXT controls
+         */
+        var textContainer = document.createElement('div');
+        textContainer.className = 'form-area';
+        formEl.appendChild(textContainer);
+        /** TourName */
+        var tourNameContainer = document.createElement('div');
+        tourNameContainer.innerHTML = formElement('Tourname');
+        textContainer.appendChild(tourNameContainer);
+        /** ArtistName */
+        var artistNameContainer = document.createElement('div');
+        artistNameContainer.innerHTML = formElement('Artist');
+        textContainer.appendChild(artistNameContainer);
+        /** TourDates */
+        var tourDates = new TourDates();
+        textContainer.appendChild(tourDates.render());
+        /**
+         * update button
+         */
+        var updateButton = document.createElement('button');
+        updateButton.className = 'button';
+        updateButton.value = 'submit';
+        updateButton.innerText = 'Opdater';
+        updateButton.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            canvasCreator.update();
+        });
+        textContainer.appendChild(updateButton);
+        /**
+         * THEME controls
+         */
+        var themeContainer = document.createElement('div');
+        themeContainer.className = 'form-area';
+        formEl.appendChild(themeContainer);
+        /** Themes */
+        var themePicker = new ThemePicker();
+        themeContainer.appendChild(themePicker.render());
+        /** Colors */
+        var colorPicker = new ColorPicker(['artist', 'date', 'tourname', 'venue']);
+        themeContainer.appendChild(colorPicker.render());
+        /**
+         * IMAGE controls
+         */
+        var imageContainer = document.createElement('div');
+        imageContainer.className = 'form-area';
+        formEl.appendChild(imageContainer);
+        /** Image */
+        imageContainer.appendChild(imagePicker());
+        /**
+         * Add form element to container
+         */
+        container.appendChild(formEl);
+        /** Buttons */
+        var buttonContainer = document.createElement('div');
+        buttonContainer.className = 'flex flex-justify--between form-element';
+        var saveButton = document.createElement('button');
+        saveButton.className = 'button button--submit';
+        saveButton.value = 'submit';
+        saveButton.innerText = 'Gem';
+        saveButton.addEventListener('click', function () {
+            saveToDisk(canvasCreator.getCanvas(), canvasCreator.bannerName);
+        });
+        buttonContainer.appendChild(saveButton);
+        container.appendChild(buttonContainer);
+        return container;
+    }
+
+    var thing = document.getElementById('app');
+    thing.appendChild(createForm());
 
 }());

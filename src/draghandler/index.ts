@@ -1,6 +1,13 @@
-import { ICurrentCanvasConfig } from '../canvascreator/canvascreator';
+import { ICanvasImage, ICurrentCanvasConfig } from '../canvascreator/canvascreator';
+import { EventBus } from '../eventbus';
+
+export enum EVENTNAMES {
+  'dragstop' = 'dragstop',
+}
 
 export class DragHandler {
+  public events = new EventBus<string>('my-draghandler-eventbus');
+
   private current;
   private dragging = false;
   private imageInfo;
@@ -22,7 +29,7 @@ export class DragHandler {
     this.offsetX = current.canvas.offsetLeft;
     this.offsetY = current.canvas.offsetTop;
     this.current = current;
-    this.imageInfo = current.image;
+    this.setImage(current.image);
 
     // listen for mouse events
     current.canvas.addEventListener('mousedown', (mouseEv: MouseEvent) => {
@@ -31,12 +38,28 @@ export class DragHandler {
     current.canvas.addEventListener('mousemove', (mouseEv: MouseEvent) => {
       this.handleMouseMove(mouseEv);
     });
+    current.canvas.addEventListener('mouseenter', (mouseEv: MouseEvent) => {
+      this.handleMouseEnter(mouseEv);
+    });
     current.canvas.addEventListener('mouseout', (mouseEv: MouseEvent) => {
       this.handleMouseOut(mouseEv);
     });
     current.canvas.addEventListener('mouseup', (mouseEv: MouseEvent) => {
       this.handleMouseUp(mouseEv);
     });
+  }
+
+  public setImage(imageInfo: ICanvasImage) {
+    this.imageInfo = imageInfo;
+  }
+
+  private dragStopped() {
+    const emitStopped = this.dragging;
+    this.dragging = false;
+    if (emitStopped) {
+      this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+      this.current.canvas.style.cursor = 'default';
+    }
   }
 
   // test if x,y is inside the bounding box of texts[textIndex]
@@ -59,8 +82,19 @@ export class DragHandler {
     this.startY = ev.clientY - this.offsetY;
 
     // Put your mousedown stuff here
-
     this.dragging = this.imageHittest(this.startX, this.startY);
+  }
+
+  private handleMouseEnter(ev: MouseEvent) {
+    ev.preventDefault();
+
+    this.startX = ev.clientX - this.offsetX;
+    this.startY = ev.clientY - this.offsetY;
+
+    // Put your MouseEnter stuff here
+    if (this.imageHittest(this.startX, this.startY)) {
+      this.current.canvas.style.cursor = 'pointer';
+    }
   }
 
   // handle mousemove events
@@ -83,23 +117,28 @@ export class DragHandler {
     this.startY = mouseY;
 
     const { h, image, x, y, w } = this.imageInfo;
-    this.current.canvasContext.fillRect(x, y, x + w, y + h);
+    const { canvas, canvasContext } = this.current;
+    canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+    canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+    canvasContext.fillRect(x, y, x + w, y + h);
 
     this.imageInfo.x += dx;
     this.imageInfo.y += dy;
 
-    this.current.canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
+    canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
   }
 
-  // // also done dragging
+  // also done dragging
   private handleMouseOut(ev: MouseEvent) {
     ev.preventDefault();
-    this.dragging = false;
+
+    this.dragStopped();
   }
 
-  // // done dragging
+  // done dragging
   private handleMouseUp(ev: MouseEvent) {
     ev.preventDefault();
-    this.dragging = false;
+
+    this.dragStopped();
   }
 }

@@ -1,9 +1,15 @@
-import { asyncForEach } from '../util/asyncforeach';
-import { DragHandler } from '../draghandler';
+import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
+import { IThemeObject /** themes */ } from './themes';
+
+import { DragHandler, EVENTNAMES } from '../draghandler';
 import { imageHandler } from '../imagehandler';
 import { simpleTextStyler } from '../textstyler';
-import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
-import { themes } from './themes';
+
+import store from '../util/store';
+import { asyncForEach } from '../util/asyncforeach';
+import { eventhandler } from '../util/eventhandler';
+import { STOREACTIONS } from '../util/store/actions';
+import { IStoreState, STATENAMES } from '../util/initialstate';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -22,17 +28,13 @@ export class CanvasCreator {
   public bannerName: string;
 
   private container: HTMLElement;
-  private containerWidth = 640;
+  private containerWidth: number = 640;
   private canvasContainer = document.createElement('div');
   private canvasConfig: ICanvasTypesConfig = {
     square: {
       fontSize: 45,
       header: 'Banner: Instagram',
       height: 900,
-      imageConfig: {
-        maxHeight: 0.5,
-        maxWidth: 0.5,
-      },
       left: 20,
       ratio: 1 / 2.3,
       top: 20,
@@ -43,9 +45,6 @@ export class CanvasCreator {
       fontSize: 36,
       header: 'Banner: Skyskraper',
       height: 600,
-      imageConfig: {
-        maxWidth: 1,
-      },
       left: 20,
       ratio: 16 / 9,
       top: 20,
@@ -56,13 +55,6 @@ export class CanvasCreator {
       fontSize: 55,
       header: 'Banner: Facebook',
       height: 700,
-      imageConfig: {
-        base: 'height',
-        maxHeight: 1,
-        square: 1,
-        tall: 1,
-        wide: 1,
-      },
       left: 30,
       ratio: 7 / 19,
       top: 30,
@@ -71,22 +63,38 @@ export class CanvasCreator {
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
-  private image;
+  private form: HTMLFormElement;
+  private image: HTMLImageElement;
   private imageHasChanged = false;
+  private state: IStoreState;
+  private theme: IThemeObject;
+  private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
-  private theme = {
-    ...themes.classic,
-  };
-
-  private types = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
-
-  constructor(container) {
+  constructor(container, bannerdesigner) {
+    this.form = bannerdesigner;
     this.container = container;
     this.containerWidth = container.clientWidth;
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
-
+    this.state = { ...store.state };
+    // this.setTheme(this.state.themeName);
+    this.setTheme(this.state.theme);
     this.addAll();
+
+    eventhandler.subscribe(STATENAMES.themeName, (state) => {
+      console.log('theme theme theme', state);
+      this.setTheme(state[STATENAMES.theme]);
+    });
+
+    eventhandler.subscribe(STATENAMES.theme, (state) => {
+      console.log('alter theme alter theme theme', state);
+      this.setTheme(state[STATENAMES.theme]);
+    });
+
+    eventhandler.subscribe([STATENAMES.imageChange], (state) => {
+      this.imageChanged(state[STATENAMES.imageChange]);
+      this.update();
+    });
   }
 
   public getCanvas(): TCurrentCanvasInfo[] {
@@ -97,12 +105,27 @@ export class CanvasCreator {
     this.imageHasChanged = status;
   }
 
-  public setTheme(themeName: string) {
-    this.theme = themes[themeName];
-    console.log(this.theme);
+  public setTheme(theme: IThemeObject) {
+    this.theme = theme;
+    console.log('theme', theme);
+    if (!this.theme.loaded) {
+      const themeFont = document.createElement('div');
+      themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";visibility: hidden;`);
+      themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
+      document.body.appendChild(themeFont);
+
+      setTimeout(() => {
+        this.update();
+        this.theme.loaded = true;
+      }, 200);
+    } else {
+      this.update();
+    }
   }
 
-  public update(eleList: HTMLFormControlsCollection) {
+  public update() {
+    const eleList = this.form.elements;
+
     const formElements = Array.from(eleList);
 
     const info = {
@@ -193,52 +216,87 @@ export class CanvasCreator {
 
       this.addText(contentInfo, current);
     });
+
+    if (this.imageHasChanged) store.dispatch(STOREACTIONS.imageChange, false);
   }
 
   private async addImage(contentInfo, current: TCurrentCanvasInfo) {
     const { image } = contentInfo;
+    const { canvas, canvasContext, type } = current;
 
-    const { canvas, canvasContext, imageConfig, type } = current;
+    const { imageHasChanged } = this;
+
     let imageReturn;
-    if (image && this.imageHasChanged) {
-      this.imageChanged(false);
+    if (image && imageHasChanged) {
       imageReturn = await imageHandler(image);
+
       this.image = imageReturn;
       if (current.image) delete current.image;
-    }
-    if (this.image) {
+
       const iWidth = this.image.width;
       const iHeight = this.image.height;
-      const bigWidth = iWidth > iHeight;
 
-      let ratio = bigWidth ? iWidth / iHeight : iHeight / iWidth;
+      const cWidth = canvas.width;
+      const cHeight = canvas.height;
 
-      const { maxHeight, maxWidth } = imageConfig;
-      const cImgMaxWidth = maxWidth ? canvas.width * maxWidth : iWidth * ratio;
-      const cImgMaxHeight = maxHeight ? canvas.height * maxHeight : canvas.height;
-      let h = cImgMaxHeight,
-        w = cImgMaxWidth;
+      let w = cWidth > iWidth ? cWidth : iWidth;
+      let h = cHeight > iHeight ? cHeight : iHeight;
+      let ratio = 1;
 
       if (iWidth > iHeight) {
         ratio = iHeight / iWidth;
-        w = type === RATIOTYPES.wide ? w * ratio : w;
-        h = type === RATIOTYPES.square ? w * maxWidth : h;
+        if (type === RATIOTYPES.square) {
+          ratio = iWidth / iHeight;
+          h = cHeight;
+          w = cWidth * ratio;
+        } else if (type === RATIOTYPES.wide) {
+          ratio = iHeight / iWidth;
+          w = cWidth;
+          h = cWidth * ratio;
+        }
       } else if (iWidth < iHeight) {
-        ratio = iWidth / iHeight;
-        w = h * ratio;
+        if (type === RATIOTYPES.square) {
+          ratio = iHeight / cHeight;
+          w = cWidth;
+          h = cHeight * ratio;
+        } else if (type === RATIOTYPES.wide) {
+          ratio = iHeight / iWidth;
+          w = cWidth;
+          h = cWidth * ratio;
+        }
       } else {
-        w = h;
+        if (type === RATIOTYPES.square) {
+          w = cWidth;
+          h = cHeight;
+        } else if (type === RATIOTYPES.wide) {
+          w = h = cWidth;
+        }
       }
-      const y = canvas.height - h,
-        x = canvas.width - w;
+
+      const y = 0,
+        x = 0;
 
       current.image = { image: this.image, x, y, w, h };
     }
 
     if (current.image) {
       const { image, x, y, w, h } = current.image;
+
       canvasContext.drawImage(image, x, y, w, h);
-      current.image.dragImage = new DragHandler(current, current.scaleFactor);
+
+      if (current.dragImage) {
+        current.dragImage.setImage(current.image);
+        return;
+      }
+
+      current.dragImage = new DragHandler(current, current.scaleFactor);
+
+      current.dragImage.events.on(EVENTNAMES.dragstop, (getBack: CustomEvent) => {
+        const { detail } = getBack;
+        current.image = { ...current.image, ...detail };
+
+        this.update();
+      });
     }
   }
 
@@ -250,16 +308,16 @@ export class CanvasCreator {
     const { fontSize } = cfg;
 
     await (canvasContext.font = this.canvasFont(configName));
-    console.log('fontshit . configName', configName, this.canvasFont(configName), canvasContext.font);
+
     canvasContext.textAlign = 'left';
     canvasContext.textBaseline = 'top';
 
     const tournameTop = cfg.top * 2;
-
-    const headerString = `{#${this.theme.artistColor}${artist.toUpperCase()}}\n{#${
-      this.theme.tournameColor
+    console.log('this.theme', this.theme, this.theme.artist);
+    const headerString = `{${this.theme.artist}${artist.toUpperCase()}}\n{${
+      this.theme.tourname
     }${tourname.toUpperCase()}}`;
-    console.log('headerString ... RIGHT BEFORE DRAWTEXT', current.configName);
+
     simpleTextStyler.setFont(canvasContext);
     await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
 
@@ -275,7 +333,7 @@ export class CanvasCreator {
     const { canvasContext } = current;
     canvasContext.textBaseline = 'alphabetic';
     await (canvasContext.font = this.canvasFont(cfgName));
-    console.log('addDates fontshit', cfgName, this.canvasFont(cfgName), canvasContext.font);
+
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
@@ -304,17 +362,15 @@ export class CanvasCreator {
           }
         });
 
-        dateTexts.push(
-          `{#${this.theme.dateColor}${dateText}} {#${this.theme.venueColor}${venueText} {-${ticketText}}}`
-        );
+        dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
       }
     }
-    console.log('canvasContext.font', canvasContext.font);
+
     simpleTextStyler.setFont(canvasContext);
     const datestexting = dateTexts.join('\n');
 
     const textTop = top + cfg.top + cfg.fontSize;
-    console.log('datetext', datestexting);
+
     await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
   }
 
@@ -323,14 +379,12 @@ export class CanvasCreator {
   }
 
   private resetCanvas(currentCfg: TCurrentCanvasInfo) {
-    console.log('RESET!!!', currentCfg);
-
     currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
     currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
     currentCfg.canvasContext.moveTo(0, 0);
     // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
     currentCfg.canvasContext.stroke();
-    currentCfg.canvasContext.fillStyle = `#${this.theme.bgColor};`;
+    currentCfg.canvasContext.fillStyle = `${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
   }
 }
