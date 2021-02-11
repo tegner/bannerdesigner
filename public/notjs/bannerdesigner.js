@@ -396,6 +396,7 @@
     (function (STOREACTIONS) {
         STOREACTIONS["alterTheme"] = "alterTheme";
         STOREACTIONS["imageChange"] = "imageChange";
+        STOREACTIONS["setTextpos"] = "setTextpos";
         STOREACTIONS["setTheme"] = "setTheme";
         STOREACTIONS["setThemeName"] = "setThemeName";
     })(STOREACTIONS || (STOREACTIONS = {}));
@@ -405,6 +406,9 @@
         },
         _a[STOREACTIONS.imageChange] = function (context, payload) {
             context.commit(STOREACTIONS.imageChange, payload);
+        },
+        _a[STOREACTIONS.setTextpos] = function (context, payload) {
+            context.commit(STOREACTIONS.setTextpos, payload);
         },
         _a[STOREACTIONS.setTheme] = function (context, payload) {
             context.commit(STOREACTIONS.setTheme, payload);
@@ -469,12 +473,14 @@
     var STATENAMES;
     (function (STATENAMES) {
         STATENAMES["imageChange"] = "imageChange";
+        STATENAMES["textpos"] = "textpos";
         STATENAMES["theme"] = "theme";
         STATENAMES["themeName"] = "themeName";
     })(STATENAMES || (STATENAMES = {}));
     var defaultTheme = THEMENAMES.modern;
     var state = (_a$2 = {},
         _a$2[STATENAMES.imageChange] = false,
+        _a$2[STATENAMES.textpos] = 'left',
         _a$2[STATENAMES.theme] = themes[defaultTheme],
         _a$2[STATENAMES.themeName] = defaultTheme,
         _a$2);
@@ -489,6 +495,10 @@
         },
         _a$3[STOREACTIONS.imageChange] = function (state, payload) {
             state[STATENAMES.imageChange] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.setTextpos] = function (state, payload) {
+            state[STATENAMES.textpos] = payload;
             return state;
         },
         _a$3[STOREACTIONS.setTheme] = function (state, payload) {
@@ -686,31 +696,34 @@
                     fontSize: 45,
                     header: 'Banner: Instagram',
                     height: 900,
-                    left: 20,
+                    left: 40,
                     ratio: 1 / 2.3,
                     top: 20,
                     type: RATIOTYPES.square,
                     width: 900,
+                    xPos: 40,
                 },
                 tall: {
                     fontSize: 36,
                     header: 'Banner: Skyskraper',
                     height: 600,
-                    left: 20,
+                    left: 40,
                     ratio: 16 / 9,
                     top: 20,
                     type: RATIOTYPES.tall,
                     width: 300,
+                    xPos: 40,
                 },
                 wide: {
                     fontSize: 55,
                     header: 'Banner: Facebook',
                     height: 700,
-                    left: 30,
+                    left: 60,
                     ratio: 7 / 19,
                     top: 30,
                     type: RATIOTYPES.wide,
                     width: 1900,
+                    xPos: 60,
                 },
             };
             this.currentCanvas = [];
@@ -726,12 +739,17 @@
             this.setTheme(this.state.theme);
             this.addAll();
             eventhandler.subscribe(STATENAMES.themeName, function (state) {
-                console.log('theme theme theme', state);
+                console.log('themeName themeName themeName', state);
                 _this.setTheme(state[STATENAMES.theme]);
             });
             eventhandler.subscribe(STATENAMES.theme, function (state) {
                 console.log('alter theme alter theme theme', state);
                 _this.setTheme(state[STATENAMES.theme]);
+            });
+            eventhandler.subscribe([STATENAMES.textpos], function (state) {
+                console.log(STATENAMES.textpos, state);
+                _this.state = __assign({}, state);
+                _this.setXPos();
             });
             eventhandler.subscribe([STATENAMES.imageChange], function (state) {
                 _this.imageChanged(state[STATENAMES.imageChange]);
@@ -936,24 +954,27 @@
         };
         CanvasCreator.prototype.addText = function (stuff, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var artist, dates, tourname, canvasContext, configName, cfg, fontSize, tournameTop, headerString;
+                var artist, dates, tourname, canvasContext, configName, fontSize, top, xPos, tournameTop, headerString;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
                             artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
-                            canvasContext = current.canvasContext, configName = current.configName;
-                            cfg = this.canvasConfig[configName];
-                            fontSize = cfg.fontSize;
+                            canvasContext = current.canvasContext, configName = current.configName, fontSize = current.fontSize, top = current.top, xPos = current.xPos;
+                            // const cfg = this.canvasConfig[configName];
+                            // const { fontSize } = cfg;
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(configName))];
                         case 1:
+                            // const cfg = this.canvasConfig[configName];
+                            // const { fontSize } = cfg;
                             _a.sent();
-                            canvasContext.textAlign = 'left';
+                            // canvasContext.textAlign = 'left';
+                            canvasContext.textAlign = this.state.textpos;
                             canvasContext.textBaseline = 'top';
-                            tournameTop = cfg.top * 2;
+                            tournameTop = top * 2;
                             console.log('this.theme', this.theme, this.theme.artist);
                             headerString = "{" + this.theme.artist + artist.toUpperCase() + "}\n{" + this.theme.tourname + tourname.toUpperCase() + "}";
                             simpleTextStyler.setFont(canvasContext);
-                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
+                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, xPos, tournameTop, fontSize)];
                         case 2:
                             _a.sent();
                             this.bannerName = artist.replace(/\s/g, '-') + "_" + tourname.replace(/\s/g, '-');
@@ -964,15 +985,14 @@
                 });
             });
         };
-        CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
+        CanvasCreator.prototype.addDates = function (datesInfo, cfgName, topParam, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var cfg, dateTexts, canvasContext, _loop_1, this_1, dates, datestexting, textTop;
+                var dateTexts, canvasContext, fontSize, top, xPos, _loop_1, this_1, dates, datestexting, textTop;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            cfg = this.canvasConfig[cfgName];
                             dateTexts = [];
-                            canvasContext = current.canvasContext;
+                            canvasContext = current.canvasContext, fontSize = current.fontSize, top = current.top, xPos = current.xPos;
                             canvasContext.textBaseline = 'alphabetic';
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
@@ -1011,8 +1031,8 @@
                             }
                             simpleTextStyler.setFont(canvasContext);
                             datestexting = dateTexts.join('\n');
-                            textTop = top + cfg.top + cfg.fontSize;
-                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize)];
+                            textTop = topParam + top + fontSize;
+                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, xPos, textTop, fontSize)];
                         case 2:
                             _a.sent();
                             return [2 /*return*/];
@@ -1031,6 +1051,14 @@
             currentCfg.canvasContext.stroke();
             currentCfg.canvasContext.fillStyle = this.theme.bgColor + ";";
             currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+        };
+        CanvasCreator.prototype.setXPos = function () {
+            var _this = this;
+            this.currentCanvas.forEach(function (canvasObject) {
+                console.log('name name name', canvasObject);
+                canvasObject.xPos = _this.state.textpos === 'right' ? canvasObject.width - canvasObject.left : canvasObject.left;
+                console.log('name name name', canvasObject.xPos);
+            });
         };
         return CanvasCreator;
     }());
@@ -1518,6 +1546,58 @@
         return TourDates;
     }());
 
+    // <label class="margin-xl--r">
+    var TextPosition = /** @class */ (function () {
+        function TextPosition() {
+            this.buttonContainer = document.createElement('div');
+            this.container = document.createElement('div');
+            this.curDir = 'left';
+        }
+        TextPosition.prototype.render = function () {
+            this.container.className = 'form-element';
+            this.container.innerHTML = "<label class=\"form-label margin-s--b\">Textposition</label>";
+            this.container.appendChild(this.buttonContainer);
+            this.update();
+            return this.container;
+        };
+        TextPosition.prototype.posButton = function (dir, checked) {
+            var _this = this;
+            var el = document.createElement('label');
+            el.className = 'margin-xl--r';
+            var inputEl = document.createElement('input');
+            inputEl.checked = checked;
+            inputEl.dataset.dir = dir;
+            inputEl.name = 'textpos';
+            inputEl.type = 'radio';
+            inputEl.style.display = 'none';
+            inputEl.addEventListener('change', function (ev) {
+                var _a;
+                var dir = (_a = ev.target.dataset.dir) !== null && _a !== void 0 ? _a : 'left';
+                _this.curDir = dir;
+                _this.update();
+                store.dispatch(STOREACTIONS.setTextpos, dir);
+            });
+            el.appendChild(inputEl);
+            // add graphic
+            var img = document.createElement('img');
+            img.src = checked ? "left_neg.svg" : "left.svg";
+            img.className = "button-textpos button-textpos--" + dir;
+            el.appendChild(img);
+            return el;
+        };
+        TextPosition.prototype.update = function () {
+            var _this = this;
+            while (this.buttonContainer.firstChild) {
+                this.buttonContainer.firstChild.remove();
+            }
+            ['left', 'right'].forEach(function (dir) {
+                var checked = dir === _this.curDir;
+                _this.buttonContainer.appendChild(_this.posButton(dir, checked));
+            });
+        };
+        return TextPosition;
+    }());
+
     var formElement = function (name) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">" + name + "</label>\n    <input class=\"form-input\" name=\"" + name.toLocaleLowerCase() + "\" type=\"text\" value=\"\" id=\"bdTourname\" placeholder=\"" + name + "\" />\n  </div>\n"; };
     function createForm() {
         var canvascontainer = document.getElementById('canvascontainer');
@@ -1548,11 +1628,14 @@
         /** TourDates */
         var tourDates = new TourDates();
         textContainer.appendChild(tourDates.render());
+        /** TextPosition */
+        var textPosition = new TextPosition();
+        textContainer.appendChild(textPosition.render());
         /**
          * update button
          */
         var updateButton = document.createElement('button');
-        updateButton.className = 'button';
+        updateButton.className = 'button margin-xl--t';
         updateButton.value = 'submit';
         updateButton.innerText = 'Opdater';
         updateButton.addEventListener('click', function (ev) {

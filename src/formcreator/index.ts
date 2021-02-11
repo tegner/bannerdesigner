@@ -8,6 +8,7 @@ import { TourDates } from './tourdates';
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 import { themes } from '../canvascreator/themes';
+import { TextPosition } from './textposition';
 
 const formElement = (name: string): string => `
   <div class="form-element">
@@ -53,11 +54,15 @@ export function createForm() {
   const tourDates = new TourDates();
   textContainer.appendChild(tourDates.render());
 
+  /** TextPosition */
+  const textPosition = new TextPosition();
+  textContainer.appendChild(textPosition.render());
+
   /**
    * update button
    */
   const updateButton = document.createElement('button');
-  updateButton.className = 'button';
+  updateButton.className = 'button margin-xl--t';
   updateButton.value = 'submit';
   updateButton.innerText = 'Opdater';
 

@@ -738,3 +738,19 @@ h5 {
   width: 25px;
   height: 25px;
 }
+
+/**
+* Text positioning
+*/
+.button-textpos {
+  cursor: pointer;
+  width: 40px;
+}
+
+.button-textpos[data-chosen] {
+  filter: invert(100%);
+}
+
+.button-textpos--right {
+  transform: scaleX(-1);
+}

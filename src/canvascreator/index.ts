@@ -35,31 +35,34 @@ export class CanvasCreator {
       fontSize: 45,
       header: 'Banner: Instagram',
       height: 900,
-      left: 20,
+      left: 40,
       ratio: 1 / 2.3,
       top: 20,
       type: RATIOTYPES.square,
       width: 900,
+      xPos: 40,
     },
     tall: {
       fontSize: 36,
       header: 'Banner: Skyskraper',
       height: 600,
-      left: 20,
+      left: 40,
       ratio: 16 / 9,
       top: 20,
       type: RATIOTYPES.tall,
       width: 300,
+      xPos: 40,
     },
     wide: {
       fontSize: 55,
       header: 'Banner: Facebook',
       height: 700,
-      left: 30,
+      left: 60,
       ratio: 7 / 19,
       top: 30,
       type: RATIOTYPES.wide,
       width: 1900,
+      xPos: 60,
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
@@ -82,13 +85,19 @@ export class CanvasCreator {
     this.addAll();
 
     eventhandler.subscribe(STATENAMES.themeName, (state) => {
-      console.log('theme theme theme', state);
+      console.log('themeName themeName themeName', state);
       this.setTheme(state[STATENAMES.theme]);
     });
 
     eventhandler.subscribe(STATENAMES.theme, (state) => {
       console.log('alter theme alter theme theme', state);
       this.setTheme(state[STATENAMES.theme]);
+    });
+
+    eventhandler.subscribe([STATENAMES.textpos], (state) => {
+      console.log(STATENAMES.textpos, state);
+      this.state = { ...state };
+      this.setXPos();
     });
 
     eventhandler.subscribe([STATENAMES.imageChange], (state) => {
@@ -303,23 +312,24 @@ export class CanvasCreator {
   private async addText(stuff, current: TCurrentCanvasInfo) {
     const { artist, dates, tourname } = stuff;
 
-    const { canvasContext, configName } = current;
-    const cfg = this.canvasConfig[configName];
-    const { fontSize } = cfg;
+    const { canvasContext, configName, fontSize, top, xPos } = current;
+    // const cfg = this.canvasConfig[configName];
+    // const { fontSize } = cfg;
 
     await (canvasContext.font = this.canvasFont(configName));
 
-    canvasContext.textAlign = 'left';
+    // canvasContext.textAlign = 'left';
+    canvasContext.textAlign = this.state.textpos;
     canvasContext.textBaseline = 'top';
 
-    const tournameTop = cfg.top * 2;
+    const tournameTop = top * 2;
     console.log('this.theme', this.theme, this.theme.artist);
     const headerString = `{${this.theme.artist}${artist.toUpperCase()}}\n{${
       this.theme.tourname
     }${tourname.toUpperCase()}}`;
 
     simpleTextStyler.setFont(canvasContext);
-    await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
+    await simpleTextStyler.drawText(canvasContext, headerString, xPos, tournameTop, fontSize);
 
     this.bannerName = `${artist.replace(/\s/g, '-')}_${tourname.replace(/\s/g, '-')}`;
 
@@ -327,10 +337,9 @@ export class CanvasCreator {
     this.addDates(dates, configName, tournameTop + fontSize * 2, current);
   }
 
-  private async addDates(datesInfo, cfgName, top, current: TCurrentCanvasInfo) {
-    const cfg = this.canvasConfig[cfgName];
+  private async addDates(datesInfo, cfgName, topParam, current: TCurrentCanvasInfo) {
     const dateTexts = [];
-    const { canvasContext } = current;
+    const { canvasContext, fontSize, top, xPos } = current;
     canvasContext.textBaseline = 'alphabetic';
     await (canvasContext.font = this.canvasFont(cfgName));
 
@@ -369,9 +378,9 @@ export class CanvasCreator {
     simpleTextStyler.setFont(canvasContext);
     const datestexting = dateTexts.join('\n');
 
-    const textTop = top + cfg.top + cfg.fontSize;
+    const textTop = topParam + top + fontSize;
 
-    await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
+    await simpleTextStyler.drawText(canvasContext, datestexting, xPos, textTop, fontSize);
   }
 
   private canvasFont(cfgName: string) {
@@ -386,5 +395,13 @@ export class CanvasCreator {
     currentCfg.canvasContext.stroke();
     currentCfg.canvasContext.fillStyle = `${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+  }
+
+  private setXPos() {
+    this.currentCanvas.forEach((canvasObject) => {
+      console.log('name name name', canvasObject);
+      canvasObject.xPos = this.state.textpos === 'right' ? canvasObject.width - canvasObject.left : canvasObject.left;
+      console.log('name name name', canvasObject.xPos);
+    });
   }
 }

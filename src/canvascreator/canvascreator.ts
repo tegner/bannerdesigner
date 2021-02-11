@@ -37,10 +37,10 @@ export interface ICanvasConfig {
   fontSize: number;
   header: string;
   height: number;
-
   left: number;
   ratio: number;
   top: number;
   type: string;
   width: number;
+  xPos: number;
 }

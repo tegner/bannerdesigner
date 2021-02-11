@@ -13,6 +13,11 @@ export default {
 
     return state;
   },
+  [STOREACTIONS.setTextpos](state, payload) {
+    state[STATENAMES.textpos] = payload;
+
+    return state;
+  },
   [STOREACTIONS.setTheme](state, payload) {
     state[STATENAMES.theme] = payload;
 
