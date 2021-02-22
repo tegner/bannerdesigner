@@ -15,7 +15,7 @@ export const themePicker = (themes, currentTheme) => `
   <div class="form-element">
     <label class="form-label">Tema</label>
     <div class="form-input form-input--select">
-      <select>
+      <select data-type="themepicker">
         ${themeList(themes, currentTheme)}
       </select>
     </div>

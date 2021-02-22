@@ -1,8 +1,8 @@
 import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
-import { IThemeObject /** themes */ } from './themes';
+import { IThemeObject } from './themes';
 
 import { DragHandler, EVENTNAMES } from '../draghandler';
-import { imageHandler } from '../imagehandler';
+import { imageUploader } from '../imageuploader';
 import { simpleTextStyler } from '../textstyler';
 
 import store from '../util/store';
@@ -10,6 +10,7 @@ import { asyncForEach } from '../util/asyncforeach';
 import { eventhandler } from '../util/eventhandler';
 import { STOREACTIONS } from '../util/store/actions';
 import { IStoreState, STATENAMES } from '../util/initialstate';
+import { topLeft } from '../imagesizer';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -228,55 +229,12 @@ export class CanvasCreator {
 
     let imageReturn;
     if (image && imageHasChanged) {
-      imageReturn = await imageHandler(image);
+      imageReturn = await imageUploader(image);
 
       this.image = imageReturn;
       if (current.image) delete current.image;
 
-      const iWidth = this.image.width;
-      const iHeight = this.image.height;
-
-      const cWidth = canvas.width;
-      const cHeight = canvas.height;
-
-      let w = cWidth > iWidth ? cWidth : iWidth;
-      let h = cHeight > iHeight ? cHeight : iHeight;
-      let ratio = 1;
-
-      if (iWidth > iHeight) {
-        ratio = iHeight / iWidth;
-        if (type === RATIOTYPES.square) {
-          ratio = iWidth / iHeight;
-          h = cHeight;
-          w = cWidth * ratio;
-        } else if (type === RATIOTYPES.wide) {
-          ratio = iHeight / iWidth;
-          w = cWidth;
-          h = cWidth * ratio;
-        }
-      } else if (iWidth < iHeight) {
-        if (type === RATIOTYPES.square) {
-          ratio = iHeight / cHeight;
-          w = cWidth;
-          h = cHeight * ratio;
-        } else if (type === RATIOTYPES.wide) {
-          ratio = iHeight / iWidth;
-          w = cWidth;
-          h = cWidth * ratio;
-        }
-      } else {
-        if (type === RATIOTYPES.square) {
-          w = cWidth;
-          h = cHeight;
-        } else if (type === RATIOTYPES.wide) {
-          w = h = cWidth;
-        }
-      }
-
-      const y = 0,
-        x = 0;
-
-      current.image = { image: this.image, x, y, w, h };
+      current.image = topLeft(this.image, canvas, type);
     }
 
     if (current.image) {
@@ -380,7 +338,7 @@ export class CanvasCreator {
 
   private resetCanvas(currentCfg: TCurrentCanvasInfo) {
     currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
-    currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
+    currentCfg.canvasContext.beginPath(); // ADD THIS LINE!<<<<<<<<<<<<<
     currentCfg.canvasContext.moveTo(0, 0);
     // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
     currentCfg.canvasContext.stroke();

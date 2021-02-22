@@ -8,6 +8,7 @@ import { TourDates } from './tourdates';
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 import { themes } from '../canvascreator/themes';
+import { ImagePlacementPicker } from './imageplacement';
 
 const formElement = (name: string): string => `
   <div class="form-element">
@@ -26,7 +27,8 @@ export function createForm() {
   const canvasCreator = new CanvasCreator(canvascontainer, formEl);
 
   formEl.addEventListener('change', (ev) => {
-    if ((ev.target as HTMLInputElement).nodeName === 'SELECT') {
+    const target = ev.target as HTMLInputElement;
+    if (target.nodeName === 'SELECT' && target.dataset.type === 'themepicker') {
       store.dispatch(STOREACTIONS.setThemeName, (ev.target as HTMLInputElement).value);
       store.dispatch(STOREACTIONS.setTheme, themes[(ev.target as HTMLInputElement).value]);
     }
@@ -90,6 +92,9 @@ export function createForm() {
   formEl.appendChild(imageContainer);
   /** Image */
   imageContainer.appendChild(imagePicker());
+  /** Themes */
+  const imagePlacement = new ImagePlacementPicker();
+  imageContainer.appendChild(imagePlacement.render());
 
   /**
    * Add form element to container

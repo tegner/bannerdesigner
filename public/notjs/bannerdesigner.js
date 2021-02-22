@@ -215,7 +215,7 @@
         return DragHandler;
     }());
 
-    function imageHandler(input) {
+    function imageUploader(input) {
         var url = input.value;
         var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
         return new Promise(function (resolve, reject) {
@@ -665,6 +665,58 @@
     }());
     new HandlingStateChange();
 
+    function scaler(scalerOptions) {
+        var cHeight = scalerOptions.cHeight, cWidth = scalerOptions.cWidth, iHeight = scalerOptions.iHeight, iWidth = scalerOptions.iWidth, type = scalerOptions.type;
+        var w = cWidth > iWidth ? cWidth : iWidth;
+        var h = cHeight > iHeight ? cHeight : iHeight;
+        var ratio = 1;
+        if (iWidth > iHeight) {
+            ratio = iHeight / iWidth;
+            if (type === RATIOTYPES.square) {
+                ratio = iWidth / iHeight;
+                h = cHeight;
+                w = cWidth * ratio;
+            }
+            else if (type === RATIOTYPES.wide) {
+                ratio = iHeight / iWidth;
+                w = cWidth;
+                h = cWidth * ratio;
+            }
+        }
+        else if (iWidth < iHeight) {
+            if (type === RATIOTYPES.square) {
+                ratio = iHeight / cHeight;
+                w = cWidth;
+                h = cHeight * ratio;
+            }
+            else if (type === RATIOTYPES.wide) {
+                ratio = iHeight / iWidth;
+                w = cWidth;
+                h = cWidth * ratio;
+            }
+        }
+        else {
+            if (type === RATIOTYPES.square) {
+                w = cWidth;
+                h = cHeight;
+            }
+            else if (type === RATIOTYPES.wide) {
+                w = h = cWidth;
+            }
+        }
+        return { h: h, w: w };
+    }
+
+    function topLeft(image, canvas, type) {
+        var iWidth = image.width;
+        var iHeight = image.height;
+        var cWidth = canvas.width;
+        var cHeight = canvas.height;
+        var _a = scaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
+        var y = 0, x = 0;
+        return { image: image, x: x, y: y, w: w, h: h };
+    }
+
     var sizeCanvas = function (w, h, ratio) {
         if (ratio === void 0) { ratio = 4; }
         var can = document.createElement('canvas');
@@ -855,7 +907,7 @@
         };
         CanvasCreator.prototype.addImage = function (contentInfo, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, iWidth, iHeight, cWidth, cHeight, w, h, ratio, y, x, _a, image_1, x, y, w, h;
+                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, _a, image_1, x, y, w, h;
                 var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
@@ -864,55 +916,13 @@
                             canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
                             imageHasChanged = this.imageHasChanged;
                             if (!(image && imageHasChanged)) return [3 /*break*/, 2];
-                            return [4 /*yield*/, imageHandler(image)];
+                            return [4 /*yield*/, imageUploader(image)];
                         case 1:
                             imageReturn = _b.sent();
                             this.image = imageReturn;
                             if (current.image)
                                 delete current.image;
-                            iWidth = this.image.width;
-                            iHeight = this.image.height;
-                            cWidth = canvas.width;
-                            cHeight = canvas.height;
-                            w = cWidth > iWidth ? cWidth : iWidth;
-                            h = cHeight > iHeight ? cHeight : iHeight;
-                            ratio = 1;
-                            if (iWidth > iHeight) {
-                                ratio = iHeight / iWidth;
-                                if (type === RATIOTYPES.square) {
-                                    ratio = iWidth / iHeight;
-                                    h = cHeight;
-                                    w = cWidth * ratio;
-                                }
-                                else if (type === RATIOTYPES.wide) {
-                                    ratio = iHeight / iWidth;
-                                    w = cWidth;
-                                    h = cWidth * ratio;
-                                }
-                            }
-                            else if (iWidth < iHeight) {
-                                if (type === RATIOTYPES.square) {
-                                    ratio = iHeight / cHeight;
-                                    w = cWidth;
-                                    h = cHeight * ratio;
-                                }
-                                else if (type === RATIOTYPES.wide) {
-                                    ratio = iHeight / iWidth;
-                                    w = cWidth;
-                                    h = cWidth * ratio;
-                                }
-                            }
-                            else {
-                                if (type === RATIOTYPES.square) {
-                                    w = cWidth;
-                                    h = cHeight;
-                                }
-                                else if (type === RATIOTYPES.wide) {
-                                    w = h = cWidth;
-                                }
-                            }
-                            y = 0, x = 0;
-                            current.image = { image: this.image, x: x, y: y, w: w, h: h };
+                            current.image = topLeft(this.image, canvas, type);
                             _b.label = 2;
                         case 2:
                             if (current.image) {
@@ -1025,7 +1035,7 @@
         };
         CanvasCreator.prototype.resetCanvas = function (currentCfg) {
             currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
-            currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
+            currentCfg.canvasContext.beginPath(); // ADD THIS LINE!<<<<<<<<<<<<<
             currentCfg.canvasContext.moveTo(0, 0);
             // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
             currentCfg.canvasContext.stroke();
@@ -1416,6 +1426,7 @@
     }());
 
     function imagePicker() {
+        var imagePickerFrag = document.createDocumentFragment();
         var fileElement = document.createElement('div');
         fileElement.className = 'form-element flex flex-align--center';
         /** Actual file picker  */
@@ -1442,7 +1453,34 @@
             console.log('imageHasChanged!');
             store.dispatch(STOREACTIONS.imageChange, true);
         });
-        return fileElement;
+        imagePickerFrag.appendChild(fileElement);
+        var handlingElement = document.createElement('div');
+        handlingElement.className = 'form-element flex flex-justify--between flex-align--center';
+        var scaleImage = document.createElement('div');
+        scaleImage.className = 'button';
+        scaleImage.innerHTML = 'Scale image';
+        handlingElement.appendChild(scaleImage);
+        scaleImage.addEventListener('click', function () {
+            console.log('image SCALE!');
+            // bottomRight();
+            // store.dispatch(STOREACTIONS.imageChange, true);
+        });
+        var cover = document.createElement('div');
+        cover.innerHTML = 'Cover';
+        handlingElement.appendChild(cover);
+        cover.addEventListener('click', function () {
+            console.log('image COVER!');
+            // store.dispatch(STOREACTIONS.imageChange, true);
+        });
+        var stretch = document.createElement('div');
+        stretch.innerHTML = 'Stretch';
+        handlingElement.appendChild(stretch);
+        stretch.addEventListener('click', function () {
+            console.log('image STRETCH!');
+            // store.dispatch(STOREACTIONS.imageChange, true);
+        });
+        imagePickerFrag.appendChild(handlingElement);
+        return imagePickerFrag;
     }
 
     function themeList(themes, currentTheme) {
@@ -1454,7 +1492,7 @@
         }
         return themeOption.join('');
     }
-    var themePicker = function (themes, currentTheme) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Tema</label>\n    <div class=\"form-input form-input--select\">\n      <select>\n        " + themeList(themes, currentTheme) + "\n      </select>\n    </div>\n  </div>\n"; };
+    var themePicker = function (themes, currentTheme) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Tema</label>\n    <div class=\"form-input form-input--select\">\n      <select data-type=\"themepicker\">\n        " + themeList(themes, currentTheme) + "\n      </select>\n    </div>\n  </div>\n"; };
     var ThemePicker = /** @class */ (function () {
         function ThemePicker() {
             // eventhandler;
@@ -1518,6 +1556,34 @@
         return TourDates;
     }());
 
+    function placementList(placements, currentplacement) {
+        var placementOption = [];
+        for (var key in placements) {
+            if (placements[key]) {
+                placementOption.push("<option " + (key === currentplacement ? 'selected=true' : '') + " value=\"" + key + "\">" + placements[key] + "</option>");
+            }
+        }
+        return placementOption.join('');
+    }
+    var placementPicker = function (placements, currentplacement) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Billed placering</label>\n    <div class=\"form-input form-input--select\">\n      <select data-type=\"placementpicker\">\n        " + placementList(placements, currentplacement) + "\n      </select>\n    </div>\n  </div>\n"; };
+    var ImagePlacementPicker = /** @class */ (function () {
+        function ImagePlacementPicker() {
+            this.placements = {
+                bottomleft: 'Bottom Left',
+                bottomright: 'Bottom Right',
+                topleft: 'Top Left',
+                topright: 'Top Right',
+            };
+        }
+        ImagePlacementPicker.prototype.render = function () {
+            var placementPickerDiv = document.createElement('div');
+            placementPickerDiv.className = 'form-element';
+            placementPickerDiv.innerHTML = placementPicker(this.placements, 'topleft');
+            return placementPickerDiv;
+        };
+        return ImagePlacementPicker;
+    }());
+
     var formElement = function (name) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">" + name + "</label>\n    <input class=\"form-input\" name=\"" + name.toLocaleLowerCase() + "\" type=\"text\" value=\"\" id=\"bdTourname\" placeholder=\"" + name + "\" />\n  </div>\n"; };
     function createForm() {
         var canvascontainer = document.getElementById('canvascontainer');
@@ -1526,7 +1592,8 @@
         formEl.className = 'form-container';
         var canvasCreator = new CanvasCreator(canvascontainer, formEl);
         formEl.addEventListener('change', function (ev) {
-            if (ev.target.nodeName === 'SELECT') {
+            var target = ev.target;
+            if (target.nodeName === 'SELECT' && target.dataset.type === 'themepicker') {
                 store.dispatch(STOREACTIONS.setThemeName, ev.target.value);
                 store.dispatch(STOREACTIONS.setTheme, themes[ev.target.value]);
             }
@@ -1580,6 +1647,9 @@
         formEl.appendChild(imageContainer);
         /** Image */
         imageContainer.appendChild(imagePicker());
+        /** Themes */
+        var imagePlacement = new ImagePlacementPicker();
+        imageContainer.appendChild(imagePlacement.render());
         /**
          * Add form element to container
          */

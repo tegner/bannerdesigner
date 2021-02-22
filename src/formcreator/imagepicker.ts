@@ -1,7 +1,9 @@
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 
-export function imagePicker(): HTMLDivElement {
+export function imagePicker(): DocumentFragment {
+  const imagePickerFrag = document.createDocumentFragment();
+
   const fileElement = document.createElement('div');
   fileElement.className = 'form-element flex flex-align--center';
 
@@ -35,5 +37,45 @@ export function imagePicker(): HTMLDivElement {
     store.dispatch(STOREACTIONS.imageChange, true);
   });
 
-  return fileElement;
+  imagePickerFrag.appendChild(fileElement);
+
+  const handlingElement = document.createElement('div');
+  handlingElement.className = 'form-element flex flex-justify--between flex-align--center';
+
+  const scaleImage = document.createElement('div');
+  scaleImage.className = 'button';
+  scaleImage.innerHTML = 'Scale image';
+  handlingElement.appendChild(scaleImage);
+
+  scaleImage.addEventListener('click', () => {
+    console.log('image SCALE!');
+    // bottomRight();
+    // store.dispatch(STOREACTIONS.imageChange, true);
+  });
+
+  const cover = document.createElement('div');
+  cover.className = 'button';
+  cover.innerHTML = 'Cover';
+  handlingElement.appendChild(cover);
+
+  cover.addEventListener('click', () => {
+    console.log('image COVER!');
+
+    // store.dispatch(STOREACTIONS.imageChange, true);
+  });
+
+  const stretch = document.createElement('div');
+  stretch.className = 'button';
+  stretch.innerHTML = 'Stretch';
+  handlingElement.appendChild(stretch);
+
+  stretch.addEventListener('click', () => {
+    console.log('image STRETCH!');
+
+    // store.dispatch(STOREACTIONS.imageChange, true);
+  });
+
+  imagePickerFrag.appendChild(handlingElement);
+
+  return imagePickerFrag;
 }

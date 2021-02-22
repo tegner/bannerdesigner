@@ -16,5 +16,9 @@
   },
   "dependencies": {
     "jszip": "^3.5.0"
+  },
+  "scripts": {
+    "build": "yarn rollup -c",
+    "start": "yarn rollup -cw"
   }
 }
