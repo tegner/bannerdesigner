@@ -398,6 +398,7 @@
         STOREACTIONS["imageChange"] = "imageChange";
         STOREACTIONS["setTheme"] = "setTheme";
         STOREACTIONS["setThemeName"] = "setThemeName";
+        STOREACTIONS["updateCanvases"] = "updateCanvases";
     })(STOREACTIONS || (STOREACTIONS = {}));
     var actions = (_a = {},
         _a[STOREACTIONS.alterTheme] = function (context, payload) {
@@ -411,6 +412,10 @@
         },
         _a[STOREACTIONS.setThemeName] = function (context, payload) {
             context.commit(STOREACTIONS.setThemeName, payload);
+        },
+        _a[STOREACTIONS.updateCanvases] = function (context, payload) {
+            console.log('updateCanvases', payload);
+            context.commit(STOREACTIONS.updateCanvases, payload);
         },
         _a);
 
@@ -468,12 +473,14 @@
     var _a$2;
     var STATENAMES;
     (function (STATENAMES) {
+        STATENAMES["canvases"] = "canvases";
         STATENAMES["imageChange"] = "imageChange";
         STATENAMES["theme"] = "theme";
         STATENAMES["themeName"] = "themeName";
     })(STATENAMES || (STATENAMES = {}));
     var defaultTheme = THEMENAMES.modern;
     var state = (_a$2 = {},
+        _a$2[STATENAMES.canvases] = [],
         _a$2[STATENAMES.imageChange] = false,
         _a$2[STATENAMES.theme] = themes[defaultTheme],
         _a$2[STATENAMES.themeName] = defaultTheme,
@@ -497,6 +504,10 @@
         },
         _a$3[STOREACTIONS.setThemeName] = function (state, payload) {
             state[STATENAMES.themeName] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.updateCanvases] = function (state, payload) {
+            state[STATENAMES.canvases] = payload;
             return state;
         },
         _a$3);
@@ -653,10 +664,8 @@
             var _this = this;
             this.state = __assign({}, store.state);
             store.events.subscribe('stateChange', function (newState, key) {
-                // console.log('newState[key]', newState[key]);
                 if (_this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key])) {
-                    // console.log('newState[key] ... slipped in here', key, newState);
-                    eventhandler.publish(key, __assign({}, newState));
+                    eventhandler.publish(key, newState[key], newState);
                     _this.state = __assign({}, newState);
                 }
             });
@@ -665,7 +674,7 @@
     }());
     new HandlingStateChange();
 
-    function scaler(scalerOptions) {
+    function initialscaler(scalerOptions) {
         var cHeight = scalerOptions.cHeight, cWidth = scalerOptions.cWidth, iHeight = scalerOptions.iHeight, iWidth = scalerOptions.iWidth, type = scalerOptions.type;
         var w = cWidth > iWidth ? cWidth : iWidth;
         var h = cHeight > iHeight ? cHeight : iHeight;
@@ -707,12 +716,37 @@
         return { h: h, w: w };
     }
 
+    function scalePoint(pos) {
+        var point = document.createElement('div');
+        point.className = "scalepoint scalepoint--" + pos;
+        return point;
+    }
+    function manualScaler() {
+        console.log('image SCALE!');
+        console.log('store, store.state', store.state.canvases);
+        store.state.canvases.forEach(function (element) {
+            var image = element.image, scaleFactor = element.scaleFactor;
+            var scaleElement = document.createElement('div');
+            var scaleImage = document.createElement('img');
+            scaleImage.src = image.image.src;
+            scaleImage.setAttribute('style', 'height: 100%; width: 100%;');
+            scaleElement.appendChild(scaleImage);
+            scaleElement.className = 'scalearea';
+            var styleString = "\n      top: " + image.x + "px;\n      left: " + image.y + "px;\n      width:" + image.w + "px;\n      height:" + image.h + "px;\n      transform: scale(" + scaleFactor + ");\n      ";
+            scaleElement.setAttribute('style', styleString);
+            ['topright', 'topleft', 'bottomright', 'bottomleft'].forEach(function (pos) {
+                scaleElement.appendChild(scalePoint(pos));
+            });
+            element.wrapper.appendChild(scaleElement);
+        });
+    }
+
     function topLeft(image, canvas, type) {
         var iWidth = image.width;
         var iHeight = image.height;
         var cWidth = canvas.width;
         var cHeight = canvas.height;
-        var _a = scaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
+        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
         var y = 0, x = 0;
         return { image: image, x: x, y: y, w: w, h: h };
     }
@@ -774,30 +808,26 @@
             this.canvasContainer.className = 'flex flex-wrap flex-start';
             this.container.appendChild(this.canvasContainer);
             this.state = __assign({}, store.state);
-            // this.setTheme(this.state.themeName);
-            this.setTheme(this.state.theme);
+            this.setTheme(this.state.theme, false);
             this.addAll();
-            eventhandler.subscribe(STATENAMES.themeName, function (state) {
-                console.log('theme theme theme', state);
-                _this.setTheme(state[STATENAMES.theme]);
-            });
-            eventhandler.subscribe(STATENAMES.theme, function (state) {
+            eventhandler.subscribe(STATENAMES.theme, function (theme, state) {
                 console.log('alter theme alter theme theme', state);
-                _this.setTheme(state[STATENAMES.theme]);
+                _this.setTheme(theme);
             });
-            eventhandler.subscribe([STATENAMES.imageChange], function (state) {
-                _this.imageChanged(state[STATENAMES.imageChange]);
-                _this.update();
+            eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, state) {
+                console.log('So this is the culprit?', imageChange, state);
+                _this.imageHasChanged = imageChange;
+                if (_this.imageHasChanged) {
+                    _this.update();
+                }
             });
         }
         CanvasCreator.prototype.getCanvas = function () {
             return this.currentCanvas;
         };
-        CanvasCreator.prototype.imageChanged = function (status) {
-            this.imageHasChanged = status;
-        };
-        CanvasCreator.prototype.setTheme = function (theme) {
+        CanvasCreator.prototype.setTheme = function (theme, update) {
             var _this = this;
+            if (update === void 0) { update = true; }
             this.theme = theme;
             console.log('theme', theme);
             if (!this.theme.loaded) {
@@ -806,15 +836,17 @@
                 themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
                 document.body.appendChild(themeFont);
                 setTimeout(function () {
-                    _this.update();
+                    if (update)
+                        _this.update();
                     _this.theme.loaded = true;
                 }, 200);
             }
-            else {
+            else if (update) {
                 this.update();
             }
         };
         CanvasCreator.prototype.update = function () {
+            console.log('this.update!');
             var eleList = this.form.elements;
             var formElements = Array.from(eleList);
             var info = {
@@ -833,12 +865,16 @@
                 }
             });
             this.addContent(info, true);
+            console.log('this.updateState()', this.updateState);
+            // this.updateState();
         };
         CanvasCreator.prototype.addAll = function () {
             var _this = this;
             this.types.forEach(function (configName) {
                 _this.addCanvas(configName);
             });
+            this.updateState();
+            console.log('bitch what?');
         };
         CanvasCreator.prototype.addCanvas = function (configName) {
             var _a = this.canvasConfig[configName], header = _a.header, height = _a.height, type = _a.type, width = _a.width;
@@ -846,9 +882,12 @@
             wrapper.className = 'margin-l--b';
             wrapper.id = "wrapper" + type;
             this.canvasContainer.appendChild(wrapper);
+            var containerThing = document.createElement('div');
             var head = document.createElement('h5');
             head.innerHTML = header;
             wrapper.appendChild(head);
+            var canvaswrapper = document.createElement('div');
+            canvaswrapper.className = 'canvaswrapper';
             var scaleFactor;
             switch (type) {
                 case RATIOTYPES.square:
@@ -869,11 +908,13 @@
             canvas.id = type;
             var ctx = canvas.getContext('2d');
             var curCanvas = __assign(__assign({}, this.canvasConfig[configName]), { canvas: canvas, canvasContext: ctx, configName: configName,
-                scaleFactor: scaleFactor });
+                scaleFactor: scaleFactor, wrapper: canvaswrapper });
             this.currentCanvas.push(curCanvas);
             canvas.height = height;
             canvas.width = width;
-            wrapper.appendChild(canvas);
+            canvaswrapper.appendChild(containerThing);
+            canvaswrapper.appendChild(canvas);
+            wrapper.appendChild(canvaswrapper);
             this.resetCanvas(curCanvas);
         };
         CanvasCreator.prototype.addContent = function (contentInfo, clear) {
@@ -1041,6 +1082,9 @@
             currentCfg.canvasContext.stroke();
             currentCfg.canvasContext.fillStyle = this.theme.bgColor + ";";
             currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+        };
+        CanvasCreator.prototype.updateState = function () {
+            store.dispatch(STOREACTIONS.updateCanvases, this.currentCanvas);
         };
         return CanvasCreator;
     }());
@@ -1365,14 +1409,10 @@
             this.state = __assign({}, store.state);
             this.theme = this.state.theme;
             this.colorPickerDiv.className = 'form-element colorpicker-layout';
-            eventhandler.subscribe('themeName', function (state) {
-                _this.state = __assign({}, state);
-                _this.theme = _this.state.theme;
-                _this.render();
-            });
-            eventhandler.subscribe('theme', function (state) {
-                _this.state = __assign({}, state);
-                _this.theme = _this.state.theme;
+            eventhandler.subscribe('theme', function (theme, newState) {
+                console.log('ColorPicker theme', newState);
+                _this.state = newState;
+                _this.theme = theme;
                 _this.render();
             });
             this.fuse = new Fuse();
@@ -1411,6 +1451,7 @@
                 this.colorPickerDiv.firstChild.remove();
             }
             var theme = this.theme;
+            console.log('this.names', this.names, theme);
             this.names.forEach(function (name) {
                 var colorPickerEl = document.createElement('div');
                 colorPickerEl.className = "colorpicker colorpicker--" + name;
@@ -1458,14 +1499,13 @@
         handlingElement.className = 'form-element flex flex-justify--between flex-align--center';
         var scaleImage = document.createElement('div');
         scaleImage.className = 'button';
-        scaleImage.innerHTML = 'Scale image';
+        scaleImage.innerHTML = 'Skalér billede';
         handlingElement.appendChild(scaleImage);
         scaleImage.addEventListener('click', function () {
-            console.log('image SCALE!');
-            // bottomRight();
-            // store.dispatch(STOREACTIONS.imageChange, true);
+            manualScaler();
         });
         var cover = document.createElement('div');
+        cover.className = 'button';
         cover.innerHTML = 'Cover';
         handlingElement.appendChild(cover);
         cover.addEventListener('click', function () {
@@ -1473,6 +1513,7 @@
             // store.dispatch(STOREACTIONS.imageChange, true);
         });
         var stretch = document.createElement('div');
+        stretch.className = 'button';
         stretch.innerHTML = 'Stretch';
         handlingElement.appendChild(stretch);
         stretch.addEventListener('click', function () {

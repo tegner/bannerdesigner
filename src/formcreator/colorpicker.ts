@@ -39,16 +39,10 @@ export class ColorPicker {
 
     this.colorPickerDiv.className = 'form-element colorpicker-layout';
 
-    eventhandler.subscribe('themeName', (state) => {
-      this.state = { ...state };
-      this.theme = this.state.theme;
-
-      this.render();
-    });
-
-    eventhandler.subscribe('theme', (state) => {
-      this.state = { ...state };
-      this.theme = this.state.theme;
+    eventhandler.subscribe('theme', (theme, newState) => {
+      console.log('ColorPicker theme', newState);
+      this.state = newState;
+      this.theme = theme;
 
       this.render();
     });
@@ -95,7 +89,7 @@ export class ColorPicker {
       this.colorPickerDiv.firstChild.remove();
     }
     const { theme } = this;
-
+    console.log('this.names', this.names, theme);
     this.names.forEach((name) => {
       const colorPickerEl = document.createElement('div');
       colorPickerEl.className = `colorpicker colorpicker--${name}`;

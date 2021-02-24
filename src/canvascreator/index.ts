@@ -78,23 +78,23 @@ export class CanvasCreator {
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
     this.state = { ...store.state };
-    // this.setTheme(this.state.themeName);
-    this.setTheme(this.state.theme);
+
+    this.setTheme(this.state.theme, false);
     this.addAll();
 
-    eventhandler.subscribe(STATENAMES.themeName, (state) => {
-      console.log('theme theme theme', state);
-      this.setTheme(state[STATENAMES.theme]);
-    });
-
-    eventhandler.subscribe(STATENAMES.theme, (state) => {
+    eventhandler.subscribe(STATENAMES.theme, (theme, state) => {
       console.log('alter theme alter theme theme', state);
-      this.setTheme(state[STATENAMES.theme]);
+      this.setTheme(theme);
     });
 
-    eventhandler.subscribe([STATENAMES.imageChange], (state) => {
-      this.imageChanged(state[STATENAMES.imageChange]);
-      this.update();
+    eventhandler.subscribe([STATENAMES.imageChange], (imageChange, state) => {
+      console.log('So this is the culprit?', imageChange, state);
+
+      this.imageHasChanged = imageChange;
+
+      if (this.imageHasChanged) {
+        this.update();
+      }
     });
   }
 
@@ -102,11 +102,7 @@ export class CanvasCreator {
     return this.currentCanvas;
   }
 
-  public imageChanged(status: boolean) {
-    this.imageHasChanged = status;
-  }
-
-  public setTheme(theme: IThemeObject) {
+  public setTheme(theme: IThemeObject, update = true) {
     this.theme = theme;
     console.log('theme', theme);
     if (!this.theme.loaded) {
@@ -116,15 +112,16 @@ export class CanvasCreator {
       document.body.appendChild(themeFont);
 
       setTimeout(() => {
-        this.update();
+        if (update) this.update();
         this.theme.loaded = true;
       }, 200);
-    } else {
+    } else if (update) {
       this.update();
     }
   }
 
   public update() {
+    console.log('this.update!');
     const eleList = this.form.elements;
 
     const formElements = Array.from(eleList);
@@ -145,12 +142,17 @@ export class CanvasCreator {
     });
 
     this.addContent(info, true);
+    console.log('this.updateState()', this.updateState);
+
+    // this.updateState();
   }
 
   private addAll() {
     this.types.forEach((configName) => {
       this.addCanvas(configName);
     });
+    this.updateState();
+    console.log('bitch what?');
   }
 
   private addCanvas(configName) {
@@ -161,10 +163,15 @@ export class CanvasCreator {
     wrapper.id = `wrapper${type}`;
     this.canvasContainer.appendChild(wrapper);
 
+    const containerThing = document.createElement('div');
+
     const head = document.createElement('h5');
     head.innerHTML = header;
 
     wrapper.appendChild(head);
+
+    const canvaswrapper = document.createElement('div');
+    canvaswrapper.className = 'canvaswrapper';
 
     let scaleFactor;
     switch (type) {
@@ -196,14 +203,17 @@ export class CanvasCreator {
       canvasContext: ctx,
       configName,
       scaleFactor,
+      wrapper: canvaswrapper,
     };
     this.currentCanvas.push(curCanvas);
 
     canvas.height = height;
     canvas.width = width;
 
-    wrapper.appendChild(canvas);
+    canvaswrapper.appendChild(containerThing);
+    canvaswrapper.appendChild(canvas);
 
+    wrapper.appendChild(canvaswrapper);
     this.resetCanvas(curCanvas);
   }
 
@@ -344,5 +354,9 @@ export class CanvasCreator {
     currentCfg.canvasContext.stroke();
     currentCfg.canvasContext.fillStyle = `${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+  }
+
+  private updateState() {
+    store.dispatch(STOREACTIONS.updateCanvases, this.currentCanvas);
   }
 }

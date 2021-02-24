@@ -1,3 +1,4 @@
+import { manualScaler } from '../imagesizer';
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 
@@ -44,13 +45,11 @@ export function imagePicker(): DocumentFragment {
 
   const scaleImage = document.createElement('div');
   scaleImage.className = 'button';
-  scaleImage.innerHTML = 'Scale image';
+  scaleImage.innerHTML = 'Skalér billede';
   handlingElement.appendChild(scaleImage);
 
   scaleImage.addEventListener('click', () => {
-    console.log('image SCALE!');
-    // bottomRight();
-    // store.dispatch(STOREACTIONS.imageChange, true);
+    manualScaler();
   });
 
   const cover = document.createElement('div');

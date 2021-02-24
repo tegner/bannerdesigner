@@ -1,6 +1,6 @@
 import { RATIOTYPES } from '../canvascreator/canvascreator';
 
-export function scaler(scalerOptions) {
+export function initialscaler(scalerOptions) {
   const { cHeight, cWidth, iHeight, iWidth, type } = scalerOptions;
 
   let w = cWidth > iWidth ? cWidth : iWidth;

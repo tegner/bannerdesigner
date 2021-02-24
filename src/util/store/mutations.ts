@@ -23,4 +23,9 @@ export default {
 
     return state;
   },
+  [STOREACTIONS.updateCanvases](state, payload) {
+    state[STATENAMES.canvases] = payload;
+
+    return state;
+  },
 };

@@ -1,4 +1,4 @@
-import { scaler } from './scaler';
+import { initialscaler } from './initialscaler';
 
 export function topLeft(image, canvas, type) {
   const iWidth = image.width;
@@ -7,7 +7,7 @@ export function topLeft(image, canvas, type) {
   const cWidth = canvas.width;
   const cHeight = canvas.height;
 
-  const { h, w } = scaler({ cHeight, cWidth, iHeight, iWidth, type });
+  const { h, w } = initialscaler({ cHeight, cWidth, iHeight, iWidth, type });
 
   const y = 0,
     x = 0;
