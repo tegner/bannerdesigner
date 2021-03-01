@@ -2,12 +2,12 @@ import actions from './actions';
 import mutations from './mutations';
 import { Store } from './store';
 
-import state from '../initialstate';
+import { initialState } from '../initialstate';
 
 const store = new Store({
   actions,
   mutations,
-  state,
+  state: initialState,
 });
 
 export default store;

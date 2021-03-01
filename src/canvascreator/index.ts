@@ -2,15 +2,14 @@ import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, IC
 import { IThemeObject } from './themes';
 
 import { DragHandler, EVENTNAMES } from '../draghandler';
-import { imageUploader } from '../imageuploader';
+import { imageUploader, topLeft } from '../imagehandler/';
 import { simpleTextStyler } from '../textstyler';
 
 import store from '../util/store';
 import { asyncForEach } from '../util/asyncforeach';
 import { eventhandler } from '../util/eventhandler';
 import { STOREACTIONS } from '../util/store/actions';
-import { IStoreState, STATENAMES } from '../util/initialstate';
-import { topLeft } from '../imagesizer';
+import { StateType, STATENAMES } from '../util/initialstate';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -67,7 +66,7 @@ export class CanvasCreator {
   private form: HTMLFormElement;
   private image: HTMLImageElement;
   private imageHasChanged = false;
-  private state: IStoreState;
+  private state: StateType;
   private theme: IThemeObject;
   private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
@@ -87,14 +86,16 @@ export class CanvasCreator {
       this.setTheme(theme);
     });
 
-    eventhandler.subscribe([STATENAMES.imageChange], (imageChange, state) => {
-      console.log('So this is the culprit?', imageChange, state);
-
+    eventhandler.subscribe([STATENAMES.imageChange], (imageChange, _state) => {
       this.imageHasChanged = imageChange;
 
       if (this.imageHasChanged) {
         this.update();
       }
+    });
+
+    eventhandler.subscribe([STATENAMES.imageScale], (imageScale, _state) => {
+      console.log('imageScale imageScale imageScale', imageScale);
     });
   }
 
@@ -104,7 +105,7 @@ export class CanvasCreator {
 
   public setTheme(theme: IThemeObject, update = true) {
     this.theme = theme;
-    console.log('theme', theme);
+
     if (!this.theme.loaded) {
       const themeFont = document.createElement('div');
       themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";visibility: hidden;`);
@@ -142,7 +143,6 @@ export class CanvasCreator {
     });
 
     this.addContent(info, true);
-    console.log('this.updateState()', this.updateState);
 
     // this.updateState();
   }
@@ -152,7 +152,6 @@ export class CanvasCreator {
       this.addCanvas(configName);
     });
     this.updateState();
-    console.log('bitch what?');
   }
 
   private addCanvas(configName) {
@@ -281,7 +280,7 @@ export class CanvasCreator {
     canvasContext.textBaseline = 'top';
 
     const tournameTop = cfg.top * 2;
-    console.log('this.theme', this.theme, this.theme.artist);
+
     const headerString = `{${this.theme.artist}${artist.toUpperCase()}}\n{${
       this.theme.tourname
     }${tourname.toUpperCase()}}`;

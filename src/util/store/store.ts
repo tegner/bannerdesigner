@@ -1,18 +1,16 @@
+import { StateType } from '../initialstate';
 import { PubSub } from '../pubsub';
 
 export class Store {
   public events;
-  public state;
+  public state: StateType = {};
   public status;
 
-  private actions;
-  private mutations;
+  private actions = {};
+  private mutations = {};
 
   constructor(params) {
     // Add some default objects to hold our actions, mutations and state
-    this.actions = {};
-    this.mutations = {};
-    this.state = {};
 
     // A status enum to set during actions and mutations
     this.status = 'resting';

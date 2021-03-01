@@ -13,6 +13,18 @@ export default {
 
     return state;
   },
+  [STOREACTIONS.setImageScale](state, payload) {
+    console.log('imageScale: state[STATENAMES.imageScale]', state[STATENAMES.imageScale]);
+    console.log('imageScale: payload', payload);
+    // const { imageScale, type } = payload;
+
+    // if (state[STATENAMES.imageScale][type]) {
+    //   state[STATENAMES.imageScale][type] = parseInt(imageScale, 10) / 100;
+    // }
+    state[STATENAMES.imageScale] = { ...state[STATENAMES.imageScale], ...payload };
+    console.log('after imageScale: state[STATENAMES.imageScale]', state[STATENAMES.imageScale]);
+    return state;
+  },
   [STOREACTIONS.setTheme](state, payload) {
     state[STATENAMES.theme] = payload;
 

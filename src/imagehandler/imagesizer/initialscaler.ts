@@ -1,4 +1,5 @@
-import { RATIOTYPES } from '../canvascreator/canvascreator';
+import { RATIOTYPES } from '../../canvascreator/canvascreator';
+import store from '../../util/store';
 
 export function initialscaler(scalerOptions) {
   const { cHeight, cWidth, iHeight, iWidth, type } = scalerOptions;
@@ -36,6 +37,11 @@ export function initialscaler(scalerOptions) {
       w = h = cWidth;
     }
   }
+
+  console.log('height times imageScale', h * store.state.imageScale[type]);
+  console.log('width times imageScale', w * store.state.imageScale[type]);
+  h = h * store.state.imageScale[type];
+  w = w * store.state.imageScale[type];
 
   return { h, w };
 }

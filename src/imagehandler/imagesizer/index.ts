@@ -1,3 +1,3 @@
 export { bottomRight } from './bottomright';
-export { manualScaler } from './manualscaler';
+export { ManualScaler } from './manualscaler';
 export { topLeft } from './topleft';

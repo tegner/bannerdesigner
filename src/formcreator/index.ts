@@ -1,14 +1,13 @@
 import { CanvasCreator } from '../canvascreator';
 import { saveToDisk } from '../util/savetodisk';
 import { ColorPicker } from './colorpicker';
-import { imagePicker } from './imagepicker';
+import { ImageHandler } from '../imagehandler';
 import { ThemePicker } from './themepicker';
 import { TourDates } from './tourdates';
 
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 import { themes } from '../canvascreator/themes';
-import { ImagePlacementPicker } from './imageplacement';
 
 const formElement = (name: string): string => `
   <div class="form-element">
@@ -90,11 +89,9 @@ export function createForm() {
   const imageContainer = document.createElement('div');
   imageContainer.className = 'form-area';
   formEl.appendChild(imageContainer);
+
   /** Image */
-  imageContainer.appendChild(imagePicker());
-  /** Themes */
-  const imagePlacement = new ImagePlacementPicker();
-  imageContainer.appendChild(imagePlacement.render());
+  imageContainer.appendChild(new ImageHandler().render());
 
   /**
    * Add form element to container

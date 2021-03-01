@@ -1,6 +1,7 @@
 export enum STOREACTIONS {
   alterTheme = 'alterTheme',
   imageChange = 'imageChange',
+  setImageScale = 'setImageScale',
   setTheme = 'setTheme',
   setThemeName = 'setThemeName',
   updateCanvases = 'updateCanvases',
@@ -12,6 +13,9 @@ export default {
   },
   [STOREACTIONS.imageChange](context, payload) {
     context.commit(STOREACTIONS.imageChange, payload);
+  },
+  [STOREACTIONS.setImageScale](context, payload) {
+    context.commit(STOREACTIONS.setImageScale, payload);
   },
   [STOREACTIONS.setTheme](context, payload) {
     context.commit(STOREACTIONS.setTheme, payload);
