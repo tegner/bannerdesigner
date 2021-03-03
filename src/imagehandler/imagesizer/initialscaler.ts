@@ -21,7 +21,7 @@ export function initialscaler(scalerOptions) {
     }
   } else if (iWidth < iHeight) {
     if (type === RATIOTYPES.square) {
-      ratio = iHeight / cHeight;
+      ratio = iHeight / iWidth;
       w = cWidth;
       h = cHeight * ratio;
     } else if (type === RATIOTYPES.wide) {

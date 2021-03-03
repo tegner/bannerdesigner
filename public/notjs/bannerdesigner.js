@@ -728,7 +728,9 @@
         }
         else if (iWidth < iHeight) {
             if (type === RATIOTYPES.square) {
-                ratio = iHeight / cHeight;
+                ratio = iHeight / iWidth;
+                var ratio2 = iWidth / iHeight;
+                console.log('what the bees?', ratio, ratio2);
                 w = cWidth;
                 h = cHeight * ratio;
             }
