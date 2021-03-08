@@ -3,7 +3,9 @@ function placementList(placements, currentplacement): string {
   for (const key in placements) {
     if (placements[key]) {
       placementOption.push(
-        `<option ${key === currentplacement ? 'selected=true' : ''} value="${key}">${placements[key]}</option>`
+        `<div data-value="${key}" data-selected="${
+          key === currentplacement ? 'true' : 'false'
+        }" class="placement placement--${key}" title="${placements[key]}"></div>`
       );
     }
   }
@@ -14,24 +16,53 @@ function placementList(placements, currentplacement): string {
 export const placementPicker = (placements, currentplacement) => `
   <div class="form-element">
     <label class="form-label">Billed placering</label>
-    <div class="form-input form-input--select">
-      <select data-type="placementpicker">
+    <div class="placements-container">
+      <div class="placements">
         ${placementList(placements, currentplacement)}
-      </select>
+      </div>
     </div>
   </div>
 `;
 
+export enum PLACEMENTNAMES {
+  bottom = 'bottom',
+  bottomleft = 'bottomleft',
+  bottomright = 'bottomright',
+  center = 'center',
+  left = 'left',
+  right = 'right',
+  top = 'top',
+  topleft = 'topleft',
+  topright = 'topright',
+}
+export type TPlacementNames =
+  | 'bottom'
+  | 'bottomleft'
+  | 'bottomright'
+  | 'center'
+  | 'left'
+  | 'right'
+  | 'top'
+  | 'topleft'
+  | 'topright';
+
 export class ImagePlacementPicker {
-  private placements;
+  private currentSelected: HTMLDivElement;
+  private elements;
+  private placements = {
+    bottom: 'Bottom',
+    bottomleft: 'Bottom Left',
+    bottomright: 'Bottom Right',
+    center: 'Center',
+    left: 'Left',
+    right: 'Right',
+    top: 'Top',
+    topleft: 'Top Left',
+    topright: 'Top Right',
+  };
 
   constructor() {
-    this.placements = {
-      bottomleft: 'Bottom Left',
-      bottomright: 'Bottom Right',
-      topleft: 'Top Left',
-      topright: 'Top Right',
-    };
+    this.placements;
   }
 
   public render() {
@@ -39,6 +70,19 @@ export class ImagePlacementPicker {
     placementPickerDiv.className = 'form-element';
     placementPickerDiv.innerHTML = placementPicker(this.placements, 'topleft');
 
+    this.elements = placementPickerDiv.querySelectorAll('.placement');
+    Array.from(this.elements).forEach((el: HTMLDivElement) => {
+      if (el.dataset.selected === 'true') this.currentSelected = el;
+
+      el.addEventListener('click', (ev: MouseEvent) => {
+        this.currentSelected.dataset.selected = 'false';
+        el.dataset.selected = 'true';
+
+        console.log('DO SHIT!!!', el.dataset.value);
+
+        this.currentSelected = el;
+      });
+    });
     return placementPickerDiv;
   }
 }

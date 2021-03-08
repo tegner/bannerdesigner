@@ -219,25 +219,55 @@
         var placementOption = [];
         for (var key in placements) {
             if (placements[key]) {
-                placementOption.push("<option " + (key === currentplacement ? 'selected=true' : '') + " value=\"" + key + "\">" + placements[key] + "</option>");
+                placementOption.push("<div data-value=\"" + key + "\" data-selected=\"" + (key === currentplacement ? 'true' : 'false') + "\" class=\"placement placement--" + key + "\" title=\"" + placements[key] + "\"></div>");
             }
         }
         return placementOption.join('');
     }
-    var placementPicker = function (placements, currentplacement) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Billed placering</label>\n    <div class=\"form-input form-input--select\">\n      <select data-type=\"placementpicker\">\n        " + placementList(placements, currentplacement) + "\n      </select>\n    </div>\n  </div>\n"; };
+    var placementPicker = function (placements, currentplacement) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Billed placering</label>\n    <div class=\"placements-container\">\n      <div class=\"placements\">\n        " + placementList(placements, currentplacement) + "\n      </div>\n    </div>\n  </div>\n"; };
+    var PLACEMENTNAMES;
+    (function (PLACEMENTNAMES) {
+        PLACEMENTNAMES["bottom"] = "bottom";
+        PLACEMENTNAMES["bottomleft"] = "bottomleft";
+        PLACEMENTNAMES["bottomright"] = "bottomright";
+        PLACEMENTNAMES["center"] = "center";
+        PLACEMENTNAMES["left"] = "left";
+        PLACEMENTNAMES["right"] = "right";
+        PLACEMENTNAMES["top"] = "top";
+        PLACEMENTNAMES["topleft"] = "topleft";
+        PLACEMENTNAMES["topright"] = "topright";
+    })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
     var ImagePlacementPicker = /** @class */ (function () {
         function ImagePlacementPicker() {
             this.placements = {
+                bottom: 'Bottom',
                 bottomleft: 'Bottom Left',
                 bottomright: 'Bottom Right',
+                center: 'Center',
+                left: 'Left',
+                right: 'Right',
+                top: 'Top',
                 topleft: 'Top Left',
                 topright: 'Top Right',
             };
+            this.placements;
         }
         ImagePlacementPicker.prototype.render = function () {
+            var _this = this;
             var placementPickerDiv = document.createElement('div');
             placementPickerDiv.className = 'form-element';
             placementPickerDiv.innerHTML = placementPicker(this.placements, 'topleft');
+            this.elements = placementPickerDiv.querySelectorAll('.placement');
+            Array.from(this.elements).forEach(function (el) {
+                if (el.dataset.selected === 'true')
+                    _this.currentSelected = el;
+                el.addEventListener('click', function (ev) {
+                    _this.currentSelected.dataset.selected = 'false';
+                    el.dataset.selected = 'true';
+                    console.log('DO SHIT!!!', el.dataset.value);
+                    _this.currentSelected = el;
+                });
+            });
             return placementPickerDiv;
         };
         return ImagePlacementPicker;
@@ -332,6 +362,7 @@
         STATENAMES["canvases"] = "canvases";
         STATENAMES["imageChange"] = "imageChange";
         STATENAMES["imageScale"] = "imageScale";
+        STATENAMES["imagePosition"] = "imagePosition";
         STATENAMES["theme"] = "theme";
         STATENAMES["themeName"] = "themeName";
     })(STATENAMES || (STATENAMES = {}));
@@ -343,6 +374,7 @@
             _b[RATIOTYPES.square] = 1,
             _b[RATIOTYPES.wide] = 1,
             _b),
+        _a$2[STATENAMES.imagePosition] = 'topleft',
         _a$2[STATENAMES.theme] = themes[defaultTheme],
         _a$2[STATENAMES.themeName] = defaultTheme,
         _a$2);
@@ -356,6 +388,7 @@
             return state;
         },
         _a$3[STOREACTIONS.imageChange] = function (state, payload) {
+            console.log('imageHasChanged mutation=STOREACTIONS.imageChange]', payload);
             state[STATENAMES.imageChange] = payload;
             return state;
         },
@@ -379,7 +412,10 @@
             return state;
         },
         _a$3[STOREACTIONS.updateCanvases] = function (state, payload) {
-            state[STATENAMES.canvases] = payload;
+            var _a;
+            console.log('STOREACTIONS.updateCanvases', state[STATENAMES.canvases], Array.isArray(payload));
+            (_a = state[STATENAMES.canvases]).push.apply(_a, payload);
+            // state[STATENAMES.canvases] = payload;
             return state;
         },
         _a$3);
@@ -632,7 +668,7 @@
                 var _a;
                 console.log('type', type);
                 store.dispatch(STOREACTIONS.setImageScale, (_a = {}, _a[type] = parseInt(imageScale, 10) / 100, _a));
-                store.dispatch(STOREACTIONS.imageChange, true);
+                store.dispatch(STOREACTIONS.imageChange, type);
             }, 250);
         };
         ImageHandler.prototype.renderHandlers = function (element) {
@@ -729,8 +765,6 @@
         else if (iWidth < iHeight) {
             if (type === RATIOTYPES.square) {
                 ratio = iHeight / iWidth;
-                var ratio2 = iWidth / iHeight;
-                console.log('what the bees?', ratio, ratio2);
                 w = cWidth;
                 h = cHeight * ratio;
             }
@@ -956,7 +990,7 @@
         return can;
     };
     var CanvasCreator = /** @class */ (function () {
-        function CanvasCreator(container, bannerdesigner) {
+        function CanvasCreator(container, bannerdesigner, type) {
             var _this = this;
             this.containerWidth = 640;
             this.canvasContainer = document.createElement('div');
@@ -1002,19 +1036,16 @@
             this.container.appendChild(this.canvasContainer);
             this.state = __assign({}, store.state);
             this.setTheme(this.state.theme, false);
-            this.addAll();
-            eventhandler.subscribe(STATENAMES.theme, function (theme, state) {
-                console.log('alter theme alter theme theme', state);
+            this.currentType = type;
+            this.addAll(type);
+            eventhandler.subscribe(STATENAMES.theme, function (theme, _state) {
                 _this.setTheme(theme);
             });
             eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, _state) {
                 _this.imageHasChanged = imageChange;
-                if (_this.imageHasChanged) {
+                if (_this.imageHasChanged === true || _this.imageHasChanged === _this.currentType) {
                     _this.update();
                 }
-            });
-            eventhandler.subscribe([STATENAMES.imageScale], function (imageScale, _state) {
-                console.log('imageScale imageScale imageScale', imageScale);
             });
         }
         CanvasCreator.prototype.getCanvas = function () {
@@ -1040,13 +1071,13 @@
             }
         };
         CanvasCreator.prototype.update = function () {
+            var _a;
             console.log('this.update!');
-            var eleList = this.form.elements;
-            var formElements = Array.from(eleList);
+            this.formElements = (_a = this.formElements) !== null && _a !== void 0 ? _a : Array.from(this.form.elements);
             var info = {
                 dates: {},
             };
-            formElements.forEach(function (el) {
+            this.formElements.forEach(function (el) {
                 if (el.dataset.line) {
                     info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
                     info.dates[el.dataset.line].push(el);
@@ -1061,11 +1092,11 @@
             this.addContent(info, true);
             // this.updateState();
         };
-        CanvasCreator.prototype.addAll = function () {
-            var _this = this;
-            this.types.forEach(function (configName) {
-                _this.addCanvas(configName);
-            });
+        CanvasCreator.prototype.addAll = function (type) {
+            console.log(type, this.types);
+            // this.types.forEach((configName) => {
+            this.addCanvas(type);
+            // });
             this.updateState();
         };
         CanvasCreator.prototype.addCanvas = function (configName) {
@@ -1148,7 +1179,9 @@
                             image = contentInfo.image;
                             canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
                             imageHasChanged = this.imageHasChanged;
-                            if (!(image && imageHasChanged)) return [3 /*break*/, 2];
+                            console.log('imageHasChanged', imageHasChanged, type);
+                            if (!(image && (imageHasChanged || imageHasChanged === type))) return [3 /*break*/, 2];
+                            console.log('imageHasChanged', imageHasChanged, type);
                             return [4 /*yield*/, imageUploader(image)];
                         case 1:
                             imageReturn = _b.sent();
@@ -1736,7 +1769,9 @@
         var container = document.createDocumentFragment();
         var formEl = document.createElement('form');
         formEl.className = 'form-container';
-        var canvasCreator = new CanvasCreator(canvascontainer, formEl);
+        var canvasCreator = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.wide);
+        var canvasCreator2 = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
+        console.log(canvasCreator2);
         formEl.addEventListener('change', function (ev) {
             var target = ev.target;
             if (target.nodeName === 'SELECT' && target.dataset.type === 'themepicker') {

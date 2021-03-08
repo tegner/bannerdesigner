@@ -8,6 +8,7 @@ import { TourDates } from './tourdates';
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 import { themes } from '../canvascreator/themes';
+import { RATIOTYPES } from '../canvascreator/canvascreator';
 
 const formElement = (name: string): string => `
   <div class="form-element">
@@ -23,7 +24,9 @@ export function createForm() {
   const formEl = document.createElement('form');
   formEl.className = 'form-container';
 
-  const canvasCreator = new CanvasCreator(canvascontainer, formEl);
+  const canvasCreator = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.wide);
+  const canvasCreator2 = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
+  console.log(canvasCreator2);
 
   formEl.addEventListener('change', (ev) => {
     const target = ev.target as HTMLInputElement;

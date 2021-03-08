@@ -1,20 +1,23 @@
 import { ICurrentCanvasConfig, RATIOTYPES } from '../canvascreator/canvascreator';
 import { IThemeObject, THEMENAMES, themes } from '../canvascreator/themes';
+import { TPlacementNames } from '../imagehandler/imageplacement';
 
 export enum STATENAMES {
   canvases = 'canvases',
   imageChange = 'imageChange',
   imageScale = 'imageScale',
+  imagePosition = 'imagePosition',
   theme = 'theme',
   themeName = 'themeName',
 }
 
 export interface IStoreState {
   [STATENAMES.canvases]: ICurrentCanvasConfig[];
-  [STATENAMES.imageChange]: boolean;
+  [STATENAMES.imageChange]: boolean | keyof RATIOTYPES;
   [STATENAMES.imageScale]: {
     [id: string]: number;
   };
+  [STATENAMES.imagePosition]: TPlacementNames;
   [STATENAMES.theme]: IThemeObject;
   [STATENAMES.themeName]: string;
 }
@@ -30,6 +33,7 @@ export const initialState: IStoreState = {
     [RATIOTYPES.square]: 1,
     [RATIOTYPES.wide]: 1,
   },
+  [STATENAMES.imagePosition]: 'topleft',
   [STATENAMES.theme]: themes[defaultTheme],
   [STATENAMES.themeName]: defaultTheme,
 };

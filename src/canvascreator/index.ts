@@ -63,14 +63,16 @@ export class CanvasCreator {
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
+  private currentType: RATIOTYPES;
   private form: HTMLFormElement;
+  private formElements: HTMLElement[];
   private image: HTMLImageElement;
-  private imageHasChanged = false;
+  private imageHasChanged: boolean | RATIOTYPES = false;
   private state: StateType;
   private theme: IThemeObject;
   private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
-  constructor(container, bannerdesigner) {
+  constructor(container, bannerdesigner, type) {
     this.form = bannerdesigner;
     this.container = container;
     this.containerWidth = container.clientWidth;
@@ -79,23 +81,19 @@ export class CanvasCreator {
     this.state = { ...store.state };
 
     this.setTheme(this.state.theme, false);
-    this.addAll();
+    this.currentType = type;
+    this.addAll(type);
 
-    eventhandler.subscribe(STATENAMES.theme, (theme, state) => {
-      console.log('alter theme alter theme theme', state);
+    eventhandler.subscribe(STATENAMES.theme, (theme, _state) => {
       this.setTheme(theme);
     });
 
     eventhandler.subscribe([STATENAMES.imageChange], (imageChange, _state) => {
       this.imageHasChanged = imageChange;
 
-      if (this.imageHasChanged) {
+      if (this.imageHasChanged === true || this.imageHasChanged === this.currentType) {
         this.update();
       }
-    });
-
-    eventhandler.subscribe([STATENAMES.imageScale], (imageScale, _state) => {
-      console.log('imageScale imageScale imageScale', imageScale);
     });
   }
 
@@ -123,15 +121,14 @@ export class CanvasCreator {
 
   public update() {
     console.log('this.update!');
-    const eleList = this.form.elements;
 
-    const formElements = Array.from(eleList);
+    this.formElements = this.formElements ?? (Array.from(this.form.elements) as HTMLElement[]);
 
     const info = {
       dates: {},
     };
 
-    formElements.forEach((el: HTMLInputElement) => {
+    this.formElements.forEach((el: HTMLInputElement) => {
       if (el.dataset.line) {
         info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
         info.dates[el.dataset.line].push(el);
@@ -147,10 +144,11 @@ export class CanvasCreator {
     // this.updateState();
   }
 
-  private addAll() {
-    this.types.forEach((configName) => {
-      this.addCanvas(configName);
-    });
+  private addAll(type: RATIOTYPES) {
+    console.log(type, this.types);
+    // this.types.forEach((configName) => {
+    this.addCanvas(type);
+    // });
     this.updateState();
   }
 
@@ -237,7 +235,11 @@ export class CanvasCreator {
     const { imageHasChanged } = this;
 
     let imageReturn;
-    if (image && imageHasChanged) {
+
+    console.log('imageHasChanged', imageHasChanged, type);
+
+    if (image && (imageHasChanged || imageHasChanged === type)) {
+      console.log('imageHasChanged', imageHasChanged, type);
       imageReturn = await imageUploader(image);
 
       this.image = imageReturn;

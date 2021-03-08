@@ -9,6 +9,7 @@ export default {
     return state;
   },
   [STOREACTIONS.imageChange](state, payload) {
+    console.log('imageHasChanged mutation=STOREACTIONS.imageChange]', payload);
     state[STATENAMES.imageChange] = payload;
 
     return state;
@@ -36,7 +37,11 @@ export default {
     return state;
   },
   [STOREACTIONS.updateCanvases](state, payload) {
-    state[STATENAMES.canvases] = payload;
+    console.log('STOREACTIONS.updateCanvases', state[STATENAMES.canvases], Array.isArray(payload));
+
+    state[STATENAMES.canvases].push(...payload);
+
+    // state[STATENAMES.canvases] = payload;
 
     return state;
   },
