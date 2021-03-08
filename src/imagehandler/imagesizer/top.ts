@@ -1,6 +1,6 @@
 import { initialscaler } from './initialscaler';
 
-export function bottom(image, canvas, type) {
+export function topLeft(image, canvas, type) {
   const iWidth = image.width;
   const iHeight = image.height;
 
@@ -9,7 +9,7 @@ export function bottom(image, canvas, type) {
 
   const { h, w } = initialscaler({ cHeight, cWidth, iHeight, iWidth, type });
 
-  const y = cHeight - h,
+  const y = 0,
     x = cWidth / 2 - w / 2;
 
   return { image, x, y, w, h };

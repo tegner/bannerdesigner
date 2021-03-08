@@ -1,4 +1,8 @@
 import { PLACEMENTNAMES } from '../imageplacement';
+import { bottomRight } from './bottomright';
+import { bottom } from './bottom';
+import { bottomLeft } from './bottomleft';
+import { center } from './center';
 import { topLeft } from './topleft';
 
 export { bottomRight } from './bottomright';
