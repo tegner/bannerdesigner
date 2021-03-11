@@ -2,7 +2,7 @@ import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, IC
 import { IThemeObject } from './themes';
 
 import { DragHandler, EVENTNAMES } from '../draghandler';
-import { imageScaler, imageUploader } from '../imagehandler/';
+import { imagePositioner, imageUploader } from '../imagehandler/';
 import { simpleTextStyler } from '../textstyler';
 
 import store from '../util/store';
@@ -248,7 +248,7 @@ export class CanvasCreator {
       this.image = imageReturn;
       if (current.image) delete current.image;
       console.log('type type type', type);
-      current.image = imageScaler(this.image, canvas, type, store.state.imagePosition);
+      current.image = imagePositioner(this.image, canvas, type, store.state.imagePosition);
     }
 
     if (current.image) {

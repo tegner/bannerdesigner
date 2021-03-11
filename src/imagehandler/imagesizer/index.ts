@@ -1,4 +1,4 @@
 export { bottomRight } from './bottomright';
-export { imageScaler } from './imagescaler';
+export { imagePositioner } from './imagepositioner';
 export { ManualScaler } from './manualscaler';
 export { topLeft } from './topleft';

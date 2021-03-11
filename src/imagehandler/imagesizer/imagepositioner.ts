@@ -9,7 +9,7 @@ import { top } from './top';
 import { topLeft } from './topleft';
 import { topRight } from './topright';
 
-export function imageScaler(image, canvas, imagetype, pos) {
+export function imagePositioner(image, canvas, imagetype, pos) {
   switch (pos) {
     case PLACEMENTNAMES.bottom:
       return bottom(image, canvas, imagetype);

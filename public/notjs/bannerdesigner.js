@@ -215,28 +215,6 @@
         return DragHandler;
     }());
 
-    var PubSub = /** @class */ (function () {
-        function PubSub() {
-            this.events = {};
-        }
-        PubSub.prototype.publish = function (event, data, key) {
-            if (data === void 0) { data = {}; }
-            var self = this;
-            if (!self.events[event]) {
-                return [];
-            }
-            return self.events[event].map(function (callback) { return callback(data, key); });
-        };
-        PubSub.prototype.subscribe = function (event, callback) {
-            var self = this;
-            if (!self.events[event]) {
-                self.events[event] = [];
-            }
-            return self.events[event].push(callback);
-        };
-        return PubSub;
-    }());
-
     var _a;
     var STOREACTIONS;
     (function (STOREACTIONS) {
@@ -393,6 +371,28 @@
         },
         _a$3);
 
+    var PubSub = /** @class */ (function () {
+        function PubSub() {
+            this.events = {};
+        }
+        PubSub.prototype.publish = function (event, data, key) {
+            if (data === void 0) { data = {}; }
+            var self = this;
+            if (!self.events[event]) {
+                return [];
+            }
+            return self.events[event].map(function (callback) { return callback(data, key); });
+        };
+        PubSub.prototype.subscribe = function (event, callback) {
+            var self = this;
+            if (!self.events[event]) {
+                self.events[event] = [];
+            }
+            return self.events[event].push(callback);
+        };
+        return PubSub;
+    }());
+
     var Store = /** @class */ (function () {
         function Store(params) {
             // Add some default objects to hold our actions, mutations and state
@@ -494,22 +494,174 @@
         state: initialState,
     });
 
-    var eventhandler = new PubSub();
-    var HandlingStateChange = /** @class */ (function () {
-        function HandlingStateChange() {
-            var _this = this;
-            this.state = __assign({}, store.state);
-            store.events.subscribe('stateChange', function (newState, key) {
-                console.log('newState', newState, key, _this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key]));
-                if (_this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key])) {
-                    eventhandler.publish(key, newState[key], newState);
-                    _this.state = __assign({}, newState);
+    // import { ImagePlacementPicker } from './imageplacement';
+    var ImageHandler = /** @class */ (function () {
+        // TODO: VisualScaling
+        // private scalers: {
+        //   [RATIOTYPES.square]: ManualScaler;
+        //   [RATIOTYPES.wide]: ManualScaler;
+        // } = {
+        //   [RATIOTYPES.square]: null,
+        //   [RATIOTYPES.wide]: null,
+        // };
+        function ImageHandler() {
+            var _a, _b;
+            this.containers = [];
+            this.imagePickerFrag = document.createElement('div');
+            this.imageFileElement = (function () {
+                var imageFileElement = document.createElement('input');
+                imageFileElement.type = 'file';
+                imageFileElement.style.display = 'none';
+                return imageFileElement;
+            })();
+            this.imageFileValue = (function () {
+                var imageFileValue = document.createElement('small');
+                imageFileValue.className = 'file-value';
+                return imageFileValue;
+            })();
+            this.parents = (_a = {},
+                _a[RATIOTYPES.square] = null,
+                _a[RATIOTYPES.wide] = null,
+                _a);
+            this.prevScale = (_b = {},
+                _b[RATIOTYPES.square] = 1,
+                _b[RATIOTYPES.wide] = 1,
+                _b);
+            for (var key in store.state.imageScale) {
+                if (key) {
+                    this.prevScale[key] = store.state.imageScale[key];
                 }
-            });
+            }
+            // TODO: VisualScaling
+            // eventhandler.subscribe([STATENAMES.imageScale], (imageScale, state) => {
+            //   let changed = '';
+            //   for (const key in imageScale) {
+            //     if (imageScale[key] !== this.prevScale[key]) {
+            //       this.prevScale[key] = imageScale[key];
+            //       changed = key;
+            //     }
+            //   }
+            //   this.scalers[changed].scaleElement();
+            // });
         }
-        return HandlingStateChange;
+        ImageHandler.prototype.render = function () {
+            var _this = this;
+            var fileElement = document.createElement('div');
+            fileElement.className = 'form-element flex flex-align--center';
+            /** Actual file picker  */
+            fileElement.appendChild(this.imageFileElement);
+            /** Button */
+            var imageButton = document.createElement('button');
+            imageButton.className = 'button button--file';
+            imageButton.innerText = 'Vælg billede';
+            fileElement.appendChild(imageButton);
+            fileElement.appendChild(this.imageFileValue);
+            /** eventlisteners */
+            imageButton.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                _this.imageFileElement.click();
+            });
+            this.imageFileElement.addEventListener('change', this.change.bind(this));
+            this.imagePickerFrag.appendChild(fileElement);
+            return this.imagePickerFrag;
+        };
+        ImageHandler.prototype.change = function () {
+            var _this = this;
+            var splitValue = this.imageFileElement.value.split('\\');
+            this.imageFileValue.innerHTML = splitValue[splitValue.length - 1];
+            store.dispatch(STOREACTIONS.imageChange, true);
+            this.clearHandlers();
+            store.state.canvases.forEach(function (element) {
+                _this.renderHandlers(element, element.configName);
+            });
+        };
+        ImageHandler.prototype.clearHandlers = function () {
+            var i = 0;
+            while (i < this.containers.length) {
+                this.containers[i].remove();
+                i++;
+            }
+            this.containers.length = 0;
+        };
+        ImageHandler.prototype.debounce = function (imageScale, type) {
+            clearTimeout(this.debounceTimeout);
+            this.debounceTimeout = setTimeout(function () {
+                var _a;
+                console.log('type', type);
+                store.dispatch(STOREACTIONS.setImageScale, (_a = {}, _a[type] = parseInt(imageScale, 10) / 100, _a));
+                store.dispatch(STOREACTIONS.imageChange, type);
+            }, 250);
+        };
+        ImageHandler.prototype.renderHandlers = function (element, configName) {
+            var _this = this;
+            console.log('canvasElement', element, configName);
+            var handlingFieldset = document.createElement('fieldset');
+            handlingFieldset.className = 'form-element margin-m--b';
+            this.containers.push(handlingFieldset);
+            var handlingLegend = document.createElement('legend');
+            handlingLegend.className = 'legend';
+            handlingLegend.innerHTML = element.header;
+            handlingFieldset.appendChild(handlingLegend);
+            var handlingElement = document.createElement('div');
+            handlingElement.className = 'form-element flex flex-justify--between flex-align--center';
+            handlingFieldset.appendChild(handlingElement);
+            // TODO: VisualScaling
+            // const { image, scaleFactor, type, wrapper } = element;
+            var type = element.type;
+            this.parents[type] = handlingElement;
+            // TODO: VisualScaling
+            // this.scalers[type] =
+            //   this.scalers[type] || new ManualScaler({ image, parent: handlingElement, scaleFactor, type, wrapper });
+            /**
+             * Scaler button
+             */
+            var scaleImage = document.createElement('div');
+            scaleImage.innerHTML = 'Skalér billede:';
+            // TODO: VisualScaling
+            // scaleImage.className = 'button';
+            // scaleImage.addEventListener('click', () => {
+            //   this.scalers[type].scaleElement();
+            // });
+            handlingElement.appendChild(scaleImage);
+            /**
+             * Scaler element
+             */
+            var scalerLabel = document.createElement('div');
+            var scalerElement = document.createElement('input');
+            scalerElement.style.textAlign = 'right';
+            scalerElement.type = 'number';
+            scalerElement.value = '100';
+            scalerElement.addEventListener('keyup', function () {
+                console.log('debounce this keyup');
+                _this.debounce(scalerElement.value, element.type);
+            });
+            scalerLabel.appendChild(scalerElement);
+            var textInput = document.createTextNode('%');
+            scalerLabel.appendChild(textInput);
+            handlingElement.appendChild(scalerLabel);
+            // const cover = document.createElement('div');
+            // cover.className = 'button';
+            // cover.innerHTML = 'Cover';
+            // handlingElement.appendChild(cover);
+            // cover.addEventListener('click', () => {
+            //   console.log('image COVER!');
+            //   // store.dispatch(STOREACTIONS.imageChange, true);
+            // });
+            // const stretch = document.createElement('div');
+            // stretch.className = 'button';
+            // stretch.innerHTML = 'Stretch';
+            // handlingElement.appendChild(stretch);
+            // stretch.addEventListener('click', () => {
+            //   console.log('image STRETCH!');
+            //   // store.dispatch(STOREACTIONS.imageChange, true);
+            // });
+            /** Image placement */
+            // const imagePlacement = new ImagePlacementPicker(element.configName);
+            // handlingFieldset.appendChild(imagePlacement.render());
+            this.imagePickerFrag.appendChild(handlingFieldset);
+        };
+        return ImageHandler;
     }());
-    new HandlingStateChange();
 
     var PLACEMENTNAMES;
     (function (PLACEMENTNAMES) {
@@ -523,6 +675,27 @@
         PLACEMENTNAMES["topleft"] = "topleft";
         PLACEMENTNAMES["topright"] = "topright";
     })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
+
+    function imageUploader(input) {
+        var url = input.value;
+        var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
+        return new Promise(function (resolve, reject) {
+            if (input.files && input.files[0] && (ext == 'gif' || ext == 'png' || ext == 'jpeg' || ext == 'jpg')) {
+                var reader = new FileReader();
+                reader.addEventListener('load', function (readerLoadEvent) {
+                    var base_image = new Image();
+                    base_image.src = readerLoadEvent.target.result.toString();
+                    base_image.addEventListener('load', function () {
+                        resolve(base_image);
+                    });
+                });
+                reader.readAsDataURL(input.files[0]);
+            }
+            else {
+                reject();
+            }
+        });
+    }
 
     function initialscaler(scalerOptions) {
         var cHeight = scalerOptions.cHeight, cWidth = scalerOptions.cWidth, iHeight = scalerOptions.iHeight, iWidth = scalerOptions.iWidth, type = scalerOptions.type;
@@ -568,6 +741,16 @@
         return { h: h, w: w };
     }
 
+    function bottomRight(image, canvas, type) {
+        var iWidth = image.width;
+        var iHeight = image.height;
+        var cWidth = canvas.width;
+        var cHeight = canvas.height;
+        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
+        var y = cHeight - h, x = cWidth - w;
+        return { image: image, x: x, y: y, w: w, h: h };
+    }
+
     function bottom(image, canvas, type) {
         var iWidth = image.width;
         var iHeight = image.height;
@@ -585,16 +768,6 @@
         var cHeight = canvas.height;
         var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
         var y = cHeight - h, x = 0;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function bottomRight(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = cHeight - h, x = cWidth - w;
         return { image: image, x: x, y: y, w: w, h: h };
     }
 
@@ -658,7 +831,7 @@
         return { image: image, x: x, y: y, w: w, h: h };
     }
 
-    function imageScaler(image, canvas, imagetype, pos) {
+    function imagePositioner(image, canvas, imagetype, pos) {
         switch (pos) {
             case PLACEMENTNAMES.bottom:
                 return bottom(image, canvas, imagetype);
@@ -679,253 +852,6 @@
             case PLACEMENTNAMES.topright:
                 return topRight(image, canvas, imagetype);
         }
-    }
-
-    // import { eventhandler } from '../../util/eventhandler';
-    // function scalePoint(pos: string) {
-    //   const point = document.createElement('div');
-    //   point.className = `scalepoint scalepoint--${pos}`;
-    //   return point;
-    // }
-    var ManualScaler = /** @class */ (function () {
-        function ManualScaler(element) {
-            this.current = element.type;
-            console.log('cur cur cur SCALER!!!! element', element);
-            // eventhandler.subscribe([STATENAMES.imageChange], (imageChange, state) => {
-            //   console.log('SCALER!!!!', imageChange, 'stae', state);
-            //   this.clearScaler();
-            // });
-        }
-        ManualScaler.prototype.scaleElement = function () {
-            this.clearScaler();
-            console.log('scaleElement', this.current);
-            this.scaler(this.current);
-            this.scaleVisualization(this.current);
-        };
-        ManualScaler.prototype.clearScaler = function () {
-            console.log('clearScaler cur cur cur');
-            if (this.currentContainer) {
-                this.currentContainer.remove();
-            }
-        };
-        ManualScaler.prototype.scaler = function (type) {
-            console.log('image SCALE!', type);
-            console.log('image SCALE! store, store.state', store.state.canvases);
-        };
-        ManualScaler.prototype.scaleVisualization = function (type) {
-            var cur = store.state.canvases.find(function (el) { return el.configName === type; });
-            var canvas = cur.canvas, image = cur.image, scaleFactor = cur.scaleFactor, wrapper = cur.wrapper;
-            console.log('cur cur cur', cur, type, image, scaleFactor, wrapper);
-            var currentImage = imageScaler(image, canvas, type, store.state.imagePosition);
-            var scaleImage = document.createElement('img');
-            scaleImage.src = image.image.src;
-            scaleImage.setAttribute('style', 'height: 100%; width: 100%;');
-            console.log('image.image.src cur cur cur', image);
-            var scaleElementContainer = document.createElement('div');
-            scaleElementContainer.appendChild(scaleImage);
-            scaleElementContainer.className = 'scalearea';
-            var styleString = "\n      top: " + currentImage.x + "px;\n      left: " + currentImage.y + "px;\n      width:" + currentImage.w + "px;\n      height:" + currentImage.h + "px;\n      transform: scale(" + scaleFactor + ");\n      ";
-            scaleElementContainer.setAttribute('style', styleString);
-            // ['topright', 'topleft', 'bottomright', 'bottomleft'].forEach((pos) => {
-            //   scaleElementContainer.appendChild(scalePoint(pos));
-            // });
-            this.currentContainer = scaleElementContainer;
-            wrapper.appendChild(scaleElementContainer);
-            console.log('cur cur cur cur cur cur cur cur ');
-        };
-        return ManualScaler;
-    }());
-
-    // import { ImagePlacementPicker } from './imageplacement';
-    var ImageHandler = /** @class */ (function () {
-        function ImageHandler() {
-            var _a, _b, _c;
-            var _this = this;
-            this.containers = [];
-            this.imagePickerFrag = document.createElement('div');
-            this.imageFileElement = (function () {
-                var imageFileElement = document.createElement('input');
-                imageFileElement.type = 'file';
-                imageFileElement.style.display = 'none';
-                return imageFileElement;
-            })();
-            this.imageFileValue = (function () {
-                var imageFileValue = document.createElement('small');
-                imageFileValue.className = 'file-value';
-                return imageFileValue;
-            })();
-            // private manualScaler: ManualScaler;
-            this.parents = (_a = {},
-                _a[RATIOTYPES.square] = null,
-                _a[RATIOTYPES.wide] = null,
-                _a);
-            this.prevScale = (_b = {},
-                _b[RATIOTYPES.square] = 1,
-                _b[RATIOTYPES.wide] = 1,
-                _b);
-            this.scalers = (_c = {},
-                _c[RATIOTYPES.square] = null,
-                _c[RATIOTYPES.wide] = null,
-                _c);
-            for (var key in store.state.imageScale) {
-                if (key) {
-                    this.prevScale[key] = store.state.imageScale[key];
-                }
-            }
-            eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, state) {
-                console.log('IMAGEPICKER!!!', imageChange);
-                if (imageChange === true) {
-                    console.log('IMAGEPICKER!!!', state);
-                }
-            });
-            eventhandler.subscribe([STATENAMES.imageScale], function (imageScale, state) {
-                console.log('IMAGEPICKER!!! imageScale', imageScale);
-                console.log('IMAGEPICKER!!! imageScale -this.prevScale', _this.prevScale);
-                var changed = '';
-                for (var key in imageScale) {
-                    if (imageScale[key] !== _this.prevScale[key]) {
-                        _this.prevScale[key] = imageScale[key];
-                        changed = key;
-                    }
-                }
-                console.log('IMAGEPICKER!!! imageScale changed', changed);
-                // const { type } = state;
-                // this.manualScaler =
-                //   this.manualScaler || new ManualScaler({ image, parent: handlingElement, scaleFactor, wrapper });
-                _this.scalers[changed].scaleElement();
-            });
-        }
-        ImageHandler.prototype.render = function () {
-            var _this = this;
-            var fileElement = document.createElement('div');
-            fileElement.className = 'form-element flex flex-align--center';
-            /** Actual file picker  */
-            fileElement.appendChild(this.imageFileElement);
-            /** Button */
-            var imageButton = document.createElement('button');
-            imageButton.className = 'button button--file';
-            imageButton.innerText = 'Vælg billede';
-            fileElement.appendChild(imageButton);
-            fileElement.appendChild(this.imageFileValue);
-            /** eventlisteners */
-            imageButton.addEventListener('click', function (ev) {
-                ev.preventDefault();
-                _this.imageFileElement.click();
-            });
-            this.imageFileElement.addEventListener('change', this.change.bind(this));
-            this.imagePickerFrag.appendChild(fileElement);
-            return this.imagePickerFrag;
-        };
-        ImageHandler.prototype.change = function () {
-            var _this = this;
-            var splitValue = this.imageFileElement.value.split('\\');
-            this.imageFileValue.innerHTML = splitValue[splitValue.length - 1];
-            store.dispatch(STOREACTIONS.imageChange, true);
-            this.clearHandlers();
-            store.state.canvases.forEach(function (element) {
-                _this.renderHandlers(element, element.configName);
-            });
-        };
-        ImageHandler.prototype.clearHandlers = function () {
-            var i = 0;
-            while (i < this.containers.length) {
-                this.containers[i].remove();
-                i++;
-            }
-            this.containers.length = 0;
-        };
-        ImageHandler.prototype.debounce = function (imageScale, type) {
-            clearTimeout(this.debounceTimeout);
-            this.debounceTimeout = setTimeout(function () {
-                var _a;
-                console.log('type', type);
-                store.dispatch(STOREACTIONS.setImageScale, (_a = {}, _a[type] = parseInt(imageScale, 10) / 100, _a));
-                store.dispatch(STOREACTIONS.imageChange, type);
-            }, 250);
-        };
-        ImageHandler.prototype.renderHandlers = function (element, configName) {
-            var _this = this;
-            console.log('canvasElement', element, configName);
-            var handlingFieldset = document.createElement('fieldset');
-            handlingFieldset.className = 'form-element margin-m--b';
-            this.containers.push(handlingFieldset);
-            var handlingLegend = document.createElement('legend');
-            handlingLegend.className = 'legend';
-            handlingLegend.innerHTML = element.header;
-            handlingFieldset.appendChild(handlingLegend);
-            var handlingElement = document.createElement('div');
-            handlingElement.className = 'form-element flex flex-justify--between flex-align--center';
-            handlingFieldset.appendChild(handlingElement);
-            var image = element.image, scaleFactor = element.scaleFactor, type = element.type, wrapper = element.wrapper;
-            console.log('this.manualScaler type type type', type, this.parents);
-            this.parents[type] = handlingElement;
-            console.log('this.manualScaler image', image);
-            this.scalers[type] =
-                this.scalers[type] || new ManualScaler({ image: image, parent: handlingElement, scaleFactor: scaleFactor, type: type, wrapper: wrapper });
-            /**
-             * Scaler button
-             */
-            var scaleImage = document.createElement('div');
-            scaleImage.className = 'button';
-            scaleImage.innerHTML = 'Skalér billede';
-            scaleImage.addEventListener('click', function () {
-                _this.scalers[type].scaleElement();
-            });
-            handlingElement.appendChild(scaleImage);
-            /**
-             * Scaler element
-             */
-            var scalerElement = document.createElement('input');
-            scalerElement.type = 'number';
-            scalerElement.value = '100';
-            scalerElement.addEventListener('keyup', function () {
-                console.log('debounce this keyup');
-                _this.debounce(scalerElement.value, element.type);
-            });
-            handlingElement.appendChild(scalerElement);
-            // const cover = document.createElement('div');
-            // cover.className = 'button';
-            // cover.innerHTML = 'Cover';
-            // handlingElement.appendChild(cover);
-            // cover.addEventListener('click', () => {
-            //   console.log('image COVER!');
-            //   // store.dispatch(STOREACTIONS.imageChange, true);
-            // });
-            // const stretch = document.createElement('div');
-            // stretch.className = 'button';
-            // stretch.innerHTML = 'Stretch';
-            // handlingElement.appendChild(stretch);
-            // stretch.addEventListener('click', () => {
-            //   console.log('image STRETCH!');
-            //   // store.dispatch(STOREACTIONS.imageChange, true);
-            // });
-            /** Image placement */
-            // const imagePlacement = new ImagePlacementPicker(element.configName);
-            // handlingFieldset.appendChild(imagePlacement.render());
-            this.imagePickerFrag.appendChild(handlingFieldset);
-        };
-        return ImageHandler;
-    }());
-
-    function imageUploader(input) {
-        var url = input.value;
-        var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
-        return new Promise(function (resolve, reject) {
-            if (input.files && input.files[0] && (ext == 'gif' || ext == 'png' || ext == 'jpeg' || ext == 'jpg')) {
-                var reader = new FileReader();
-                reader.addEventListener('load', function (readerLoadEvent) {
-                    var base_image = new Image();
-                    base_image.src = readerLoadEvent.target.result.toString();
-                    base_image.addEventListener('load', function () {
-                        resolve(base_image);
-                    });
-                });
-                reader.readAsDataURL(input.files[0]);
-            }
-            else {
-                reject();
-            }
-        });
     }
 
     var simpleTextStyler = {
@@ -1105,6 +1031,23 @@
             });
         });
     }
+
+    var eventhandler = new PubSub();
+    var HandlingStateChange = /** @class */ (function () {
+        function HandlingStateChange() {
+            var _this = this;
+            this.state = __assign({}, store.state);
+            store.events.subscribe('stateChange', function (newState, key) {
+                console.log('newState', newState, key, _this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key]));
+                if (_this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key])) {
+                    eventhandler.publish(key, newState[key], newState);
+                    _this.state = __assign({}, newState);
+                }
+            });
+        }
+        return HandlingStateChange;
+    }());
+    new HandlingStateChange();
 
     var sizeCanvas = function (w, h, ratio) {
         if (ratio === void 0) { ratio = 4; }
@@ -1319,7 +1262,7 @@
                             if (current.image)
                                 delete current.image;
                             console.log('type type type', type);
-                            current.image = imageScaler(this.image, canvas, type, store.state.imagePosition);
+                            current.image = imagePositioner(this.image, canvas, type, store.state.imagePosition);
                             _b.label = 2;
                         case 2:
                             if (current.image) {

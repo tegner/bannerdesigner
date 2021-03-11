@@ -1,6 +1,6 @@
 // import { eventhandler } from '../../util/eventhandler';
 // import { STATENAMES } from '../../util/initialstate';
-import { imageScaler } from './imagescaler';
+import { imagePositioner } from './imagepositioner';
 import store from '../../util/store';
 
 // function scalePoint(pos: string) {
@@ -48,7 +48,7 @@ export class ManualScaler {
     const { canvas, image, scaleFactor, wrapper } = cur;
     console.log('cur cur cur', cur, type, image, scaleFactor, wrapper);
 
-    const currentImage = imageScaler(image, canvas, type, store.state.imagePosition);
+    const currentImage = imagePositioner(image, canvas, type, store.state.imagePosition);
 
     const scaleImage = document.createElement('img');
     scaleImage.src = image.image.src;
