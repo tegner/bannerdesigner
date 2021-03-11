@@ -68,7 +68,7 @@ export class CanvasCreator {
   private form: HTMLFormElement;
   private formElements: HTMLElement[];
   private image: HTMLImageElement;
-  private imageHasChanged: boolean | RATIOTYPES = false;
+  private imageHasChanged: any = false;
 
   private theme: IThemeObject;
   private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
@@ -90,8 +90,13 @@ export class CanvasCreator {
 
     eventhandler.subscribe([STATENAMES.imageChange], (imageChange, _state) => {
       this.imageHasChanged = imageChange;
+      console.log(
+        'imageChange_imageChange_imageChange this.imageHasChanged.type',
+        this.imageHasChanged,
+        this.imageHasChanged.type
+      );
 
-      if (this.imageHasChanged === true || this.imageHasChanged === this.currentType) {
+      if (this.imageHasChanged === true || this.imageHasChanged.type === this.currentType) {
         this.update();
       }
     });
@@ -239,24 +244,41 @@ export class CanvasCreator {
     const { imageHasChanged } = this;
 
     let imageReturn;
-    if (image && (imageHasChanged || imageHasChanged === type)) {
-      console.log('current.image current.image', current.image);
-      imageReturn = await imageUploader(image);
+    console.log('current.image_current.image', imageHasChanged, current.image);
+    if (imageHasChanged !== false) {
+      if (image && (imageHasChanged === true || imageHasChanged === type)) {
+        imageReturn = await imageUploader(image);
 
-      this.image = imageReturn;
-      if (current.image) delete current.image;
+        this.image = imageReturn;
+        if (current.image) delete current.image;
+      }
 
       const options = {
         cHeight: canvas.height,
         cWidth: canvas.width,
-        iHeight: image.height,
-        iWidth: image.width,
+        iHeight: this.image.height,
+        iWidth: this.image.width,
         type,
       };
-      const imgSize = initialscaler(options);
-      const imgPos = imagePositioner({ options, ...imgSize }, store.state.imagePosition);
+
+      let imgSize = initialscaler(options);
+
+      let imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
+      if (imageHasChanged.type === type) {
+        switch (imageHasChanged.action) {
+          case 'scale':
+            imgSize = initialscaler(options);
+            break;
+          case 'position':
+            imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
+            break;
+          default:
+            imgPos = imagePositioner({ options, ...imgSize }, store.state.imagePosition);
+        }
+      }
 
       current.image = { image: this.image, ...imgPos, ...imgSize };
+      console.log('_current.image_current.image_ alot', current.image, imgPos, imgSize);
     }
 
     if (current.image) {

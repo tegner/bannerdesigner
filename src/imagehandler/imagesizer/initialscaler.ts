@@ -3,6 +3,7 @@ import store from '../../util/store';
 
 export function initialscaler(scalerOptions) {
   const { cHeight, cWidth, iHeight, iWidth, type } = scalerOptions;
+  console.log('scalerOptions', scalerOptions, 'store.state.imageScale[type]', store.state.imageScale[type]);
 
   let w = cWidth > iWidth ? cWidth : iWidth;
   let h = cHeight > iHeight ? cHeight : iHeight;
@@ -40,6 +41,6 @@ export function initialscaler(scalerOptions) {
 
   h = h * store.state.imageScale[type];
   w = w * store.state.imageScale[type];
-
+  console.log('scalerOptions', h, w);
   return { h, w };
 }

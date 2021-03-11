@@ -1,5 +1,7 @@
 import { ICanvasImage, ICurrentCanvasConfig } from '../canvascreator/canvascreator';
 import { EventBus } from '../eventbus';
+import store from '../util/store';
+import { STOREACTIONS } from '../util/store/actions';
 
 export enum EVENTNAMES {
   'dragstop' = 'dragstop',
@@ -59,6 +61,10 @@ export class DragHandler {
     if (emitStopped) {
       this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
       this.current.canvas.style.cursor = 'default';
+      console.log('dragshit', this.current);
+      const { x, y } = this.imageInfo;
+
+      store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.current.type, x, y });
     }
   }
 

@@ -119,7 +119,7 @@ export class ImageHandler {
     this.debounceTimeout = setTimeout(() => {
       console.log('type', type);
       store.dispatch(STOREACTIONS.setImageScale, { [type]: parseInt(imageScale, 10) / 100 });
-      store.dispatch(STOREACTIONS.imageChange, type);
+      store.dispatch(STOREACTIONS.imageChange, { action: 'scale', type, scale: parseInt(imageScale, 10) / 100 });
     }, 250);
   }
 

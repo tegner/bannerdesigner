@@ -108,113 +108,6 @@
     // myEventBus.emit('event-name', 'Hello'); // => Hello Hello
     // myEventBus.emit('event-name', 'World'); // => World
 
-    var EVENTNAMES;
-    (function (EVENTNAMES) {
-        EVENTNAMES["dragstop"] = "dragstop";
-    })(EVENTNAMES || (EVENTNAMES = {}));
-    var DragHandler = /** @class */ (function () {
-        function DragHandler(current, scaleFactor) {
-            var _this = this;
-            this.events = new EventBus('my-draghandler-eventbus');
-            this.dragging = false;
-            this.scaleFactor = scaleFactor;
-            this.offsetX = current.canvas.offsetLeft;
-            this.offsetY = current.canvas.offsetTop;
-            this.current = current;
-            this.setImage(current.image);
-            // listen for mouse events
-            current.canvas.addEventListener('mousedown', function (mouseEv) {
-                _this.handleMouseDown(mouseEv);
-            });
-            current.canvas.addEventListener('mousemove', function (mouseEv) {
-                _this.handleMouseMove(mouseEv);
-            });
-            current.canvas.addEventListener('mouseenter', function (mouseEv) {
-                _this.handleMouseEnter(mouseEv);
-            });
-            current.canvas.addEventListener('mouseout', function (mouseEv) {
-                _this.handleMouseOut(mouseEv);
-            });
-            current.canvas.addEventListener('mouseup', function (mouseEv) {
-                _this.handleMouseUp(mouseEv);
-            });
-        }
-        DragHandler.prototype.setImage = function (imageInfo) {
-            this.imageInfo = imageInfo;
-        };
-        DragHandler.prototype.dragStopped = function () {
-            var emitStopped = this.dragging;
-            this.dragging = false;
-            if (emitStopped) {
-                this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
-                this.current.canvas.style.cursor = 'default';
-            }
-        };
-        // test if x,y is inside the bounding box of texts[textIndex]
-        DragHandler.prototype.imageHittest = function (x, y) {
-            var _a = this.imageInfo, imageH = _a.h, imageX = _a.x, imageY = _a.y, imageW = _a.w;
-            var scaledX = imageX * this.scaleFactor;
-            var scaledY = imageY * this.scaleFactor;
-            return x >= scaledX && x <= scaledX + imageW && y >= scaledY && y <= scaledY + imageH;
-        };
-        // handle mousedown events
-        // iterate through texts[] and see if the user
-        // mousedown'ed on one of them
-        // If yes, set the selectedText to the index of that text
-        DragHandler.prototype.handleMouseDown = function (ev) {
-            ev.preventDefault();
-            this.startX = ev.clientX - this.offsetX;
-            this.startY = ev.clientY - this.offsetY;
-            // Put your mousedown stuff here
-            this.dragging = this.imageHittest(this.startX, this.startY);
-        };
-        DragHandler.prototype.handleMouseEnter = function (ev) {
-            ev.preventDefault();
-            this.startX = ev.clientX - this.offsetX;
-            this.startY = ev.clientY - this.offsetY;
-            // Put your MouseEnter stuff here
-            if (this.imageHittest(this.startX, this.startY)) {
-                this.current.canvas.style.cursor = 'pointer';
-            }
-        };
-        // handle mousemove events
-        // calc how far the mouse has been dragged since
-        // the last mousemove event and move the selected text
-        // by that distance
-        DragHandler.prototype.handleMouseMove = function (ev) {
-            if (!this.dragging) {
-                return;
-            }
-            ev.preventDefault();
-            var mouseX = ev.clientX - this.offsetX;
-            var mouseY = ev.clientY - this.offsetY;
-            // Put your mousemove stuff here
-            var dx = mouseX - this.startX;
-            var dy = mouseY - this.startY;
-            this.startX = mouseX;
-            this.startY = mouseY;
-            var _a = this.imageInfo, h = _a.h, image = _a.image, x = _a.x, y = _a.y, w = _a.w;
-            var _b = this.current, canvas = _b.canvas, canvasContext = _b.canvasContext;
-            canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-            canvasContext.fillRect(0, 0, canvas.width, canvas.height);
-            canvasContext.fillRect(x, y, x + w, y + h);
-            this.imageInfo.x += dx;
-            this.imageInfo.y += dy;
-            canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
-        };
-        // also done dragging
-        DragHandler.prototype.handleMouseOut = function (ev) {
-            ev.preventDefault();
-            this.dragStopped();
-        };
-        // done dragging
-        DragHandler.prototype.handleMouseUp = function (ev) {
-            ev.preventDefault();
-            this.dragStopped();
-        };
-        return DragHandler;
-    }());
-
     var _a;
     var STOREACTIONS;
     (function (STOREACTIONS) {
@@ -494,6 +387,116 @@
         state: initialState,
     });
 
+    var EVENTNAMES;
+    (function (EVENTNAMES) {
+        EVENTNAMES["dragstop"] = "dragstop";
+    })(EVENTNAMES || (EVENTNAMES = {}));
+    var DragHandler = /** @class */ (function () {
+        function DragHandler(current, scaleFactor) {
+            var _this = this;
+            this.events = new EventBus('my-draghandler-eventbus');
+            this.dragging = false;
+            this.scaleFactor = scaleFactor;
+            this.offsetX = current.canvas.offsetLeft;
+            this.offsetY = current.canvas.offsetTop;
+            this.current = current;
+            this.setImage(current.image);
+            // listen for mouse events
+            current.canvas.addEventListener('mousedown', function (mouseEv) {
+                _this.handleMouseDown(mouseEv);
+            });
+            current.canvas.addEventListener('mousemove', function (mouseEv) {
+                _this.handleMouseMove(mouseEv);
+            });
+            current.canvas.addEventListener('mouseenter', function (mouseEv) {
+                _this.handleMouseEnter(mouseEv);
+            });
+            current.canvas.addEventListener('mouseout', function (mouseEv) {
+                _this.handleMouseOut(mouseEv);
+            });
+            current.canvas.addEventListener('mouseup', function (mouseEv) {
+                _this.handleMouseUp(mouseEv);
+            });
+        }
+        DragHandler.prototype.setImage = function (imageInfo) {
+            this.imageInfo = imageInfo;
+        };
+        DragHandler.prototype.dragStopped = function () {
+            var emitStopped = this.dragging;
+            this.dragging = false;
+            if (emitStopped) {
+                this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
+                this.current.canvas.style.cursor = 'default';
+                console.log('dragshit', this.current);
+                var _a = this.imageInfo, x = _a.x, y = _a.y;
+                store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.current.type, x: x, y: y });
+            }
+        };
+        // test if x,y is inside the bounding box of texts[textIndex]
+        DragHandler.prototype.imageHittest = function (x, y) {
+            var _a = this.imageInfo, imageH = _a.h, imageX = _a.x, imageY = _a.y, imageW = _a.w;
+            var scaledX = imageX * this.scaleFactor;
+            var scaledY = imageY * this.scaleFactor;
+            return x >= scaledX && x <= scaledX + imageW && y >= scaledY && y <= scaledY + imageH;
+        };
+        // handle mousedown events
+        // iterate through texts[] and see if the user
+        // mousedown'ed on one of them
+        // If yes, set the selectedText to the index of that text
+        DragHandler.prototype.handleMouseDown = function (ev) {
+            ev.preventDefault();
+            this.startX = ev.clientX - this.offsetX;
+            this.startY = ev.clientY - this.offsetY;
+            // Put your mousedown stuff here
+            this.dragging = this.imageHittest(this.startX, this.startY);
+        };
+        DragHandler.prototype.handleMouseEnter = function (ev) {
+            ev.preventDefault();
+            this.startX = ev.clientX - this.offsetX;
+            this.startY = ev.clientY - this.offsetY;
+            // Put your MouseEnter stuff here
+            if (this.imageHittest(this.startX, this.startY)) {
+                this.current.canvas.style.cursor = 'pointer';
+            }
+        };
+        // handle mousemove events
+        // calc how far the mouse has been dragged since
+        // the last mousemove event and move the selected text
+        // by that distance
+        DragHandler.prototype.handleMouseMove = function (ev) {
+            if (!this.dragging) {
+                return;
+            }
+            ev.preventDefault();
+            var mouseX = ev.clientX - this.offsetX;
+            var mouseY = ev.clientY - this.offsetY;
+            // Put your mousemove stuff here
+            var dx = mouseX - this.startX;
+            var dy = mouseY - this.startY;
+            this.startX = mouseX;
+            this.startY = mouseY;
+            var _a = this.imageInfo, h = _a.h, image = _a.image, x = _a.x, y = _a.y, w = _a.w;
+            var _b = this.current, canvas = _b.canvas, canvasContext = _b.canvasContext;
+            canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+            canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+            canvasContext.fillRect(x, y, x + w, y + h);
+            this.imageInfo.x += dx;
+            this.imageInfo.y += dy;
+            canvasContext.drawImage(image, this.imageInfo.x, this.imageInfo.y, w, h);
+        };
+        // also done dragging
+        DragHandler.prototype.handleMouseOut = function (ev) {
+            ev.preventDefault();
+            this.dragStopped();
+        };
+        // done dragging
+        DragHandler.prototype.handleMouseUp = function (ev) {
+            ev.preventDefault();
+            this.dragStopped();
+        };
+        return DragHandler;
+    }());
+
     // import { ImagePlacementPicker } from './imageplacement';
     var ImageHandler = /** @class */ (function () {
         // TODO: VisualScaling
@@ -589,7 +592,7 @@
                 var _a;
                 console.log('type', type);
                 store.dispatch(STOREACTIONS.setImageScale, (_a = {}, _a[type] = parseInt(imageScale, 10) / 100, _a));
-                store.dispatch(STOREACTIONS.imageChange, type);
+                store.dispatch(STOREACTIONS.imageChange, { action: 'scale', type: type, scale: parseInt(imageScale, 10) / 100 });
             }, 250);
         };
         ImageHandler.prototype.renderHandlers = function (element, configName) {
@@ -775,6 +778,7 @@
 
     function initialscaler(scalerOptions) {
         var cHeight = scalerOptions.cHeight, cWidth = scalerOptions.cWidth, iHeight = scalerOptions.iHeight, iWidth = scalerOptions.iWidth, type = scalerOptions.type;
+        console.log('scalerOptions', scalerOptions, 'store.state.imageScale[type]', store.state.imageScale[type]);
         var w = cWidth > iWidth ? cWidth : iWidth;
         var h = cHeight > iHeight ? cHeight : iHeight;
         var ratio = 1;
@@ -814,6 +818,7 @@
         }
         h = h * store.state.imageScale[type];
         w = w * store.state.imageScale[type];
+        console.log('scalerOptions', h, w);
         return { h: h, w: w };
     }
 
@@ -1076,7 +1081,8 @@
             });
             eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, _state) {
                 _this.imageHasChanged = imageChange;
-                if (_this.imageHasChanged === true || _this.imageHasChanged === _this.currentType) {
+                console.log('imageChange_imageChange_imageChange this.imageHasChanged.type', _this.imageHasChanged, _this.imageHasChanged.type);
+                if (_this.imageHasChanged === true || _this.imageHasChanged.type === _this.currentType) {
                     _this.update();
                 }
             });
@@ -1215,26 +1221,42 @@
                             image = contentInfo.image;
                             canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
                             imageHasChanged = this.imageHasChanged;
-                            if (!(image && (imageHasChanged || imageHasChanged === type))) return [3 /*break*/, 2];
-                            console.log('current.image current.image', current.image);
+                            console.log('current.image_current.image', imageHasChanged, current.image);
+                            if (!(imageHasChanged !== false)) return [3 /*break*/, 3];
+                            if (!(image && (imageHasChanged === true || imageHasChanged === type))) return [3 /*break*/, 2];
                             return [4 /*yield*/, imageUploader(image)];
                         case 1:
                             imageReturn = _b.sent();
                             this.image = imageReturn;
                             if (current.image)
                                 delete current.image;
+                            _b.label = 2;
+                        case 2:
                             options = {
                                 cHeight: canvas.height,
                                 cWidth: canvas.width,
-                                iHeight: image.height,
-                                iWidth: image.width,
+                                iHeight: this.image.height,
+                                iWidth: this.image.width,
                                 type: type,
                             };
                             imgSize = initialscaler(options);
-                            imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
+                            imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
+                            if (imageHasChanged.type === type) {
+                                switch (imageHasChanged.action) {
+                                    case 'scale':
+                                        imgSize = initialscaler(options);
+                                        break;
+                                    case 'position':
+                                        imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
+                                        break;
+                                    default:
+                                        imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
+                                }
+                            }
                             current.image = __assign(__assign({ image: this.image }, imgPos), imgSize);
-                            _b.label = 2;
-                        case 2:
+                            console.log('_current.image_current.image_ alot', current.image, imgPos, imgSize);
+                            _b.label = 3;
+                        case 3:
                             if (current.image) {
                                 _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
                                 canvasContext.drawImage(image_1, x, y, w, h);

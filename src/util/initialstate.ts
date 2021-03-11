@@ -13,7 +13,7 @@ export enum STATENAMES {
 
 export interface IStoreState {
   [STATENAMES.canvases]: ICurrentCanvasConfig[];
-  [STATENAMES.imageChange]: boolean | keyof RATIOTYPES;
+  [STATENAMES.imageChange]: any;
   [STATENAMES.imageScale]: {
     [id: string]: number;
   };

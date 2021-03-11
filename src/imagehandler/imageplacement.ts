@@ -87,7 +87,7 @@ export class ImagePlacementPicker {
 
         console.log('DO SHIT!!! setImagePosition ', el.dataset.value);
         store.dispatch(STOREACTIONS.setImagePosition, { type: this.type, val: el.dataset.value });
-        store.dispatch(STOREACTIONS.imageChange, this.type);
+        store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.type, val: el.dataset.value });
         this.currentSelected = el;
       });
     });
