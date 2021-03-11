@@ -27,6 +27,7 @@ export interface ICurrentCanvasConfig {
   dragImage?: DragHandler;
   image?: ICanvasImage;
   scaleFactor?: number;
+  wrapper: HTMLDivElement;
 }
 
 export interface ICanvasTypesConfig {

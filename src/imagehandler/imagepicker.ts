@@ -1,4 +1,9 @@
-import { ImagePlacementPicker } from './imageplacement';
+// import { ImagePlacementPicker } from './imageplacement';
+// import { eventhandler } from '../util/eventhandler';
+// import { STATENAMES } from '../util/initialstate';
+import { RATIOTYPES } from '../canvascreator/canvascreator';
+import { eventhandler } from '../util/eventhandler';
+import { STATENAMES } from '../util/initialstate';
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 
@@ -16,22 +21,71 @@ export class ImageHandler {
     imageFileElement.style.display = 'none';
     return imageFileElement;
   })();
+
   private imageFileValue = (() => {
     const imageFileValue = document.createElement('small');
     imageFileValue.className = 'file-value';
     return imageFileValue;
   })();
 
-  private manualScaler: ManualScaler;
+  // private manualScaler: ManualScaler;
 
-  constructor() {}
+  private parents = {
+    [RATIOTYPES.square]: null,
+    [RATIOTYPES.wide]: null,
+  };
+
+  private prevScale = {
+    [RATIOTYPES.square]: 1,
+    [RATIOTYPES.wide]: 1,
+  };
+
+  private scalers: {
+    [RATIOTYPES.square]: ManualScaler;
+    [RATIOTYPES.wide]: ManualScaler;
+  } = {
+    [RATIOTYPES.square]: null,
+    [RATIOTYPES.wide]: null,
+  };
+
+  constructor() {
+    for (const key in store.state.imageScale) {
+      if (key) {
+        this.prevScale[key] = store.state.imageScale[key];
+      }
+    }
+
+    eventhandler.subscribe([STATENAMES.imageChange], (imageChange, state) => {
+      console.log('IMAGEPICKER!!!', imageChange);
+      if (imageChange === true) {
+        console.log('IMAGEPICKER!!!', state);
+      }
+    });
+    eventhandler.subscribe([STATENAMES.imageScale], (imageScale, state) => {
+      console.log('IMAGEPICKER!!! imageScale', imageScale);
+      console.log('IMAGEPICKER!!! imageScale -this.prevScale', this.prevScale);
+
+      let changed = '';
+
+      for (const key in imageScale) {
+        if (imageScale[key] !== this.prevScale[key]) {
+          this.prevScale[key] = imageScale[key];
+          changed = key;
+        }
+      }
+      console.log('IMAGEPICKER!!! imageScale changed', changed);
+      // const { type } = state;
+      // this.manualScaler =
+      //   this.manualScaler || new ManualScaler({ image, parent: handlingElement, scaleFactor, wrapper });
+      this.scalers[changed].scaleElement();
+    });
+  }
 
   public render() {
     const fileElement = document.createElement('div');
     fileElement.className = 'form-element flex flex-align--center';
 
     /** Actual file picker  */
-
     fileElement.appendChild(this.imageFileElement);
 
     /** Button */
@@ -63,7 +117,7 @@ export class ImageHandler {
 
     this.clearHandlers();
     store.state.canvases.forEach((element) => {
-      this.renderHandlers(element);
+      this.renderHandlers(element, element.configName);
     });
   }
 
@@ -85,12 +139,14 @@ export class ImageHandler {
     }, 250);
   }
 
-  private renderHandlers(element) {
-    console.log('canvasElement', element);
+  private renderHandlers(element, configName) {
+    console.log('canvasElement', element, configName);
 
     const handlingFieldset = document.createElement('fieldset');
+    handlingFieldset.className = 'form-element margin-m--b';
     this.containers.push(handlingFieldset);
     const handlingLegend = document.createElement('legend');
+    handlingLegend.className = 'legend';
     handlingLegend.innerHTML = element.header;
     handlingFieldset.appendChild(handlingLegend);
 
@@ -99,11 +155,29 @@ export class ImageHandler {
 
     handlingFieldset.appendChild(handlingElement);
 
+    const { image, scaleFactor, type, wrapper } = element;
+    console.log('this.manualScaler type type type', type, this.parents);
+    this.parents[type] = handlingElement;
+    console.log('this.manualScaler image', image);
+    this.scalers[type] =
+      this.scalers[type] || new ManualScaler({ image, parent: handlingElement, scaleFactor, type, wrapper });
+
+    /**
+     * Scaler button
+     */
     const scaleImage = document.createElement('div');
     scaleImage.className = 'button';
     scaleImage.innerHTML = 'Skalér billede';
+
+    scaleImage.addEventListener('click', () => {
+      this.scalers[type].scaleElement();
+    });
+
     handlingElement.appendChild(scaleImage);
 
+    /**
+     * Scaler element
+     */
     const scalerElement = document.createElement('input');
     scalerElement.type = 'number';
     scalerElement.value = '100';
@@ -114,12 +188,6 @@ export class ImageHandler {
     });
 
     handlingElement.appendChild(scalerElement);
-
-    scaleImage.addEventListener('click', () => {
-      this.manualScaler = this.manualScaler || new ManualScaler();
-      const { image, scaleFactor, wrapper } = element;
-      this.manualScaler.scaleElement({ image, parent: handlingElement, scaleFactor, wrapper });
-    });
 
     // const cover = document.createElement('div');
     // cover.className = 'button';
@@ -144,8 +212,8 @@ export class ImageHandler {
     // });
 
     /** Image placement */
-    const imagePlacement = new ImagePlacementPicker();
-    handlingFieldset.appendChild(imagePlacement.render());
+    // const imagePlacement = new ImagePlacementPicker(element.configName);
+    // handlingFieldset.appendChild(imagePlacement.render());
 
     this.imagePickerFrag.appendChild(handlingFieldset);
   }

@@ -1,6 +1,6 @@
 import { initialscaler } from './initialscaler';
 
-export function topLeft(image, canvas, type) {
+export function top(image, canvas, type) {
   const iWidth = image.width;
   const iHeight = image.height;
 

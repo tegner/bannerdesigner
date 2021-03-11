@@ -1,3 +1,7 @@
+import { RATIOTYPES } from '../canvascreator/canvascreator';
+import store from '../util/store';
+import { STOREACTIONS } from '../util/store/actions';
+
 function placementList(placements, currentplacement): string {
   const placementOption = [];
   for (const key in placements) {
@@ -35,6 +39,7 @@ export enum PLACEMENTNAMES {
   topleft = 'topleft',
   topright = 'topright',
 }
+
 export type TPlacementNames =
   | 'bottom'
   | 'bottomleft'
@@ -60,9 +65,11 @@ export class ImagePlacementPicker {
     topleft: 'Top Left',
     topright: 'Top Right',
   };
+  private type: RATIOTYPES;
 
-  constructor() {
+  constructor(callType) {
     this.placements;
+    this.type = callType;
   }
 
   public render() {
@@ -74,12 +81,13 @@ export class ImagePlacementPicker {
     Array.from(this.elements).forEach((el: HTMLDivElement) => {
       if (el.dataset.selected === 'true') this.currentSelected = el;
 
-      el.addEventListener('click', (ev: MouseEvent) => {
+      el.addEventListener('click', (_ev: MouseEvent) => {
         this.currentSelected.dataset.selected = 'false';
         el.dataset.selected = 'true';
 
-        console.log('DO SHIT!!!', el.dataset.value);
-
+        console.log('DO SHIT!!! setImagePosition ', el.dataset.value);
+        store.dispatch(STOREACTIONS.setImagePosition, { type: this.type, val: el.dataset.value });
+        store.dispatch(STOREACTIONS.imageChange, this.type);
         this.currentSelected = el;
       });
     });

@@ -14,6 +14,12 @@ export default {
 
     return state;
   },
+  [STOREACTIONS.setImagePosition](state, payload) {
+    console.log('imageHasChanged mutation=STOREACTIONS.setImagePosition]', payload);
+    state[STATENAMES.imagePosition] = payload.val;
+
+    return state;
+  },
   [STOREACTIONS.setImageScale](state, payload) {
     console.log('imageScale: state[STATENAMES.imageScale]', state[STATENAMES.imageScale]);
     console.log('imageScale: payload', payload);

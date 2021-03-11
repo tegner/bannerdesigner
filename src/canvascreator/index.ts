@@ -2,14 +2,14 @@ import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, IC
 import { IThemeObject } from './themes';
 
 import { DragHandler, EVENTNAMES } from '../draghandler';
-import { imageUploader, topLeft } from '../imagehandler/';
+import { imageScaler, imageUploader } from '../imagehandler/';
 import { simpleTextStyler } from '../textstyler';
 
 import store from '../util/store';
 import { asyncForEach } from '../util/asyncforeach';
 import { eventhandler } from '../util/eventhandler';
 import { STOREACTIONS } from '../util/store/actions';
-import { StateType, STATENAMES } from '../util/initialstate';
+import { STATENAMES } from '../util/initialstate';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -68,7 +68,7 @@ export class CanvasCreator {
   private formElements: HTMLElement[];
   private image: HTMLImageElement;
   private imageHasChanged: boolean | RATIOTYPES = false;
-  private state: StateType;
+
   private theme: IThemeObject;
   private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
@@ -78,9 +78,8 @@ export class CanvasCreator {
     this.containerWidth = container.clientWidth;
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
-    this.state = { ...store.state };
 
-    this.setTheme(this.state.theme, false);
+    this.setTheme(store.state.theme, false);
     this.currentType = type;
     this.addAll(type);
 
@@ -94,6 +93,10 @@ export class CanvasCreator {
       if (this.imageHasChanged === true || this.imageHasChanged === this.currentType) {
         this.update();
       }
+    });
+
+    eventhandler.subscribe([STATENAMES.imagePosition], (imagePosition, _state) => {
+      console.log('canvas STATENAMES.imagePosition imagePosition', imagePosition);
     });
   }
 
@@ -239,13 +242,13 @@ export class CanvasCreator {
     console.log('imageHasChanged', imageHasChanged, type);
 
     if (image && (imageHasChanged || imageHasChanged === type)) {
-      console.log('imageHasChanged', imageHasChanged, type);
+      console.log('imageHasChanged inside', imageHasChanged, type);
       imageReturn = await imageUploader(image);
 
       this.image = imageReturn;
       if (current.image) delete current.image;
-
-      current.image = topLeft(this.image, canvas, type);
+      console.log('type type type', type);
+      current.image = imageScaler(this.image, canvas, type, store.state.imagePosition);
     }
 
     if (current.image) {

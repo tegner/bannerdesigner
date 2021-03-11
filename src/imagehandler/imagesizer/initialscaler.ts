@@ -38,8 +38,6 @@ export function initialscaler(scalerOptions) {
     }
   }
 
-  console.log('height times imageScale', h * store.state.imageScale[type]);
-  console.log('width times imageScale', w * store.state.imageScale[type]);
   h = h * store.state.imageScale[type];
   w = w * store.state.imageScale[type];
 
