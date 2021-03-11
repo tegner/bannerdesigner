@@ -10,6 +10,7 @@ import { asyncForEach } from '../util/asyncforeach';
 import { eventhandler } from '../util/eventhandler';
 import { STOREACTIONS } from '../util/store/actions';
 import { STATENAMES } from '../util/initialstate';
+import { initialscaler } from '../imagehandler/imagesizer/initialscaler';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -238,17 +239,24 @@ export class CanvasCreator {
     const { imageHasChanged } = this;
 
     let imageReturn;
-
-    console.log('imageHasChanged', imageHasChanged, type);
-
     if (image && (imageHasChanged || imageHasChanged === type)) {
-      console.log('imageHasChanged inside', imageHasChanged, type);
+      console.log('current.image current.image', current.image);
       imageReturn = await imageUploader(image);
 
       this.image = imageReturn;
       if (current.image) delete current.image;
-      console.log('type type type', type);
-      current.image = imagePositioner(this.image, canvas, type, store.state.imagePosition);
+
+      const options = {
+        cHeight: canvas.height,
+        cWidth: canvas.width,
+        iHeight: image.height,
+        iWidth: image.width,
+        type,
+      };
+      const imgSize = initialscaler(options);
+      const imgPos = imagePositioner({ options, ...imgSize }, store.state.imagePosition);
+
+      current.image = { image: this.image, ...imgPos, ...imgSize };
     }
 
     if (current.image) {

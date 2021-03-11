@@ -9,25 +9,25 @@ import { top } from './top';
 import { topLeft } from './topleft';
 import { topRight } from './topright';
 
-export function imagePositioner(image, canvas, imagetype, pos) {
+export function imagePositioner(options, pos) {
   switch (pos) {
     case PLACEMENTNAMES.bottom:
-      return bottom(image, canvas, imagetype);
+      return bottom(options);
     case PLACEMENTNAMES.bottomleft:
-      return bottomLeft(image, canvas, imagetype);
+      return bottomLeft(options);
     case PLACEMENTNAMES.bottomright:
-      return bottomRight(image, canvas, imagetype);
+      return bottomRight(options);
     case PLACEMENTNAMES.center:
-      return center(image, canvas, imagetype);
+      return center(options);
     case PLACEMENTNAMES.left:
-      return left(image, canvas, imagetype);
+      return left(options);
     case PLACEMENTNAMES.right:
-      return right(image, canvas, imagetype);
+      return right(options);
     case PLACEMENTNAMES.top:
-      return top(image, canvas, imagetype);
+      return top(options);
     case PLACEMENTNAMES.topleft:
-      return topLeft(image, canvas, imagetype);
+      return topLeft();
     case PLACEMENTNAMES.topright:
-      return topRight(image, canvas, imagetype);
+      return topRight(options);
   }
 }

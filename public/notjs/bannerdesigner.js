@@ -697,6 +697,82 @@
         });
     }
 
+    function bottomRight(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight - h, x = cWidth - w;
+        return { x: x, y: y };
+    }
+
+    function bottom(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight - h, x = cWidth / 2 - w / 2;
+        return { x: x, y: y };
+    }
+
+    function bottomLeft(options) {
+        var cHeight = options.cHeight, h = options.h;
+        var y = cHeight - h, x = 0;
+        return { x: x, y: y };
+    }
+
+    function center(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight / 2 - h / 2, x = cWidth / 2 - w / 2;
+        return { x: x, y: y };
+    }
+
+    function left(options) {
+        var cHeight = options.cHeight, h = options.h;
+        var y = cHeight / 2 - h / 2, x = 0;
+        return { x: x, y: y };
+    }
+
+    function right(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight / 2 - h / 2, x = cWidth - w;
+        return { x: x, y: y };
+    }
+
+    function top(options) {
+        var cWidth = options.cWidth, w = options.w;
+        var y = 0, x = cWidth / 2 - w / 2;
+        return { x: x, y: y };
+    }
+
+    function topLeft() {
+        var y = 0, x = 0;
+        return { x: x, y: y };
+    }
+
+    function topRight(options) {
+        var cWidth = options.cWidth, w = options.w;
+        var y = 0, x = cWidth - w;
+        return { x: x, y: y };
+    }
+
+    function imagePositioner(options, pos) {
+        switch (pos) {
+            case PLACEMENTNAMES.bottom:
+                return bottom(options);
+            case PLACEMENTNAMES.bottomleft:
+                return bottomLeft(options);
+            case PLACEMENTNAMES.bottomright:
+                return bottomRight(options);
+            case PLACEMENTNAMES.center:
+                return center(options);
+            case PLACEMENTNAMES.left:
+                return left(options);
+            case PLACEMENTNAMES.right:
+                return right(options);
+            case PLACEMENTNAMES.top:
+                return top(options);
+            case PLACEMENTNAMES.topleft:
+                return topLeft();
+            case PLACEMENTNAMES.topright:
+                return topRight(options);
+        }
+    }
+
     function initialscaler(scalerOptions) {
         var cHeight = scalerOptions.cHeight, cWidth = scalerOptions.cWidth, iHeight = scalerOptions.iHeight, iWidth = scalerOptions.iWidth, type = scalerOptions.type;
         var w = cWidth > iWidth ? cWidth : iWidth;
@@ -739,119 +815,6 @@
         h = h * store.state.imageScale[type];
         w = w * store.state.imageScale[type];
         return { h: h, w: w };
-    }
-
-    function bottomRight(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = cHeight - h, x = cWidth - w;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function bottom(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = cHeight - h, x = cWidth / 2 - w / 2;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function bottomLeft(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = cHeight - h, x = 0;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function center(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = cHeight / 2 - h / 2, x = cWidth / 2 - w / 2;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function left(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = cHeight / 2 - h / 2, x = 0;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function right(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = cHeight / 2 - h / 2, x = cWidth - w;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function top(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = 0, x = cWidth / 2 - w / 2;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function topLeft(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = 0, x = 0;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function topRight(image, canvas, type) {
-        var iWidth = image.width;
-        var iHeight = image.height;
-        var cWidth = canvas.width;
-        var cHeight = canvas.height;
-        var _a = initialscaler({ cHeight: cHeight, cWidth: cWidth, iHeight: iHeight, iWidth: iWidth, type: type }), h = _a.h, w = _a.w;
-        var y = 0, x = cWidth - w;
-        return { image: image, x: x, y: y, w: w, h: h };
-    }
-
-    function imagePositioner(image, canvas, imagetype, pos) {
-        switch (pos) {
-            case PLACEMENTNAMES.bottom:
-                return bottom(image, canvas, imagetype);
-            case PLACEMENTNAMES.bottomleft:
-                return bottomLeft(image, canvas, imagetype);
-            case PLACEMENTNAMES.bottomright:
-                return bottomRight(image, canvas, imagetype);
-            case PLACEMENTNAMES.center:
-                return center(image, canvas, imagetype);
-            case PLACEMENTNAMES.left:
-                return left(image, canvas, imagetype);
-            case PLACEMENTNAMES.right:
-                return right(image, canvas, imagetype);
-            case PLACEMENTNAMES.top:
-                return top(image, canvas, imagetype);
-            case PLACEMENTNAMES.topleft:
-                return topLeft(image, canvas, imagetype);
-            case PLACEMENTNAMES.topright:
-                return topRight(image, canvas, imagetype);
-        }
     }
 
     var simpleTextStyler = {
@@ -1244,7 +1207,7 @@
         };
         CanvasCreator.prototype.addImage = function (contentInfo, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, _a, image_1, x, y, w, h;
+                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, options, imgSize, imgPos, _a, image_1, x, y, w, h;
                 var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
@@ -1252,17 +1215,24 @@
                             image = contentInfo.image;
                             canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
                             imageHasChanged = this.imageHasChanged;
-                            console.log('imageHasChanged', imageHasChanged, type);
                             if (!(image && (imageHasChanged || imageHasChanged === type))) return [3 /*break*/, 2];
-                            console.log('imageHasChanged inside', imageHasChanged, type);
+                            console.log('current.image current.image', current.image);
                             return [4 /*yield*/, imageUploader(image)];
                         case 1:
                             imageReturn = _b.sent();
                             this.image = imageReturn;
                             if (current.image)
                                 delete current.image;
-                            console.log('type type type', type);
-                            current.image = imagePositioner(this.image, canvas, type, store.state.imagePosition);
+                            options = {
+                                cHeight: canvas.height,
+                                cWidth: canvas.width,
+                                iHeight: image.height,
+                                iWidth: image.width,
+                                type: type,
+                            };
+                            imgSize = initialscaler(options);
+                            imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
+                            current.image = __assign(__assign({ image: this.image }, imgPos), imgSize);
                             _b.label = 2;
                         case 2:
                             if (current.image) {

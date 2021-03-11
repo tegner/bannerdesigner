@@ -2,6 +2,7 @@
 // import { STATENAMES } from '../../util/initialstate';
 import { imagePositioner } from './imagepositioner';
 import store from '../../util/store';
+import { initialscaler } from './initialscaler';
 
 // function scalePoint(pos: string) {
 //   const point = document.createElement('div');
@@ -48,7 +49,18 @@ export class ManualScaler {
     const { canvas, image, scaleFactor, wrapper } = cur;
     console.log('cur cur cur', cur, type, image, scaleFactor, wrapper);
 
-    const currentImage = imagePositioner(image, canvas, type, store.state.imagePosition);
+    const options = {
+      cHeight: canvas.height,
+      cWidth: canvas.width,
+      iHeight: image.image.height,
+      iWidth: image.image.width,
+      type,
+    };
+    const imgSize = initialscaler(options);
+
+    const imgPos = imagePositioner({ options, ...imgSize }, store.state.imagePosition);
+
+    const currentImage = { image, ...imgPos, ...imgSize };
 
     const scaleImage = document.createElement('img');
     scaleImage.src = image.image.src;
