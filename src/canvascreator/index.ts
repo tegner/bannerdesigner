@@ -1,15 +1,16 @@
 import { ICanvasTypesConfig, RATIOTYPES, ICurrentCanvasConfig, DATEINFOTYPES, ICanvasConfig } from './canvascreator';
-import { IThemeObject /** themes */ } from './themes';
+import { IThemeObject } from './themes';
 
 import { DragHandler, EVENTNAMES } from '../draghandler';
-import { imageHandler } from '../imagehandler';
+import { imagePositioner, imageUploader } from '../imagehandler/';
 import { simpleTextStyler } from '../textstyler';
 
 import store from '../util/store';
 import { asyncForEach } from '../util/asyncforeach';
 import { eventhandler } from '../util/eventhandler';
 import { STOREACTIONS } from '../util/store/actions';
-import { IStoreState, STATENAMES } from '../util/initialstate';
+import { STATENAMES } from '../util/initialstate';
+import { initialscaler } from '../imagehandler/imagesizer/initialscaler';
 
 const sizeCanvas = (w, h, ratio = 4) => {
   const can = document.createElement('canvas') as HTMLCanvasElement;
@@ -63,37 +64,45 @@ export class CanvasCreator {
     },
   };
   private currentCanvas: TCurrentCanvasInfo[] = [];
+  private currentType: RATIOTYPES;
   private form: HTMLFormElement;
+  private formElements: HTMLElement[];
   private image: HTMLImageElement;
-  private imageHasChanged = false;
-  private state: IStoreState;
+  private imageHasChanged: any = false;
+
   private theme: IThemeObject;
   private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
-  constructor(container, bannerdesigner) {
+  constructor(container, bannerdesigner, type) {
     this.form = bannerdesigner;
     this.container = container;
     this.containerWidth = container.clientWidth;
     this.canvasContainer.className = 'flex flex-wrap flex-start';
     this.container.appendChild(this.canvasContainer);
-    this.state = { ...store.state };
-    // this.setTheme(this.state.themeName);
-    this.setTheme(this.state.theme);
-    this.addAll();
 
-    eventhandler.subscribe(STATENAMES.themeName, (state) => {
-      console.log('theme theme theme', state);
-      this.setTheme(state[STATENAMES.theme]);
+    this.setTheme(store.state.theme, false);
+    this.currentType = type;
+    this.addAll(type);
+
+    eventhandler.subscribe(STATENAMES.theme, (theme, _state) => {
+      this.setTheme(theme);
     });
 
-    eventhandler.subscribe(STATENAMES.theme, (state) => {
-      console.log('alter theme alter theme theme', state);
-      this.setTheme(state[STATENAMES.theme]);
+    eventhandler.subscribe([STATENAMES.imageChange], (imageChange, _state) => {
+      this.imageHasChanged = imageChange;
+      console.log(
+        'imageChange_imageChange_imageChange this.imageHasChanged.type',
+        this.imageHasChanged,
+        this.imageHasChanged.type
+      );
+
+      if (this.imageHasChanged === true || this.imageHasChanged.type === this.currentType) {
+        this.update();
+      }
     });
 
-    eventhandler.subscribe([STATENAMES.imageChange], (state) => {
-      this.imageChanged(state[STATENAMES.imageChange]);
-      this.update();
+    eventhandler.subscribe([STATENAMES.imagePosition], (imagePosition, _state) => {
+      console.log('canvas STATENAMES.imagePosition imagePosition', imagePosition);
     });
   }
 
@@ -101,13 +110,9 @@ export class CanvasCreator {
     return this.currentCanvas;
   }
 
-  public imageChanged(status: boolean) {
-    this.imageHasChanged = status;
-  }
-
-  public setTheme(theme: IThemeObject) {
+  public setTheme(theme: IThemeObject, update = true) {
     this.theme = theme;
-    console.log('theme', theme);
+
     if (!this.theme.loaded) {
       const themeFont = document.createElement('div');
       themeFont.setAttribute('style', `font-family: "${this.theme.fontFamily}";visibility: hidden;`);
@@ -115,24 +120,24 @@ export class CanvasCreator {
       document.body.appendChild(themeFont);
 
       setTimeout(() => {
-        this.update();
+        if (update) this.update();
         this.theme.loaded = true;
       }, 200);
-    } else {
+    } else if (update) {
       this.update();
     }
   }
 
   public update() {
-    const eleList = this.form.elements;
+    console.log('this.update!');
 
-    const formElements = Array.from(eleList);
+    this.formElements = this.formElements ?? (Array.from(this.form.elements) as HTMLElement[]);
 
     const info = {
       dates: {},
     };
 
-    formElements.forEach((el: HTMLInputElement) => {
+    this.formElements.forEach((el: HTMLInputElement) => {
       if (el.dataset.line) {
         info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
         info.dates[el.dataset.line].push(el);
@@ -144,12 +149,16 @@ export class CanvasCreator {
     });
 
     this.addContent(info, true);
+
+    // this.updateState();
   }
 
-  private addAll() {
-    this.types.forEach((configName) => {
-      this.addCanvas(configName);
-    });
+  private addAll(type: RATIOTYPES) {
+    console.log(type, this.types);
+    // this.types.forEach((configName) => {
+    this.addCanvas(type);
+    // });
+    this.updateState();
   }
 
   private addCanvas(configName) {
@@ -160,10 +169,15 @@ export class CanvasCreator {
     wrapper.id = `wrapper${type}`;
     this.canvasContainer.appendChild(wrapper);
 
+    const containerThing = document.createElement('div');
+
     const head = document.createElement('h5');
     head.innerHTML = header;
 
     wrapper.appendChild(head);
+
+    const canvaswrapper = document.createElement('div');
+    canvaswrapper.className = 'canvaswrapper';
 
     let scaleFactor;
     switch (type) {
@@ -195,14 +209,17 @@ export class CanvasCreator {
       canvasContext: ctx,
       configName,
       scaleFactor,
+      wrapper: canvaswrapper,
     };
     this.currentCanvas.push(curCanvas);
 
     canvas.height = height;
     canvas.width = width;
 
-    wrapper.appendChild(canvas);
+    canvaswrapper.appendChild(containerThing);
+    canvaswrapper.appendChild(canvas);
 
+    wrapper.appendChild(canvaswrapper);
     this.resetCanvas(curCanvas);
   }
 
@@ -227,56 +244,41 @@ export class CanvasCreator {
     const { imageHasChanged } = this;
 
     let imageReturn;
-    if (image && imageHasChanged) {
-      imageReturn = await imageHandler(image);
+    console.log('current.image_current.image', imageHasChanged, current.image);
+    if (imageHasChanged !== false) {
+      if (image && (imageHasChanged === true || imageHasChanged === type)) {
+        imageReturn = await imageUploader(image);
 
-      this.image = imageReturn;
-      if (current.image) delete current.image;
+        this.image = imageReturn;
+        if (current.image) delete current.image;
+      }
 
-      const iWidth = this.image.width;
-      const iHeight = this.image.height;
+      const options = {
+        cHeight: canvas.height,
+        cWidth: canvas.width,
+        iHeight: this.image.height,
+        iWidth: this.image.width,
+        type,
+      };
 
-      const cWidth = canvas.width;
-      const cHeight = canvas.height;
+      let imgSize = initialscaler(options);
 
-      let w = cWidth > iWidth ? cWidth : iWidth;
-      let h = cHeight > iHeight ? cHeight : iHeight;
-      let ratio = 1;
-
-      if (iWidth > iHeight) {
-        ratio = iHeight / iWidth;
-        if (type === RATIOTYPES.square) {
-          ratio = iWidth / iHeight;
-          h = cHeight;
-          w = cWidth * ratio;
-        } else if (type === RATIOTYPES.wide) {
-          ratio = iHeight / iWidth;
-          w = cWidth;
-          h = cWidth * ratio;
-        }
-      } else if (iWidth < iHeight) {
-        if (type === RATIOTYPES.square) {
-          ratio = iHeight / cHeight;
-          w = cWidth;
-          h = cHeight * ratio;
-        } else if (type === RATIOTYPES.wide) {
-          ratio = iHeight / iWidth;
-          w = cWidth;
-          h = cWidth * ratio;
-        }
-      } else {
-        if (type === RATIOTYPES.square) {
-          w = cWidth;
-          h = cHeight;
-        } else if (type === RATIOTYPES.wide) {
-          w = h = cWidth;
+      let imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
+      if (imageHasChanged.type === type) {
+        switch (imageHasChanged.action) {
+          case 'scale':
+            imgSize = initialscaler(options);
+            break;
+          case 'position':
+            imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
+            break;
+          default:
+            imgPos = imagePositioner({ options, ...imgSize }, store.state.imagePosition);
         }
       }
 
-      const y = 0,
-        x = 0;
-
-      current.image = { image: this.image, x, y, w, h };
+      current.image = { image: this.image, ...imgPos, ...imgSize };
+      console.log('_current.image_current.image_ alot', current.image, imgPos, imgSize);
     }
 
     if (current.image) {
@@ -313,7 +315,7 @@ export class CanvasCreator {
     canvasContext.textBaseline = 'top';
 
     const tournameTop = cfg.top * 2;
-    console.log('this.theme', this.theme, this.theme.artist);
+
     const headerString = `{${this.theme.artist}${artist.toUpperCase()}}\n{${
       this.theme.tourname
     }${tourname.toUpperCase()}}`;
@@ -380,11 +382,15 @@ export class CanvasCreator {
 
   private resetCanvas(currentCfg: TCurrentCanvasInfo) {
     currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
-    currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
+    currentCfg.canvasContext.beginPath(); // ADD THIS LINE!<<<<<<<<<<<<<
     currentCfg.canvasContext.moveTo(0, 0);
     // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
     currentCfg.canvasContext.stroke();
     currentCfg.canvasContext.fillStyle = `${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+  }
+
+  private updateState() {
+    store.dispatch(STOREACTIONS.updateCanvases, this.currentCanvas);
   }
 }

@@ -1,13 +1,14 @@
 import { CanvasCreator } from '../canvascreator';
 import { saveToDisk } from '../util/savetodisk';
 import { ColorPicker } from './colorpicker';
-import { imagePicker } from './imagepicker';
+import { ImageHandler } from '../imagehandler';
 import { ThemePicker } from './themepicker';
 import { TourDates } from './tourdates';
 
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 import { themes } from '../canvascreator/themes';
+import { RATIOTYPES } from '../canvascreator/canvascreator';
 
 const formElement = (name: string): string => `
   <div class="form-element">
@@ -23,10 +24,13 @@ export function createForm() {
   const formEl = document.createElement('form');
   formEl.className = 'form-container';
 
-  const canvasCreator = new CanvasCreator(canvascontainer, formEl);
+  const canvasCreator = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.wide);
+  const canvasCreator2 = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
+  console.log(canvasCreator2);
 
   formEl.addEventListener('change', (ev) => {
-    if ((ev.target as HTMLInputElement).nodeName === 'SELECT') {
+    const target = ev.target as HTMLInputElement;
+    if (target.nodeName === 'SELECT' && target.dataset.type === 'themepicker') {
       store.dispatch(STOREACTIONS.setThemeName, (ev.target as HTMLInputElement).value);
       store.dispatch(STOREACTIONS.setTheme, themes[(ev.target as HTMLInputElement).value]);
     }
@@ -88,8 +92,9 @@ export function createForm() {
   const imageContainer = document.createElement('div');
   imageContainer.className = 'form-area';
   formEl.appendChild(imageContainer);
+
   /** Image */
-  imageContainer.appendChild(imagePicker());
+  imageContainer.appendChild(new ImageHandler().render());
 
   /**
    * Add form element to container

@@ -108,6 +108,285 @@
     // myEventBus.emit('event-name', 'Hello'); // => Hello Hello
     // myEventBus.emit('event-name', 'World'); // => World
 
+    var _a;
+    var STOREACTIONS;
+    (function (STOREACTIONS) {
+        STOREACTIONS["alterTheme"] = "alterTheme";
+        STOREACTIONS["imageChange"] = "imageChange";
+        STOREACTIONS["setImagePosition"] = "setImagePosition";
+        STOREACTIONS["setImageScale"] = "setImageScale";
+        STOREACTIONS["setTheme"] = "setTheme";
+        STOREACTIONS["setThemeName"] = "setThemeName";
+        STOREACTIONS["updateCanvases"] = "updateCanvases";
+    })(STOREACTIONS || (STOREACTIONS = {}));
+    var actions = (_a = {},
+        _a[STOREACTIONS.alterTheme] = function (context, payload) {
+            context.commit(STOREACTIONS.alterTheme, payload);
+        },
+        _a[STOREACTIONS.imageChange] = function (context, payload) {
+            context.commit(STOREACTIONS.imageChange, payload);
+        },
+        _a[STOREACTIONS.setImagePosition] = function (context, payload) {
+            context.commit(STOREACTIONS.setImagePosition, payload);
+        },
+        _a[STOREACTIONS.setImageScale] = function (context, payload) {
+            context.commit(STOREACTIONS.setImageScale, payload);
+        },
+        _a[STOREACTIONS.setTheme] = function (context, payload) {
+            context.commit(STOREACTIONS.setTheme, payload);
+        },
+        _a[STOREACTIONS.setThemeName] = function (context, payload) {
+            context.commit(STOREACTIONS.setThemeName, payload);
+        },
+        _a[STOREACTIONS.updateCanvases] = function (context, payload) {
+            console.log('updateCanvases', payload);
+            context.commit(STOREACTIONS.updateCanvases, payload);
+        },
+        _a);
+
+    var _a$1;
+    var THEMENAMES;
+    (function (THEMENAMES) {
+        THEMENAMES["classic"] = "classic";
+        THEMENAMES["modern"] = "modern";
+        THEMENAMES["urban"] = "urban";
+        THEMENAMES["writer"] = "writer";
+    })(THEMENAMES || (THEMENAMES = {}));
+    var themes = (_a$1 = {},
+        _a$1[THEMENAMES.classic] = {
+            artist: '#D9E4E1',
+            bgColor: '#010E13',
+            colorPicks: ['#D9E4E1', '#010E13', '#D96E2F', '#2F9FD9', '#A775B2'],
+            date: '#D47843',
+            fontFamily: 'Crimson Text',
+            loaded: false,
+            tourname: '#D47843',
+            venue: '#D9E4E1',
+        },
+        _a$1[THEMENAMES.modern] = {
+            artist: '#E5DADA',
+            bgColor: '#000000',
+            colorPicks: ['#E5DADA', '#010E13', '#015EB6', '#4FC546', '#EB5450'],
+            date: '#015EB6',
+            fontFamily: 'Bebas Neue',
+            loaded: false,
+            tourname: '#015EB6',
+            venue: '#E5DADA',
+        },
+        _a$1[THEMENAMES.urban] = {
+            artist: '#E8EFED',
+            bgColor: '#000000',
+            colorPicks: ['#E8EFED', '#010E13', '#F30000', '#F3C800', '#01EA85'],
+            date: '#F30000',
+            fontFamily: 'Roboto',
+            loaded: false,
+            tourname: '#F30000',
+            venue: '#E8EFED',
+        },
+        _a$1[THEMENAMES.writer] = {
+            artist: '#E8EFED',
+            bgColor: '#000000',
+            colorPicks: ['#E8EFED', '#010E13', '#0E467E', '#BF8F28', '#3F8597'],
+            date: '#0E467E',
+            fontFamily: 'Noto Serif',
+            loaded: false,
+            tourname: '#0E467E',
+            venue: '#E8EFED',
+        },
+        _a$1);
+
+    var _a$2, _b;
+    var STATENAMES;
+    (function (STATENAMES) {
+        STATENAMES["canvases"] = "canvases";
+        STATENAMES["imageChange"] = "imageChange";
+        STATENAMES["imageScale"] = "imageScale";
+        STATENAMES["imagePosition"] = "imagePosition";
+        STATENAMES["theme"] = "theme";
+        STATENAMES["themeName"] = "themeName";
+    })(STATENAMES || (STATENAMES = {}));
+    var defaultTheme = THEMENAMES.modern;
+    var initialState = (_a$2 = {},
+        _a$2[STATENAMES.canvases] = [],
+        _a$2[STATENAMES.imageChange] = false,
+        _a$2[STATENAMES.imageScale] = (_b = {},
+            _b[RATIOTYPES.square] = 1,
+            _b[RATIOTYPES.wide] = 1,
+            _b),
+        _a$2[STATENAMES.imagePosition] = 'topleft',
+        _a$2[STATENAMES.theme] = themes[defaultTheme],
+        _a$2[STATENAMES.themeName] = defaultTheme,
+        _a$2);
+
+    var _a$3;
+    var mutations = (_a$3 = {},
+        _a$3[STOREACTIONS.alterTheme] = function (state, payload) {
+            // console.log('payload', payload, state.theme);
+            state.theme = __assign(__assign({}, state.theme), payload);
+            // console.log('payload state after', state.theme);
+            return state;
+        },
+        _a$3[STOREACTIONS.imageChange] = function (state, payload) {
+            console.log('imageHasChanged mutation=STOREACTIONS.imageChange]', payload);
+            state[STATENAMES.imageChange] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.setImagePosition] = function (state, payload) {
+            console.log('imageHasChanged mutation=STOREACTIONS.setImagePosition]', payload);
+            state[STATENAMES.imagePosition] = payload.val;
+            return state;
+        },
+        _a$3[STOREACTIONS.setImageScale] = function (state, payload) {
+            console.log('imageScale: state[STATENAMES.imageScale]', state[STATENAMES.imageScale]);
+            console.log('imageScale: payload', payload);
+            // const { imageScale, type } = payload;
+            // if (state[STATENAMES.imageScale][type]) {
+            //   state[STATENAMES.imageScale][type] = parseInt(imageScale, 10) / 100;
+            // }
+            state[STATENAMES.imageScale] = __assign(__assign({}, state[STATENAMES.imageScale]), payload);
+            console.log('after imageScale: state[STATENAMES.imageScale]', state[STATENAMES.imageScale]);
+            return state;
+        },
+        _a$3[STOREACTIONS.setTheme] = function (state, payload) {
+            state[STATENAMES.theme] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.setThemeName] = function (state, payload) {
+            state[STATENAMES.themeName] = payload;
+            return state;
+        },
+        _a$3[STOREACTIONS.updateCanvases] = function (state, payload) {
+            var _a;
+            console.log('STOREACTIONS.updateCanvases', state[STATENAMES.canvases], Array.isArray(payload));
+            (_a = state[STATENAMES.canvases]).push.apply(_a, payload);
+            // state[STATENAMES.canvases] = payload;
+            return state;
+        },
+        _a$3);
+
+    var PubSub = /** @class */ (function () {
+        function PubSub() {
+            this.events = {};
+        }
+        PubSub.prototype.publish = function (event, data, key) {
+            if (data === void 0) { data = {}; }
+            var self = this;
+            if (!self.events[event]) {
+                return [];
+            }
+            return self.events[event].map(function (callback) { return callback(data, key); });
+        };
+        PubSub.prototype.subscribe = function (event, callback) {
+            var self = this;
+            if (!self.events[event]) {
+                self.events[event] = [];
+            }
+            return self.events[event].push(callback);
+        };
+        return PubSub;
+    }());
+
+    var Store = /** @class */ (function () {
+        function Store(params) {
+            // Add some default objects to hold our actions, mutations and state
+            var _this = this;
+            this.state = {};
+            this.actions = {};
+            this.mutations = {};
+            // A status enum to set during actions and mutations
+            this.status = 'resting';
+            // Attach our PubSub module as an `events` element
+            this.events = new PubSub();
+            // Look in the passed params object for actions and mutations
+            // that might have been passed in
+            if (params.hasOwnProperty('actions')) {
+                this.actions = params.actions;
+            }
+            if (params.hasOwnProperty('mutations')) {
+                this.mutations = params.mutations;
+            }
+            // Set our state to be a Proxy. We are setting the default state by
+            // checking the params and defaulting to an empty object if no default
+            // state is passed in
+            this.state = new Proxy(params.state || {}, {
+                set: function (state, key, value) {
+                    // Set the value as we would normally
+                    state[key] = value;
+                    // Trace out to the console. This will be grouped by the related action
+                    // console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
+                    // Publish the change event for the components that are listening
+                    if (_this.status === 'resting') {
+                        _this.events.publish('stateChange', _this.state, key);
+                    }
+                    // Give the user a little telling off if they set a value directly
+                    if (_this.status !== 'mutation') {
+                        console.warn("You should use a mutation to set " + String(key));
+                    }
+                    // Reset the status ready for the next operation
+                    _this.status = 'resting';
+                    return true;
+                },
+            });
+        }
+        /**
+         * A dispatcher for actions that looks in the actions
+         * collection and runs the action if it can find it
+         *
+         * @param {string} actionKey
+         * @param {mixed} payload
+         * @returns {boolean}
+         * @memberof Store
+         */
+        Store.prototype.dispatch = function (actionKey, payload) {
+            // Run a quick check to see if the action actually exists
+            // before we try to run it
+            if (typeof this.actions[actionKey] !== 'function') {
+                console.error("Action \"" + actionKey + " doesn't exist.");
+                return false;
+            }
+            // Create a console group which will contain the logs from our Proxy etc
+            // console.groupCollapsed(`ACTION: ${actionKey}`);
+            // Let anything that's watching the status know that we're dispatching an action
+            this.status = 'action';
+            // Actually call the action and pass it the Store context and whatever payload was passed
+            this.actions[actionKey](this, payload);
+            // Close our console group to keep things nice and neat
+            // console.groupEnd();
+            return true;
+        };
+        /**
+         * Look for a mutation and modify the state object
+         * if that mutation exists by calling it
+         *
+         * @param {string} mutationKey
+         * @param {mixed} payload
+         * @returns {boolean}
+         * @memberof Store
+         */
+        Store.prototype.commit = function (mutationKey, payload) {
+            // Run a quick check to see if this mutation actually exists
+            // before trying to run it
+            if (typeof this.mutations[mutationKey] !== 'function') {
+                // console.log(`Mutation "${mutationKey}" doesn't exist`);
+                return false;
+            }
+            // Let anything that's watching the status know that we're mutating state
+            this.status = 'mutation';
+            // Get a new version of the state by running the mutation and storing the result of it
+            var newState = this.mutations[mutationKey](this.state, payload);
+            // Merge the old and new together to create a new state and set it
+            this.state = Object.assign(this.state, newState);
+            return true;
+        };
+        return Store;
+    }());
+
+    var store = new Store({
+        actions: actions,
+        mutations: mutations,
+        state: initialState,
+    });
+
     var EVENTNAMES;
     (function (EVENTNAMES) {
         EVENTNAMES["dragstop"] = "dragstop";
@@ -148,6 +427,9 @@
             if (emitStopped) {
                 this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
                 this.current.canvas.style.cursor = 'default';
+                console.log('dragshit', this.current);
+                var _a = this.imageInfo, x = _a.x, y = _a.y;
+                store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.current.type, x: x, y: y });
             }
         };
         // test if x,y is inside the bounding box of texts[textIndex]
@@ -215,7 +497,189 @@
         return DragHandler;
     }());
 
-    function imageHandler(input) {
+    // import { ImagePlacementPicker } from './imageplacement';
+    var ImageHandler = /** @class */ (function () {
+        // TODO: VisualScaling
+        // private scalers: {
+        //   [RATIOTYPES.square]: ManualScaler;
+        //   [RATIOTYPES.wide]: ManualScaler;
+        // } = {
+        //   [RATIOTYPES.square]: null,
+        //   [RATIOTYPES.wide]: null,
+        // };
+        function ImageHandler() {
+            var _a, _b;
+            this.containers = [];
+            this.imagePickerFrag = document.createElement('div');
+            this.imageFileElement = (function () {
+                var imageFileElement = document.createElement('input');
+                imageFileElement.type = 'file';
+                imageFileElement.style.display = 'none';
+                return imageFileElement;
+            })();
+            this.imageFileValue = (function () {
+                var imageFileValue = document.createElement('small');
+                imageFileValue.className = 'file-value';
+                return imageFileValue;
+            })();
+            this.parents = (_a = {},
+                _a[RATIOTYPES.square] = null,
+                _a[RATIOTYPES.wide] = null,
+                _a);
+            this.prevScale = (_b = {},
+                _b[RATIOTYPES.square] = 1,
+                _b[RATIOTYPES.wide] = 1,
+                _b);
+            for (var key in store.state.imageScale) {
+                if (key) {
+                    this.prevScale[key] = store.state.imageScale[key];
+                }
+            }
+            // TODO: VisualScaling
+            // eventhandler.subscribe([STATENAMES.imageScale], (imageScale, state) => {
+            //   let changed = '';
+            //   for (const key in imageScale) {
+            //     if (imageScale[key] !== this.prevScale[key]) {
+            //       this.prevScale[key] = imageScale[key];
+            //       changed = key;
+            //     }
+            //   }
+            //   this.scalers[changed].scaleElement();
+            // });
+        }
+        ImageHandler.prototype.render = function () {
+            var _this = this;
+            var fileElement = document.createElement('div');
+            fileElement.className = 'form-element flex flex-align--center';
+            /** Actual file picker  */
+            fileElement.appendChild(this.imageFileElement);
+            /** Button */
+            var imageButton = document.createElement('button');
+            imageButton.className = 'button button--file';
+            imageButton.innerText = 'Vælg billede';
+            fileElement.appendChild(imageButton);
+            fileElement.appendChild(this.imageFileValue);
+            /** eventlisteners */
+            imageButton.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                _this.imageFileElement.click();
+            });
+            this.imageFileElement.addEventListener('change', this.change.bind(this));
+            this.imagePickerFrag.appendChild(fileElement);
+            return this.imagePickerFrag;
+        };
+        ImageHandler.prototype.change = function () {
+            var _this = this;
+            var splitValue = this.imageFileElement.value.split('\\');
+            this.imageFileValue.innerHTML = splitValue[splitValue.length - 1];
+            store.dispatch(STOREACTIONS.imageChange, true);
+            this.clearHandlers();
+            store.state.canvases.forEach(function (element) {
+                _this.renderHandlers(element, element.configName);
+            });
+        };
+        ImageHandler.prototype.clearHandlers = function () {
+            var i = 0;
+            while (i < this.containers.length) {
+                this.containers[i].remove();
+                i++;
+            }
+            this.containers.length = 0;
+        };
+        ImageHandler.prototype.debounce = function (imageScale, type) {
+            clearTimeout(this.debounceTimeout);
+            this.debounceTimeout = setTimeout(function () {
+                var _a;
+                console.log('type', type);
+                store.dispatch(STOREACTIONS.setImageScale, (_a = {}, _a[type] = parseInt(imageScale, 10) / 100, _a));
+                store.dispatch(STOREACTIONS.imageChange, { action: 'scale', type: type, scale: parseInt(imageScale, 10) / 100 });
+            }, 250);
+        };
+        ImageHandler.prototype.renderHandlers = function (element, configName) {
+            var _this = this;
+            console.log('canvasElement', element, configName);
+            var handlingFieldset = document.createElement('fieldset');
+            handlingFieldset.className = 'form-element margin-m--b';
+            this.containers.push(handlingFieldset);
+            var handlingLegend = document.createElement('legend');
+            handlingLegend.className = 'legend';
+            handlingLegend.innerHTML = element.header;
+            handlingFieldset.appendChild(handlingLegend);
+            var handlingElement = document.createElement('div');
+            handlingElement.className = 'form-element flex flex-justify--between flex-align--center';
+            handlingFieldset.appendChild(handlingElement);
+            // TODO: VisualScaling
+            // const { image, scaleFactor, type, wrapper } = element;
+            var type = element.type;
+            this.parents[type] = handlingElement;
+            // TODO: VisualScaling
+            // this.scalers[type] =
+            //   this.scalers[type] || new ManualScaler({ image, parent: handlingElement, scaleFactor, type, wrapper });
+            /**
+             * Scaler button
+             */
+            var scaleImage = document.createElement('div');
+            scaleImage.innerHTML = 'Skalér billede:';
+            // TODO: VisualScaling
+            // scaleImage.className = 'button';
+            // scaleImage.addEventListener('click', () => {
+            //   this.scalers[type].scaleElement();
+            // });
+            handlingElement.appendChild(scaleImage);
+            /**
+             * Scaler element
+             */
+            var scalerLabel = document.createElement('div');
+            var scalerElement = document.createElement('input');
+            scalerElement.style.textAlign = 'right';
+            scalerElement.type = 'number';
+            scalerElement.value = '100';
+            scalerElement.addEventListener('keyup', function () {
+                console.log('debounce this keyup');
+                _this.debounce(scalerElement.value, element.type);
+            });
+            scalerLabel.appendChild(scalerElement);
+            var textInput = document.createTextNode('%');
+            scalerLabel.appendChild(textInput);
+            handlingElement.appendChild(scalerLabel);
+            // const cover = document.createElement('div');
+            // cover.className = 'button';
+            // cover.innerHTML = 'Cover';
+            // handlingElement.appendChild(cover);
+            // cover.addEventListener('click', () => {
+            //   console.log('image COVER!');
+            //   // store.dispatch(STOREACTIONS.imageChange, true);
+            // });
+            // const stretch = document.createElement('div');
+            // stretch.className = 'button';
+            // stretch.innerHTML = 'Stretch';
+            // handlingElement.appendChild(stretch);
+            // stretch.addEventListener('click', () => {
+            //   console.log('image STRETCH!');
+            //   // store.dispatch(STOREACTIONS.imageChange, true);
+            // });
+            /** Image placement */
+            // const imagePlacement = new ImagePlacementPicker(element.configName);
+            // handlingFieldset.appendChild(imagePlacement.render());
+            this.imagePickerFrag.appendChild(handlingFieldset);
+        };
+        return ImageHandler;
+    }());
+
+    var PLACEMENTNAMES;
+    (function (PLACEMENTNAMES) {
+        PLACEMENTNAMES["bottom"] = "bottom";
+        PLACEMENTNAMES["bottomleft"] = "bottomleft";
+        PLACEMENTNAMES["bottomright"] = "bottomright";
+        PLACEMENTNAMES["center"] = "center";
+        PLACEMENTNAMES["left"] = "left";
+        PLACEMENTNAMES["right"] = "right";
+        PLACEMENTNAMES["top"] = "top";
+        PLACEMENTNAMES["topleft"] = "topleft";
+        PLACEMENTNAMES["topright"] = "topright";
+    })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
+
+    function imageUploader(input) {
         var url = input.value;
         var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
         return new Promise(function (resolve, reject) {
@@ -234,6 +698,128 @@
                 reject();
             }
         });
+    }
+
+    function bottomRight(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight - h, x = cWidth - w;
+        return { x: x, y: y };
+    }
+
+    function bottom(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight - h, x = cWidth / 2 - w / 2;
+        return { x: x, y: y };
+    }
+
+    function bottomLeft(options) {
+        var cHeight = options.cHeight, h = options.h;
+        var y = cHeight - h, x = 0;
+        return { x: x, y: y };
+    }
+
+    function center(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight / 2 - h / 2, x = cWidth / 2 - w / 2;
+        return { x: x, y: y };
+    }
+
+    function left(options) {
+        var cHeight = options.cHeight, h = options.h;
+        var y = cHeight / 2 - h / 2, x = 0;
+        return { x: x, y: y };
+    }
+
+    function right(options) {
+        var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
+        var y = cHeight / 2 - h / 2, x = cWidth - w;
+        return { x: x, y: y };
+    }
+
+    function top(options) {
+        var cWidth = options.cWidth, w = options.w;
+        var y = 0, x = cWidth / 2 - w / 2;
+        return { x: x, y: y };
+    }
+
+    function topLeft() {
+        var y = 0, x = 0;
+        return { x: x, y: y };
+    }
+
+    function topRight(options) {
+        var cWidth = options.cWidth, w = options.w;
+        var y = 0, x = cWidth - w;
+        return { x: x, y: y };
+    }
+
+    function imagePositioner(options, pos) {
+        switch (pos) {
+            case PLACEMENTNAMES.bottom:
+                return bottom(options);
+            case PLACEMENTNAMES.bottomleft:
+                return bottomLeft(options);
+            case PLACEMENTNAMES.bottomright:
+                return bottomRight(options);
+            case PLACEMENTNAMES.center:
+                return center(options);
+            case PLACEMENTNAMES.left:
+                return left(options);
+            case PLACEMENTNAMES.right:
+                return right(options);
+            case PLACEMENTNAMES.top:
+                return top(options);
+            case PLACEMENTNAMES.topleft:
+                return topLeft();
+            case PLACEMENTNAMES.topright:
+                return topRight(options);
+        }
+    }
+
+    function initialscaler(scalerOptions) {
+        var cHeight = scalerOptions.cHeight, cWidth = scalerOptions.cWidth, iHeight = scalerOptions.iHeight, iWidth = scalerOptions.iWidth, type = scalerOptions.type;
+        console.log('scalerOptions', scalerOptions, 'store.state.imageScale[type]', store.state.imageScale[type]);
+        var w = cWidth > iWidth ? cWidth : iWidth;
+        var h = cHeight > iHeight ? cHeight : iHeight;
+        var ratio = 1;
+        if (iWidth > iHeight) {
+            ratio = iHeight / iWidth;
+            if (type === RATIOTYPES.square) {
+                ratio = iWidth / iHeight;
+                h = cHeight;
+                w = cWidth * ratio;
+            }
+            else if (type === RATIOTYPES.wide) {
+                ratio = iHeight / iWidth;
+                w = cWidth;
+                h = cWidth * ratio;
+            }
+        }
+        else if (iWidth < iHeight) {
+            if (type === RATIOTYPES.square) {
+                ratio = iHeight / iWidth;
+                w = cWidth;
+                h = cHeight * ratio;
+            }
+            else if (type === RATIOTYPES.wide) {
+                ratio = iHeight / iWidth;
+                w = cWidth;
+                h = cWidth * ratio;
+            }
+        }
+        else {
+            if (type === RATIOTYPES.square) {
+                w = cWidth;
+                h = cHeight;
+            }
+            else if (type === RATIOTYPES.wide) {
+                w = h = cWidth;
+            }
+        }
+        h = h * store.state.imageScale[type];
+        w = w * store.state.imageScale[type];
+        console.log('scalerOptions', h, w);
+        return { h: h, w: w };
     }
 
     var simpleTextStyler = {
@@ -391,239 +977,6 @@
         },
     };
 
-    var _a;
-    var STOREACTIONS;
-    (function (STOREACTIONS) {
-        STOREACTIONS["alterTheme"] = "alterTheme";
-        STOREACTIONS["imageChange"] = "imageChange";
-        STOREACTIONS["setTheme"] = "setTheme";
-        STOREACTIONS["setThemeName"] = "setThemeName";
-    })(STOREACTIONS || (STOREACTIONS = {}));
-    var actions = (_a = {},
-        _a[STOREACTIONS.alterTheme] = function (context, payload) {
-            context.commit(STOREACTIONS.alterTheme, payload);
-        },
-        _a[STOREACTIONS.imageChange] = function (context, payload) {
-            context.commit(STOREACTIONS.imageChange, payload);
-        },
-        _a[STOREACTIONS.setTheme] = function (context, payload) {
-            context.commit(STOREACTIONS.setTheme, payload);
-        },
-        _a[STOREACTIONS.setThemeName] = function (context, payload) {
-            context.commit(STOREACTIONS.setThemeName, payload);
-        },
-        _a);
-
-    var _a$1;
-    var THEMENAMES;
-    (function (THEMENAMES) {
-        THEMENAMES["classic"] = "classic";
-        THEMENAMES["modern"] = "modern";
-        THEMENAMES["urban"] = "urban";
-        THEMENAMES["writer"] = "writer";
-    })(THEMENAMES || (THEMENAMES = {}));
-    var themes = (_a$1 = {},
-        _a$1[THEMENAMES.classic] = {
-            artist: '#D9E4E1',
-            bgColor: '#010E13',
-            colorPicks: ['#D9E4E1', '#010E13', '#D96E2F', '#2F9FD9', '#A775B2'],
-            date: '#D47843',
-            fontFamily: 'Crimson Text',
-            loaded: false,
-            tourname: '#D47843',
-            venue: '#D9E4E1',
-        },
-        _a$1[THEMENAMES.modern] = {
-            artist: '#E5DADA',
-            bgColor: '#000000',
-            colorPicks: ['#E5DADA', '#010E13', '#015EB6', '#4FC546', '#EB5450'],
-            date: '#015EB6',
-            fontFamily: 'Bebas Neue',
-            loaded: false,
-            tourname: '#015EB6',
-            venue: '#E5DADA',
-        },
-        _a$1[THEMENAMES.urban] = {
-            artist: '#E8EFED',
-            bgColor: '#000000',
-            colorPicks: ['#E8EFED', '#010E13', '#F30000', '#F3C800', '#01EA85'],
-            date: '#F30000',
-            fontFamily: 'Roboto',
-            loaded: false,
-            tourname: '#F30000',
-            venue: '#E8EFED',
-        },
-        _a$1[THEMENAMES.writer] = {
-            artist: '#E8EFED',
-            bgColor: '#000000',
-            colorPicks: ['#E8EFED', '#010E13', '#0E467E', '#BF8F28', '#3F8597'],
-            date: '#0E467E',
-            fontFamily: 'Noto Serif',
-            loaded: false,
-            tourname: '#0E467E',
-            venue: '#E8EFED',
-        },
-        _a$1);
-
-    var _a$2;
-    var STATENAMES;
-    (function (STATENAMES) {
-        STATENAMES["imageChange"] = "imageChange";
-        STATENAMES["theme"] = "theme";
-        STATENAMES["themeName"] = "themeName";
-    })(STATENAMES || (STATENAMES = {}));
-    var defaultTheme = THEMENAMES.modern;
-    var state = (_a$2 = {},
-        _a$2[STATENAMES.imageChange] = false,
-        _a$2[STATENAMES.theme] = themes[defaultTheme],
-        _a$2[STATENAMES.themeName] = defaultTheme,
-        _a$2);
-
-    var _a$3;
-    var mutations = (_a$3 = {},
-        _a$3[STOREACTIONS.alterTheme] = function (state, payload) {
-            // console.log('payload', payload, state.theme);
-            state.theme = __assign(__assign({}, state.theme), payload);
-            // console.log('payload state after', state.theme);
-            return state;
-        },
-        _a$3[STOREACTIONS.imageChange] = function (state, payload) {
-            state[STATENAMES.imageChange] = payload;
-            return state;
-        },
-        _a$3[STOREACTIONS.setTheme] = function (state, payload) {
-            state[STATENAMES.theme] = payload;
-            return state;
-        },
-        _a$3[STOREACTIONS.setThemeName] = function (state, payload) {
-            state[STATENAMES.themeName] = payload;
-            return state;
-        },
-        _a$3);
-
-    var PubSub = /** @class */ (function () {
-        function PubSub() {
-            this.events = {};
-        }
-        PubSub.prototype.publish = function (event, data, key) {
-            if (data === void 0) { data = {}; }
-            var self = this;
-            if (!self.events[event]) {
-                return [];
-            }
-            return self.events[event].map(function (callback) { return callback(data, key); });
-        };
-        PubSub.prototype.subscribe = function (event, callback) {
-            var self = this;
-            if (!self.events[event]) {
-                self.events[event] = [];
-            }
-            return self.events[event].push(callback);
-        };
-        return PubSub;
-    }());
-
-    var Store = /** @class */ (function () {
-        function Store(params) {
-            var _this = this;
-            // Add some default objects to hold our actions, mutations and state
-            this.actions = {};
-            this.mutations = {};
-            this.state = {};
-            // A status enum to set during actions and mutations
-            this.status = 'resting';
-            // Attach our PubSub module as an `events` element
-            this.events = new PubSub();
-            // Look in the passed params object for actions and mutations
-            // that might have been passed in
-            if (params.hasOwnProperty('actions')) {
-                this.actions = params.actions;
-            }
-            if (params.hasOwnProperty('mutations')) {
-                this.mutations = params.mutations;
-            }
-            // Set our state to be a Proxy. We are setting the default state by
-            // checking the params and defaulting to an empty object if no default
-            // state is passed in
-            this.state = new Proxy(params.state || {}, {
-                set: function (state, key, value) {
-                    // Set the value as we would normally
-                    state[key] = value;
-                    // Trace out to the console. This will be grouped by the related action
-                    // console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
-                    // Publish the change event for the components that are listening
-                    if (_this.status === 'resting') {
-                        _this.events.publish('stateChange', _this.state, key);
-                    }
-                    // Give the user a little telling off if they set a value directly
-                    if (_this.status !== 'mutation') {
-                        console.warn("You should use a mutation to set " + String(key));
-                    }
-                    // Reset the status ready for the next operation
-                    _this.status = 'resting';
-                    return true;
-                },
-            });
-        }
-        /**
-         * A dispatcher for actions that looks in the actions
-         * collection and runs the action if it can find it
-         *
-         * @param {string} actionKey
-         * @param {mixed} payload
-         * @returns {boolean}
-         * @memberof Store
-         */
-        Store.prototype.dispatch = function (actionKey, payload) {
-            // Run a quick check to see if the action actually exists
-            // before we try to run it
-            if (typeof this.actions[actionKey] !== 'function') {
-                console.error("Action \"" + actionKey + " doesn't exist.");
-                return false;
-            }
-            // Create a console group which will contain the logs from our Proxy etc
-            // console.groupCollapsed(`ACTION: ${actionKey}`);
-            // Let anything that's watching the status know that we're dispatching an action
-            this.status = 'action';
-            // Actually call the action and pass it the Store context and whatever payload was passed
-            this.actions[actionKey](this, payload);
-            // Close our console group to keep things nice and neat
-            // console.groupEnd();
-            return true;
-        };
-        /**
-         * Look for a mutation and modify the state object
-         * if that mutation exists by calling it
-         *
-         * @param {string} mutationKey
-         * @param {mixed} payload
-         * @returns {boolean}
-         * @memberof Store
-         */
-        Store.prototype.commit = function (mutationKey, payload) {
-            // Run a quick check to see if this mutation actually exists
-            // before trying to run it
-            if (typeof this.mutations[mutationKey] !== 'function') {
-                // console.log(`Mutation "${mutationKey}" doesn't exist`);
-                return false;
-            }
-            // Let anything that's watching the status know that we're mutating state
-            this.status = 'mutation';
-            // Get a new version of the state by running the mutation and storing the result of it
-            var newState = this.mutations[mutationKey](this.state, payload);
-            // Merge the old and new together to create a new state and set it
-            this.state = Object.assign(this.state, newState);
-            return true;
-        };
-        return Store;
-    }());
-
-    var store = new Store({
-        actions: actions,
-        mutations: mutations,
-        state: state,
-    });
-
     function asyncForEach(array, callback) {
         return __awaiter(this, void 0, void 0, function () {
             var index;
@@ -653,10 +1006,9 @@
             var _this = this;
             this.state = __assign({}, store.state);
             store.events.subscribe('stateChange', function (newState, key) {
-                // console.log('newState[key]', newState[key]);
+                console.log('newState', newState, key, _this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key]));
                 if (_this.state[key] !== newState[key] && JSON.stringify(_this.state[key]) !== JSON.stringify(newState[key])) {
-                    // console.log('newState[key] ... slipped in here', key, newState);
-                    eventhandler.publish(key, __assign({}, newState));
+                    eventhandler.publish(key, newState[key], newState);
                     _this.state = __assign({}, newState);
                 }
             });
@@ -677,7 +1029,7 @@
         return can;
     };
     var CanvasCreator = /** @class */ (function () {
-        function CanvasCreator(container, bannerdesigner) {
+        function CanvasCreator(container, bannerdesigner, type) {
             var _this = this;
             this.containerWidth = 640;
             this.canvasContainer = document.createElement('div');
@@ -721,54 +1073,53 @@
             this.containerWidth = container.clientWidth;
             this.canvasContainer.className = 'flex flex-wrap flex-start';
             this.container.appendChild(this.canvasContainer);
-            this.state = __assign({}, store.state);
-            // this.setTheme(this.state.themeName);
-            this.setTheme(this.state.theme);
-            this.addAll();
-            eventhandler.subscribe(STATENAMES.themeName, function (state) {
-                console.log('theme theme theme', state);
-                _this.setTheme(state[STATENAMES.theme]);
+            this.setTheme(store.state.theme, false);
+            this.currentType = type;
+            this.addAll(type);
+            eventhandler.subscribe(STATENAMES.theme, function (theme, _state) {
+                _this.setTheme(theme);
             });
-            eventhandler.subscribe(STATENAMES.theme, function (state) {
-                console.log('alter theme alter theme theme', state);
-                _this.setTheme(state[STATENAMES.theme]);
+            eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, _state) {
+                _this.imageHasChanged = imageChange;
+                console.log('imageChange_imageChange_imageChange this.imageHasChanged.type', _this.imageHasChanged, _this.imageHasChanged.type);
+                if (_this.imageHasChanged === true || _this.imageHasChanged.type === _this.currentType) {
+                    _this.update();
+                }
             });
-            eventhandler.subscribe([STATENAMES.imageChange], function (state) {
-                _this.imageChanged(state[STATENAMES.imageChange]);
-                _this.update();
+            eventhandler.subscribe([STATENAMES.imagePosition], function (imagePosition, _state) {
+                console.log('canvas STATENAMES.imagePosition imagePosition', imagePosition);
             });
         }
         CanvasCreator.prototype.getCanvas = function () {
             return this.currentCanvas;
         };
-        CanvasCreator.prototype.imageChanged = function (status) {
-            this.imageHasChanged = status;
-        };
-        CanvasCreator.prototype.setTheme = function (theme) {
+        CanvasCreator.prototype.setTheme = function (theme, update) {
             var _this = this;
+            if (update === void 0) { update = true; }
             this.theme = theme;
-            console.log('theme', theme);
             if (!this.theme.loaded) {
                 var themeFont = document.createElement('div');
                 themeFont.setAttribute('style', "font-family: \"" + this.theme.fontFamily + "\";visibility: hidden;");
                 themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
                 document.body.appendChild(themeFont);
                 setTimeout(function () {
-                    _this.update();
+                    if (update)
+                        _this.update();
                     _this.theme.loaded = true;
                 }, 200);
             }
-            else {
+            else if (update) {
                 this.update();
             }
         };
         CanvasCreator.prototype.update = function () {
-            var eleList = this.form.elements;
-            var formElements = Array.from(eleList);
+            var _a;
+            console.log('this.update!');
+            this.formElements = (_a = this.formElements) !== null && _a !== void 0 ? _a : Array.from(this.form.elements);
             var info = {
                 dates: {},
             };
-            formElements.forEach(function (el) {
+            this.formElements.forEach(function (el) {
                 if (el.dataset.line) {
                     info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
                     info.dates[el.dataset.line].push(el);
@@ -781,12 +1132,14 @@
                 }
             });
             this.addContent(info, true);
+            // this.updateState();
         };
-        CanvasCreator.prototype.addAll = function () {
-            var _this = this;
-            this.types.forEach(function (configName) {
-                _this.addCanvas(configName);
-            });
+        CanvasCreator.prototype.addAll = function (type) {
+            console.log(type, this.types);
+            // this.types.forEach((configName) => {
+            this.addCanvas(type);
+            // });
+            this.updateState();
         };
         CanvasCreator.prototype.addCanvas = function (configName) {
             var _a = this.canvasConfig[configName], header = _a.header, height = _a.height, type = _a.type, width = _a.width;
@@ -794,9 +1147,12 @@
             wrapper.className = 'margin-l--b';
             wrapper.id = "wrapper" + type;
             this.canvasContainer.appendChild(wrapper);
+            var containerThing = document.createElement('div');
             var head = document.createElement('h5');
             head.innerHTML = header;
             wrapper.appendChild(head);
+            var canvaswrapper = document.createElement('div');
+            canvaswrapper.className = 'canvaswrapper';
             var scaleFactor;
             switch (type) {
                 case RATIOTYPES.square:
@@ -817,11 +1173,13 @@
             canvas.id = type;
             var ctx = canvas.getContext('2d');
             var curCanvas = __assign(__assign({}, this.canvasConfig[configName]), { canvas: canvas, canvasContext: ctx, configName: configName,
-                scaleFactor: scaleFactor });
+                scaleFactor: scaleFactor, wrapper: canvaswrapper });
             this.currentCanvas.push(curCanvas);
             canvas.height = height;
             canvas.width = width;
-            wrapper.appendChild(canvas);
+            canvaswrapper.appendChild(containerThing);
+            canvaswrapper.appendChild(canvas);
+            wrapper.appendChild(canvaswrapper);
             this.resetCanvas(curCanvas);
         };
         CanvasCreator.prototype.addContent = function (contentInfo, clear) {
@@ -855,7 +1213,7 @@
         };
         CanvasCreator.prototype.addImage = function (contentInfo, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, iWidth, iHeight, cWidth, cHeight, w, h, ratio, y, x, _a, image_1, x, y, w, h;
+                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, options, imgSize, imgPos, _a, image_1, x, y, w, h;
                 var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
@@ -863,58 +1221,42 @@
                             image = contentInfo.image;
                             canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
                             imageHasChanged = this.imageHasChanged;
-                            if (!(image && imageHasChanged)) return [3 /*break*/, 2];
-                            return [4 /*yield*/, imageHandler(image)];
+                            console.log('current.image_current.image', imageHasChanged, current.image);
+                            if (!(imageHasChanged !== false)) return [3 /*break*/, 3];
+                            if (!(image && (imageHasChanged === true || imageHasChanged === type))) return [3 /*break*/, 2];
+                            return [4 /*yield*/, imageUploader(image)];
                         case 1:
                             imageReturn = _b.sent();
                             this.image = imageReturn;
                             if (current.image)
                                 delete current.image;
-                            iWidth = this.image.width;
-                            iHeight = this.image.height;
-                            cWidth = canvas.width;
-                            cHeight = canvas.height;
-                            w = cWidth > iWidth ? cWidth : iWidth;
-                            h = cHeight > iHeight ? cHeight : iHeight;
-                            ratio = 1;
-                            if (iWidth > iHeight) {
-                                ratio = iHeight / iWidth;
-                                if (type === RATIOTYPES.square) {
-                                    ratio = iWidth / iHeight;
-                                    h = cHeight;
-                                    w = cWidth * ratio;
-                                }
-                                else if (type === RATIOTYPES.wide) {
-                                    ratio = iHeight / iWidth;
-                                    w = cWidth;
-                                    h = cWidth * ratio;
-                                }
-                            }
-                            else if (iWidth < iHeight) {
-                                if (type === RATIOTYPES.square) {
-                                    ratio = iHeight / cHeight;
-                                    w = cWidth;
-                                    h = cHeight * ratio;
-                                }
-                                else if (type === RATIOTYPES.wide) {
-                                    ratio = iHeight / iWidth;
-                                    w = cWidth;
-                                    h = cWidth * ratio;
-                                }
-                            }
-                            else {
-                                if (type === RATIOTYPES.square) {
-                                    w = cWidth;
-                                    h = cHeight;
-                                }
-                                else if (type === RATIOTYPES.wide) {
-                                    w = h = cWidth;
-                                }
-                            }
-                            y = 0, x = 0;
-                            current.image = { image: this.image, x: x, y: y, w: w, h: h };
                             _b.label = 2;
                         case 2:
+                            options = {
+                                cHeight: canvas.height,
+                                cWidth: canvas.width,
+                                iHeight: this.image.height,
+                                iWidth: this.image.width,
+                                type: type,
+                            };
+                            imgSize = initialscaler(options);
+                            imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
+                            if (imageHasChanged.type === type) {
+                                switch (imageHasChanged.action) {
+                                    case 'scale':
+                                        imgSize = initialscaler(options);
+                                        break;
+                                    case 'position':
+                                        imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
+                                        break;
+                                    default:
+                                        imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
+                                }
+                            }
+                            current.image = __assign(__assign({ image: this.image }, imgPos), imgSize);
+                            console.log('_current.image_current.image_ alot', current.image, imgPos, imgSize);
+                            _b.label = 3;
+                        case 3:
                             if (current.image) {
                                 _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
                                 canvasContext.drawImage(image_1, x, y, w, h);
@@ -950,7 +1292,6 @@
                             canvasContext.textAlign = 'left';
                             canvasContext.textBaseline = 'top';
                             tournameTop = cfg.top * 2;
-                            console.log('this.theme', this.theme, this.theme.artist);
                             headerString = "{" + this.theme.artist + artist.toUpperCase() + "}\n{" + this.theme.tourname + tourname.toUpperCase() + "}";
                             simpleTextStyler.setFont(canvasContext);
                             return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
@@ -1025,12 +1366,15 @@
         };
         CanvasCreator.prototype.resetCanvas = function (currentCfg) {
             currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
-            currentCfg.canvasContext.beginPath(); //ADD THIS LINE!<<<<<<<<<<<<<
+            currentCfg.canvasContext.beginPath(); // ADD THIS LINE!<<<<<<<<<<<<<
             currentCfg.canvasContext.moveTo(0, 0);
             // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
             currentCfg.canvasContext.stroke();
             currentCfg.canvasContext.fillStyle = this.theme.bgColor + ";";
             currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
+        };
+        CanvasCreator.prototype.updateState = function () {
+            store.dispatch(STOREACTIONS.updateCanvases, this.currentCanvas);
         };
         return CanvasCreator;
     }());
@@ -1355,14 +1699,10 @@
             this.state = __assign({}, store.state);
             this.theme = this.state.theme;
             this.colorPickerDiv.className = 'form-element colorpicker-layout';
-            eventhandler.subscribe('themeName', function (state) {
-                _this.state = __assign({}, state);
-                _this.theme = _this.state.theme;
-                _this.render();
-            });
-            eventhandler.subscribe('theme', function (state) {
-                _this.state = __assign({}, state);
-                _this.theme = _this.state.theme;
+            eventhandler.subscribe('theme', function (theme, newState) {
+                console.log('ColorPicker theme', newState);
+                _this.state = newState;
+                _this.theme = theme;
                 _this.render();
             });
             this.fuse = new Fuse();
@@ -1401,6 +1741,7 @@
                 this.colorPickerDiv.firstChild.remove();
             }
             var theme = this.theme;
+            console.log('this.names', this.names, theme);
             this.names.forEach(function (name) {
                 var colorPickerEl = document.createElement('div');
                 colorPickerEl.className = "colorpicker colorpicker--" + name;
@@ -1415,36 +1756,6 @@
         return ColorPicker;
     }());
 
-    function imagePicker() {
-        var fileElement = document.createElement('div');
-        fileElement.className = 'form-element flex flex-align--center';
-        /** Actual file picker  */
-        var imageFileElement = document.createElement('input');
-        imageFileElement.type = 'file';
-        imageFileElement.style.display = 'none';
-        fileElement.appendChild(imageFileElement);
-        /** Button */
-        var imageButton = document.createElement('button');
-        imageButton.className = 'button button--file';
-        imageButton.innerText = 'Vælg billede';
-        fileElement.appendChild(imageButton);
-        var imageFileValue = document.createElement('small');
-        imageFileValue.className = 'file-value';
-        fileElement.appendChild(imageFileValue);
-        /** eventlisteners */
-        imageButton.addEventListener('click', function (ev) {
-            ev.preventDefault();
-            imageFileElement.click();
-        });
-        imageFileElement.addEventListener('change', function () {
-            var splitValue = imageFileElement.value.split('\\');
-            imageFileValue.innerHTML = splitValue[splitValue.length - 1];
-            console.log('imageHasChanged!');
-            store.dispatch(STOREACTIONS.imageChange, true);
-        });
-        return fileElement;
-    }
-
     function themeList(themes, currentTheme) {
         var themeOption = [];
         for (var key in themes) {
@@ -1454,7 +1765,7 @@
         }
         return themeOption.join('');
     }
-    var themePicker = function (themes, currentTheme) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Tema</label>\n    <div class=\"form-input form-input--select\">\n      <select>\n        " + themeList(themes, currentTheme) + "\n      </select>\n    </div>\n  </div>\n"; };
+    var themePicker = function (themes, currentTheme) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Tema</label>\n    <div class=\"form-input form-input--select\">\n      <select data-type=\"themepicker\">\n        " + themeList(themes, currentTheme) + "\n      </select>\n    </div>\n  </div>\n"; };
     var ThemePicker = /** @class */ (function () {
         function ThemePicker() {
             // eventhandler;
@@ -1524,9 +1835,12 @@
         var container = document.createDocumentFragment();
         var formEl = document.createElement('form');
         formEl.className = 'form-container';
-        var canvasCreator = new CanvasCreator(canvascontainer, formEl);
+        var canvasCreator = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.wide);
+        var canvasCreator2 = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
+        console.log(canvasCreator2);
         formEl.addEventListener('change', function (ev) {
-            if (ev.target.nodeName === 'SELECT') {
+            var target = ev.target;
+            if (target.nodeName === 'SELECT' && target.dataset.type === 'themepicker') {
                 store.dispatch(STOREACTIONS.setThemeName, ev.target.value);
                 store.dispatch(STOREACTIONS.setTheme, themes[ev.target.value]);
             }
@@ -1579,7 +1893,7 @@
         imageContainer.className = 'form-area';
         formEl.appendChild(imageContainer);
         /** Image */
-        imageContainer.appendChild(imagePicker());
+        imageContainer.appendChild(new ImageHandler().render());
         /**
          * Add form element to container
          */
