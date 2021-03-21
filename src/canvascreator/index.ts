@@ -222,7 +222,7 @@ export class CanvasCreator {
       }
 
       await this.addImage(contentInfo, current);
-
+      console.log('this.addText ... this.addText ... this.addText');
       this.addText(contentInfo, current);
     });
 
@@ -313,7 +313,10 @@ export class CanvasCreator {
     }${tourname.toUpperCase()}}`;
 
     simpleTextStyler.setFont(canvasContext);
-    await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
+
+    if (headerString) {
+      await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
+    }
 
     this.bannerName = `${artist.replace(/\s/g, '-')}_${tourname.replace(/\s/g, '-')}`;
 
@@ -327,12 +330,12 @@ export class CanvasCreator {
     const { canvasContext } = current;
     canvasContext.textBaseline = 'alphabetic';
     await (canvasContext.font = this.canvasFont(cfgName));
-
+    let counter = 0;
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
 
-        datesInfo[dates].forEach((datesInfoElement: HTMLInputElement) => {
+        datesInfo[dates].forEach((datesInfoElement: HTMLInputElement, i: number) => {
           const elName = datesInfoElement.name;
 
           if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
@@ -355,9 +358,19 @@ export class CanvasCreator {
             }
           }
         });
-
-        dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
+        if (dateText) {
+          dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
+          console.log('counter', counter);
+          // await simpleTextStyler.drawText(
+          //   canvasContext,
+          //   `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`,
+          //   cfg.left * 2,
+          //   textTop,
+          //   cfg.fontSize
+          // );
+        }
       }
+      counter++;
     }
 
     simpleTextStyler.setFont(canvasContext);
@@ -365,7 +378,10 @@ export class CanvasCreator {
 
     const textTop = top + cfg.top + cfg.fontSize;
 
-    await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
+    if (datestexting) {
+      console.log(textTop);
+      // await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
+    }
   }
 
   private canvasFont(cfgName: string) {

@@ -12,6 +12,7 @@ export const simpleTextStyler = {
     }
     return t;
   })(),
+
   getNextTab: function (x) {
     let i = 0;
     while (i < this.tabs.length) {
@@ -31,6 +32,7 @@ export const simpleTextStyler = {
     }
     return Number(number);
   },
+
   setFont: function (context) {
     this.font = context.font;
     this.baseSize = this.getFontSize(this.font);
@@ -40,7 +42,9 @@ export const simpleTextStyler = {
     }
     this.spaceSize = this.sizes[0];
   },
+
   drawText: function (context, text, x, y, size) {
+    console.log('drawText_drawText', text);
     var i, len, subText;
     var w, scale;
     var xx,
@@ -65,6 +69,7 @@ export const simpleTextStyler = {
     }
 
     function renderText(text) {
+      console.log('renderText', text);
       ctx.save();
       ctx.fillStyle = colour;
       ctx.translate(x, y);
@@ -143,6 +148,7 @@ export const simpleTextStyler = {
       i += 1;
     }
     if (subText !== '') {
+      console.log('renderText(subText)');
       renderText(subText);
     }
   },

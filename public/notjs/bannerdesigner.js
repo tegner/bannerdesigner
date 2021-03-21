@@ -843,6 +843,7 @@
             this.spaceSize = this.sizes[0];
         },
         drawText: function (context, text, x, y, size) {
+            console.log('drawText_drawText', text);
             var i, len, subText;
             var w, scale;
             var xx, 
@@ -867,6 +868,7 @@
                 ctx = context;
             }
             function renderText(text) {
+                console.log('renderText', text);
                 ctx.save();
                 ctx.fillStyle = colour;
                 ctx.translate(x, y);
@@ -952,6 +954,7 @@
                 i += 1;
             }
             if (subText !== '') {
+                console.log('renderText(subText)');
                 renderText(subText);
             }
         },
@@ -1173,6 +1176,7 @@
                                             return [4 /*yield*/, this.addImage(contentInfo, current)];
                                         case 1:
                                             _a.sent();
+                                            console.log('this.addText ... this.addText ... this.addText');
                                             this.addText(contentInfo, current);
                                             return [2 /*return*/];
                                     }
@@ -1270,9 +1274,12 @@
                             tournameTop = cfg.top * 2;
                             headerString = "{" + this.theme.artist + artist.toUpperCase() + "}\n{" + this.theme.tourname + tourname.toUpperCase() + "}";
                             simpleTextStyler.setFont(canvasContext);
+                            if (!headerString) return [3 /*break*/, 3];
                             return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
                         case 2:
                             _a.sent();
+                            _a.label = 3;
+                        case 3:
                             this.bannerName = artist.replace(/\s/g, '-') + "_" + tourname.replace(/\s/g, '-');
                             canvasContext.measureText(headerString).actualBoundingBoxAscent;
                             this.addDates(dates, configName, tournameTop + fontSize * 2, current);
@@ -1283,7 +1290,7 @@
         };
         CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var cfg, dateTexts, canvasContext, _loop_1, this_1, dates, datestexting, textTop;
+                var cfg, dateTexts, canvasContext, counter, _loop_1, this_1, dates, datestexting, textTop;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -1294,10 +1301,11 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
                             _a.sent();
+                            counter = 0;
                             _loop_1 = function (dates) {
                                 if (datesInfo[dates]) {
                                     var dateText_1, ticketText_1, venueText_1;
-                                    datesInfo[dates].forEach(function (datesInfoElement) {
+                                    datesInfo[dates].forEach(function (datesInfoElement, i) {
                                         var elName = datesInfoElement.name;
                                         if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
                                             dateText_1 = datesInfoElement.value.toUpperCase();
@@ -1319,8 +1327,19 @@
                                             }
                                         }
                                     });
-                                    dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
+                                    if (dateText_1) {
+                                        dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
+                                        console.log('counter', counter);
+                                        // await simpleTextStyler.drawText(
+                                        //   canvasContext,
+                                        //   `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`,
+                                        //   cfg.left * 2,
+                                        //   textTop,
+                                        //   cfg.fontSize
+                                        // );
+                                    }
                                 }
+                                counter++;
                             };
                             this_1 = this;
                             for (dates in datesInfo) {
@@ -1329,9 +1348,10 @@
                             simpleTextStyler.setFont(canvasContext);
                             datestexting = dateTexts.join('\n');
                             textTop = top + cfg.top + cfg.fontSize;
-                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize)];
-                        case 2:
-                            _a.sent();
+                            if (datestexting) {
+                                console.log(textTop);
+                                // await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
+                            }
                             return [2 /*return*/];
                     }
                 });
