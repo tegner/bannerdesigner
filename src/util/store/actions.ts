@@ -5,6 +5,7 @@ export enum STOREACTIONS {
   setImageScale = 'setImageScale',
   setTheme = 'setTheme',
   setThemeName = 'setThemeName',
+  textUpdate = 'textUpdate',
   updateCanvases = 'updateCanvases',
 }
 
@@ -27,8 +28,10 @@ export default {
   [STOREACTIONS.setThemeName](context, payload) {
     context.commit(STOREACTIONS.setThemeName, payload);
   },
+  [STOREACTIONS.textUpdate](context, payload) {
+    context.commit(STOREACTIONS.textUpdate, payload);
+  },
   [STOREACTIONS.updateCanvases](context, payload) {
-    console.log('updateCanvases', payload);
     context.commit(STOREACTIONS.updateCanvases, payload);
   },
 };

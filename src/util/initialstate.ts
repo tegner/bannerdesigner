@@ -1,4 +1,4 @@
-import { ICurrentCanvasConfig, RATIOTYPES } from '../canvascreator/canvascreator';
+import { ICanvasConfig, ICurrentCanvasConfig, RATIOTYPES } from '../canvascreator/canvascreator';
 import { IThemeObject, THEMENAMES, themes } from '../canvascreator/themes';
 import { TPlacementNames } from '../imagehandler/imageplacement';
 
@@ -7,17 +7,20 @@ export enum STATENAMES {
   imageChange = 'imageChange',
   imageScale = 'imageScale',
   imagePosition = 'imagePosition',
+  textUpdate = 'textUpdate',
   theme = 'theme',
   themeName = 'themeName',
 }
 
+export type TCanvas = ICurrentCanvasConfig & ICanvasConfig;
 export interface IStoreState {
-  [STATENAMES.canvases]: ICurrentCanvasConfig[];
+  [STATENAMES.canvases]: TCanvas[];
   [STATENAMES.imageChange]: any;
   [STATENAMES.imageScale]: {
     [id: string]: number;
   };
   [STATENAMES.imagePosition]: TPlacementNames;
+  [STATENAMES.textUpdate]: boolean;
   [STATENAMES.theme]: IThemeObject;
   [STATENAMES.themeName]: string;
 }
@@ -34,6 +37,7 @@ export const initialState: IStoreState = {
     [RATIOTYPES.wide]: 1,
   },
   [STATENAMES.imagePosition]: 'topleft',
+  [STATENAMES.textUpdate]: false,
   [STATENAMES.theme]: themes[defaultTheme],
   [STATENAMES.themeName]: defaultTheme,
 };

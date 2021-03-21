@@ -1,5 +1,8 @@
 import canvas2image from '../../public/notjs/canvas2image';
 
+import { STATENAMES, TCanvas } from './initialstate';
+import store from './store';
+
 function downloadFile(data, fileName, type = 'text/plain') {
   // Create an invisible A element
   const a = document.createElement('a');
@@ -20,10 +23,11 @@ function downloadFile(data, fileName, type = 'text/plain') {
   document.body.removeChild(a);
 }
 
-export function saveToDisk(currentArray, bannerName: string) {
+export function saveToDisk(bannerName: string) {
+  const currentArray = store.state[STATENAMES.canvases];
   const zip = new (window as any).JSZip();
   const img = zip.folder(bannerName);
-  currentArray.forEach((current) => {
+  currentArray.forEach((current: TCanvas) => {
     const { canvas, height, type, width } = current;
 
     const nameForFile = `${bannerName}-${type}.png` ?? `bannermaker-${type}.png`;

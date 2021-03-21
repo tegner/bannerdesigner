@@ -69,11 +69,10 @@ export class CanvasCreator {
   private formElements: HTMLElement[];
   private image: HTMLImageElement;
   private imageHasChanged: any = false;
-
+  private textUpdate: boolean = false;
   private theme: IThemeObject;
-  private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
-  constructor(container, bannerdesigner, type) {
+  constructor(container: HTMLDivElement, bannerdesigner: HTMLFormElement, type: RATIOTYPES) {
     this.form = bannerdesigner;
     this.container = container;
     this.containerWidth = container.clientWidth;
@@ -90,19 +89,18 @@ export class CanvasCreator {
 
     eventhandler.subscribe([STATENAMES.imageChange], (imageChange, _state) => {
       this.imageHasChanged = imageChange;
-      console.log(
-        'imageChange_imageChange_imageChange this.imageHasChanged.type',
-        this.imageHasChanged,
-        this.imageHasChanged.type
-      );
 
       if (this.imageHasChanged === true || this.imageHasChanged.type === this.currentType) {
         this.update();
       }
     });
 
-    eventhandler.subscribe([STATENAMES.imagePosition], (imagePosition, _state) => {
-      console.log('canvas STATENAMES.imagePosition imagePosition', imagePosition);
+    eventhandler.subscribe([STATENAMES.textUpdate], (textUpdate) => {
+      this.textUpdate = textUpdate;
+
+      if (this.textUpdate === true) {
+        this.update();
+      }
     });
   }
 
@@ -129,8 +127,6 @@ export class CanvasCreator {
   }
 
   public update() {
-    console.log('this.update!');
-
     this.formElements = this.formElements ?? (Array.from(this.form.elements) as HTMLElement[]);
 
     const info = {
@@ -149,15 +145,11 @@ export class CanvasCreator {
     });
 
     this.addContent(info, true);
-
-    // this.updateState();
   }
 
   private addAll(type: RATIOTYPES) {
-    console.log(type, this.types);
-    // this.types.forEach((configName) => {
     this.addCanvas(type);
-    // });
+
     this.updateState();
   }
 
@@ -235,6 +227,7 @@ export class CanvasCreator {
     });
 
     if (this.imageHasChanged) store.dispatch(STOREACTIONS.imageChange, false);
+    if (this.textUpdate) store.dispatch(STOREACTIONS.textUpdate, false);
   }
 
   private async addImage(contentInfo, current: TCurrentCanvasInfo) {
@@ -244,7 +237,7 @@ export class CanvasCreator {
     const { imageHasChanged } = this;
 
     let imageReturn;
-    console.log('current.image_current.image', imageHasChanged, current.image);
+
     if (imageHasChanged !== false) {
       if (image && (imageHasChanged === true || imageHasChanged === type)) {
         imageReturn = await imageUploader(image);
@@ -278,7 +271,6 @@ export class CanvasCreator {
       }
 
       current.image = { image: this.image, ...imgPos, ...imgSize };
-      console.log('_current.image_current.image_ alot', current.image, imgPos, imgSize);
     }
 
     if (current.image) {
@@ -384,7 +376,7 @@ export class CanvasCreator {
     currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
     currentCfg.canvasContext.beginPath(); // ADD THIS LINE!<<<<<<<<<<<<<
     currentCfg.canvasContext.moveTo(0, 0);
-    // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
+
     currentCfg.canvasContext.stroke();
     currentCfg.canvasContext.fillStyle = `${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
