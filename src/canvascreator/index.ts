@@ -360,14 +360,17 @@ export class CanvasCreator {
         });
         if (dateText) {
           dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
-          console.log('counter', counter);
-          // await simpleTextStyler.drawText(
-          //   canvasContext,
-          //   `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`,
-          //   cfg.left * 2,
-          //   textTop,
-          //   cfg.fontSize
-          // );
+          console.log('counter', top + cfg.top + cfg.fontSize, counter);
+          console.log('counter top pos:', top + cfg.top + cfg.fontSize + cfg.fontSize * counter, counter);
+          const theTopPos = top + cfg.top + cfg.fontSize + cfg.fontSize * counter;
+          console.log('counter  cfg.fontSize', cfg.fontSize);
+          await simpleTextStyler.drawText(
+            canvasContext,
+            `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`,
+            cfg.left * 2,
+            theTopPos,
+            cfg.fontSize
+          );
         }
       }
       counter++;

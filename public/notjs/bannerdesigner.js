@@ -1290,9 +1290,9 @@
         };
         CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var cfg, dateTexts, canvasContext, counter, _loop_1, this_1, dates, datestexting, textTop;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
+                var cfg, dateTexts, canvasContext, counter, _loop_1, this_1, _a, _b, _i, dates, datestexting, textTop;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
                         case 0:
                             cfg = this.canvasConfig[cfgName];
                             dateTexts = [];
@@ -1300,51 +1300,69 @@
                             canvasContext.textBaseline = 'alphabetic';
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
-                            _a.sent();
+                            _c.sent();
                             counter = 0;
                             _loop_1 = function (dates) {
-                                if (datesInfo[dates]) {
-                                    var dateText_1, ticketText_1, venueText_1;
-                                    datesInfo[dates].forEach(function (datesInfoElement, i) {
-                                        var elName = datesInfoElement.name;
-                                        if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
-                                            dateText_1 = datesInfoElement.value.toUpperCase();
-                                        }
-                                        if (elName.indexOf(DATEINFOTYPES.venue) !== -1) {
-                                            venueText_1 = datesInfoElement.value.toUpperCase();
-                                        }
-                                        if (elName.indexOf(DATEINFOTYPES.tickets) !== -1 && datesInfoElement.checked) {
-                                            switch (datesInfoElement.value) {
-                                                case 'few':
-                                                    ticketText_1 = 'Få billetter'.toUpperCase();
-                                                    break;
-                                                case 'soldout':
-                                                    ticketText_1 = 'Udsolgt'.toUpperCase();
-                                                    break;
-                                                default:
-                                                    ticketText_1 = '';
-                                                    break;
-                                            }
-                                        }
-                                    });
-                                    if (dateText_1) {
-                                        dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
-                                        console.log('counter', counter);
-                                        // await simpleTextStyler.drawText(
-                                        //   canvasContext,
-                                        //   `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`,
-                                        //   cfg.left * 2,
-                                        //   textTop,
-                                        //   cfg.fontSize
-                                        // );
+                                var dateText_1, ticketText_1, venueText_1, theTopPos;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            if (!datesInfo[dates]) return [3 /*break*/, 2];
+                                            datesInfo[dates].forEach(function (datesInfoElement, i) {
+                                                var elName = datesInfoElement.name;
+                                                if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
+                                                    dateText_1 = datesInfoElement.value.toUpperCase();
+                                                }
+                                                if (elName.indexOf(DATEINFOTYPES.venue) !== -1) {
+                                                    venueText_1 = datesInfoElement.value.toUpperCase();
+                                                }
+                                                if (elName.indexOf(DATEINFOTYPES.tickets) !== -1 && datesInfoElement.checked) {
+                                                    switch (datesInfoElement.value) {
+                                                        case 'few':
+                                                            ticketText_1 = 'Få billetter'.toUpperCase();
+                                                            break;
+                                                        case 'soldout':
+                                                            ticketText_1 = 'Udsolgt'.toUpperCase();
+                                                            break;
+                                                        default:
+                                                            ticketText_1 = '';
+                                                            break;
+                                                    }
+                                                }
+                                            });
+                                            if (!dateText_1) return [3 /*break*/, 2];
+                                            dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
+                                            console.log('counter', top + cfg.top + cfg.fontSize, counter);
+                                            console.log('counter top pos:', top + cfg.top + cfg.fontSize + cfg.fontSize * counter, counter);
+                                            theTopPos = top + cfg.top + cfg.fontSize + cfg.fontSize * counter;
+                                            console.log('counter  cfg.fontSize', cfg.fontSize);
+                                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, "{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}", cfg.left * 2, theTopPos, cfg.fontSize)];
+                                        case 1:
+                                            _a.sent();
+                                            _a.label = 2;
+                                        case 2:
+                                            counter++;
+                                            return [2 /*return*/];
                                     }
-                                }
-                                counter++;
+                                });
                             };
                             this_1 = this;
-                            for (dates in datesInfo) {
-                                _loop_1(dates);
-                            }
+                            _a = [];
+                            for (_b in datesInfo)
+                                _a.push(_b);
+                            _i = 0;
+                            _c.label = 2;
+                        case 2:
+                            if (!(_i < _a.length)) return [3 /*break*/, 5];
+                            dates = _a[_i];
+                            return [5 /*yield**/, _loop_1(dates)];
+                        case 3:
+                            _c.sent();
+                            _c.label = 4;
+                        case 4:
+                            _i++;
+                            return [3 /*break*/, 2];
+                        case 5:
                             simpleTextStyler.setFont(canvasContext);
                             datestexting = dateTexts.join('\n');
                             textTop = top + cfg.top + cfg.fontSize;
