@@ -117,15 +117,12 @@ export class ImageHandler {
   private debounce(imageScale, type) {
     clearTimeout(this.debounceTimeout);
     this.debounceTimeout = setTimeout(() => {
-      console.log('type', type);
       store.dispatch(STOREACTIONS.setImageScale, { [type]: parseInt(imageScale, 10) / 100 });
       store.dispatch(STOREACTIONS.imageChange, { action: 'scale', type, scale: parseInt(imageScale, 10) / 100 });
     }, 250);
   }
 
   private renderHandlers(element, configName) {
-    console.log('canvasElement', element, configName);
-
     const handlingFieldset = document.createElement('fieldset');
     handlingFieldset.className = 'form-element margin-m--b';
     this.containers.push(handlingFieldset);
@@ -172,7 +169,6 @@ export class ImageHandler {
     scalerElement.value = '100';
 
     scalerElement.addEventListener('keyup', () => {
-      console.log('debounce this keyup');
       this.debounce(scalerElement.value, element.type);
     });
 

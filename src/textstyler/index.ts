@@ -1,18 +1,21 @@
-export const simpleTextStyler = {
-  sizes: [],
-  baseSize: undefined,
-  font: undefined,
-  controlChars: '{}\n\t',
-  spaceSize: 0,
-  tabSize: 8, // in spaceSize units
-  tabs: (function () {
-    var t = [];
-    for (var i = 0; i < 100; i += 8) {
-      t.push(i);
-    }
-    return t;
-  })(),
-  getNextTab: function (x) {
+function getTabs() {
+  const t = [];
+  for (var i = 0; i < 100; i += 8) {
+    t.push(i);
+  }
+  return t;
+}
+export class simpleTextStyler {
+  sizes = [];
+  baseSize = undefined;
+  font = undefined;
+  controlChars = '{}\n\t';
+  spaceSize = 0;
+  tabSize = 8; // in spaceSize units
+  width = 0;
+
+  tabs = getTabs();
+  getNextTab(x) {
     let i = 0;
     while (i < this.tabs.length) {
       if (x < this.tabs[i] * this.tabSize * this.spaceSize) {
@@ -21,17 +24,18 @@ export const simpleTextStyler = {
       i++;
     }
     return this.tabs[i - 1] * this.tabSize * this.spaceSize;
-  },
+  }
 
-  getFontSize: function (font) {
+  getFontSize(font) {
     var numFind = /[0-9]+/;
     var number = parseInt(numFind.exec(font)[0], 10);
     if (isNaN(number)) {
       throw Error('SimpleTextStyler Cant find font size');
     }
     return Number(number);
-  },
-  setFont: function (context) {
+  }
+
+  setFont(context) {
     this.font = context.font;
     this.baseSize = this.getFontSize(this.font);
 
@@ -39,8 +43,11 @@ export const simpleTextStyler = {
       this.sizes[i - 32] = context.measureText(String.fromCharCode(i), 0, 0).width / this.baseSize;
     }
     this.spaceSize = this.sizes[0];
-  },
-  drawText: function (context, text, x, y, size) {
+  }
+
+  drawText(context, text, x, y, size) {
+    this.width = 0;
+
     var i, len, subText;
     var w, scale;
     var xx,
@@ -64,14 +71,17 @@ export const simpleTextStyler = {
       ctx = context;
     }
 
-    function renderText(text) {
+    const renderText = (textToRender) => {
       ctx.save();
       ctx.fillStyle = colour;
       ctx.translate(x, y);
       ctx.scale(scale, scale);
-      ctx.fillText(text, 0, 0);
+      ctx.fillText(textToRender, 0, 0);
+
+      this.width += ctx.measureText(textToRender).width;
+      console.log('renderText this.width', this.width, ctx.measureText(textToRender).width, text);
       ctx.restore();
-    }
+    };
     var colour = ctx.fillStyle;
     ctx.font = this.font;
 
@@ -88,6 +98,7 @@ export const simpleTextStyler = {
         if (this.controlChars.indexOf(c) > -1) {
           if (subText !== '') {
             scale = size / this.baseSize;
+            console.log('subtext not empty while . scale', scale);
             renderText(subText);
             x += w;
             w = 0;
@@ -145,5 +156,7 @@ export const simpleTextStyler = {
     if (subText !== '') {
       renderText(subText);
     }
-  },
-};
+    console.log('I will return', this.width, text);
+    return this.width;
+  }
+}

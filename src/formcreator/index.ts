@@ -18,15 +18,14 @@ const formElement = (name: string): string => `
 `;
 
 export function createForm() {
-  const canvascontainer = document.getElementById('canvascontainer');
+  const canvascontainer = document.getElementById('canvascontainer') as HTMLDivElement;
 
   const container = document.createDocumentFragment();
   const formEl = document.createElement('form');
   formEl.className = 'form-container';
 
   const canvasCreator = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.wide);
-  const canvasCreator2 = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
-  console.log(canvasCreator2);
+  new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
 
   formEl.addEventListener('change', (ev) => {
     const target = ev.target as HTMLInputElement;
@@ -67,7 +66,7 @@ export function createForm() {
 
   updateButton.addEventListener('click', (ev) => {
     ev.preventDefault();
-    canvasCreator.update();
+    store.dispatch(STOREACTIONS.textUpdate, true);
   });
   textContainer.appendChild(updateButton);
 
@@ -111,7 +110,7 @@ export function createForm() {
   saveButton.innerText = 'Gem';
 
   saveButton.addEventListener('click', () => {
-    saveToDisk(canvasCreator.getCanvas(), canvasCreator.bannerName);
+    saveToDisk(canvasCreator.bannerName);
   });
 
   buttonContainer.appendChild(saveButton);

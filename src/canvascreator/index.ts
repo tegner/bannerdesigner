@@ -69,11 +69,11 @@ export class CanvasCreator {
   private formElements: HTMLElement[];
   private image: HTMLImageElement;
   private imageHasChanged: any = false;
-
+  private simpleTextStyler = new simpleTextStyler();
+  private textUpdate: boolean = false;
   private theme: IThemeObject;
-  private types: RATIOTYPES[] = [RATIOTYPES.wide, RATIOTYPES.square]; // TODO? , RATIOTYPES.tall];
 
-  constructor(container, bannerdesigner, type) {
+  constructor(container: HTMLDivElement, bannerdesigner: HTMLFormElement, type: RATIOTYPES) {
     this.form = bannerdesigner;
     this.container = container;
     this.containerWidth = container.clientWidth;
@@ -90,19 +90,18 @@ export class CanvasCreator {
 
     eventhandler.subscribe([STATENAMES.imageChange], (imageChange, _state) => {
       this.imageHasChanged = imageChange;
-      console.log(
-        'imageChange_imageChange_imageChange this.imageHasChanged.type',
-        this.imageHasChanged,
-        this.imageHasChanged.type
-      );
 
       if (this.imageHasChanged === true || this.imageHasChanged.type === this.currentType) {
         this.update();
       }
     });
 
-    eventhandler.subscribe([STATENAMES.imagePosition], (imagePosition, _state) => {
-      console.log('canvas STATENAMES.imagePosition imagePosition', imagePosition);
+    eventhandler.subscribe([STATENAMES.textUpdate], (textUpdate) => {
+      this.textUpdate = textUpdate;
+
+      if (this.textUpdate === true) {
+        this.update();
+      }
     });
   }
 
@@ -129,9 +128,7 @@ export class CanvasCreator {
   }
 
   public update() {
-    console.log('this.update!');
-
-    this.formElements = this.formElements ?? (Array.from(this.form.elements) as HTMLElement[]);
+    this.formElements = Array.from(this.form.elements) as HTMLElement[];
 
     const info = {
       dates: {},
@@ -149,15 +146,11 @@ export class CanvasCreator {
     });
 
     this.addContent(info, true);
-
-    // this.updateState();
   }
 
   private addAll(type: RATIOTYPES) {
-    console.log(type, this.types);
-    // this.types.forEach((configName) => {
     this.addCanvas(type);
-    // });
+
     this.updateState();
   }
 
@@ -235,6 +228,7 @@ export class CanvasCreator {
     });
 
     if (this.imageHasChanged) store.dispatch(STOREACTIONS.imageChange, false);
+    if (this.textUpdate) store.dispatch(STOREACTIONS.textUpdate, false);
   }
 
   private async addImage(contentInfo, current: TCurrentCanvasInfo) {
@@ -244,7 +238,7 @@ export class CanvasCreator {
     const { imageHasChanged } = this;
 
     let imageReturn;
-    console.log('current.image_current.image', imageHasChanged, current.image);
+
     if (imageHasChanged !== false) {
       if (image && (imageHasChanged === true || imageHasChanged === type)) {
         imageReturn = await imageUploader(image);
@@ -278,7 +272,6 @@ export class CanvasCreator {
       }
 
       current.image = { image: this.image, ...imgPos, ...imgSize };
-      console.log('_current.image_current.image_ alot', current.image, imgPos, imgSize);
     }
 
     if (current.image) {
@@ -320,8 +313,11 @@ export class CanvasCreator {
       this.theme.tourname
     }${tourname.toUpperCase()}}`;
 
-    simpleTextStyler.setFont(canvasContext);
-    await simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
+    this.simpleTextStyler.setFont(canvasContext);
+
+    if (headerString) {
+      await this.simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize);
+    }
 
     this.bannerName = `${artist.replace(/\s/g, '-')}_${tourname.replace(/\s/g, '-')}`;
 
@@ -336,11 +332,19 @@ export class CanvasCreator {
     canvasContext.textBaseline = 'alphabetic';
     await (canvasContext.font = this.canvasFont(cfgName));
 
+    const baseTop = top + cfg.top + cfg.fontSize;
+    const maxTop = canvasContext.canvas.height - this.currentCanvas[0].top;
+    // const maxTop = top + cfg.top + cfg.fontSize;
+    let counter = 0;
+    const baseLeft = cfg.left * 2;
+    let lefty = baseLeft;
+    let widest = 0;
+    this.simpleTextStyler.setFont(canvasContext);
     for (const dates in datesInfo) {
       if (datesInfo[dates]) {
         let dateText, ticketText, venueText;
 
-        datesInfo[dates].forEach((datesInfoElement: HTMLInputElement) => {
+        datesInfo[dates].forEach((datesInfoElement: HTMLInputElement, i: number) => {
           const elName = datesInfoElement.name;
 
           if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
@@ -363,17 +367,56 @@ export class CanvasCreator {
             }
           }
         });
+        if (dateText) {
+          dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
 
-        dateTexts.push(`{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`);
+          let theTopPos = baseTop + cfg.fontSize * counter;
+          if (theTopPos > maxTop) {
+            // Reset topPos to base
+            theTopPos = baseTop;
+
+            // calculate new leftpos
+            lefty = Math.round(lefty + widest + baseLeft);
+
+            // Reset counter and widest
+            counter = 0;
+            widest = 0;
+          }
+
+          const returnedStuff = await this.simpleTextStyler.drawText(
+            canvasContext,
+            `{${this.theme.date}${dateText}} {${this.theme.venue}${venueText} {-${ticketText}}}`,
+            lefty,
+            theTopPos,
+            cfg.fontSize
+          );
+          widest = returnedStuff > widest ? returnedStuff : widest;
+
+          // if (cfgName === 'wide') {
+          //   canvasContext.beginPath(); // Start a new path
+          //   canvasContext.moveTo(lefty, theTopPos); // Move the pen to (30, 50)
+          //   canvasContext.lineTo(lefty, theTopPos + 100); // Draw a line to (150, 100)
+          //   canvasContext.strokeStyle = '#ff0000';
+          //   canvasContext.lineWidth = 2;
+          //   canvasContext.stroke();
+          //   canvasContext.fillStyle = 'green';
+          //   canvasContext.fillRect(lefty, theTopPos - 70, widest, 20);
+          // }
+
+          counter++;
+        }
       }
     }
 
-    simpleTextStyler.setFont(canvasContext);
-    const datestexting = dateTexts.join('\n');
+    // simpleTextStyler.setFont(canvasContext);
+    // const datestexting = dateTexts.join('\n');
 
-    const textTop = top + cfg.top + cfg.fontSize;
+    // const textTop = top + cfg.top + cfg.fontSize;
 
-    await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
+    // if (datestexting) {
+    //   console.log(textTop);
+    //   await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
+    // }
   }
 
   private canvasFont(cfgName: string) {
@@ -384,7 +427,7 @@ export class CanvasCreator {
     currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
     currentCfg.canvasContext.beginPath(); // ADD THIS LINE!<<<<<<<<<<<<<
     currentCfg.canvasContext.moveTo(0, 0);
-    // currentCfg.canvasContext.lineTo(event.clientX, event.clientY);
+
     currentCfg.canvasContext.stroke();
     currentCfg.canvasContext.fillStyle = `${this.theme.bgColor};`;
     currentCfg.canvasContext.fillRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
