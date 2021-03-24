@@ -802,21 +802,25 @@
         return { h: h, w: w };
     }
 
-    var simpleTextStyler = {
-        sizes: [],
-        baseSize: undefined,
-        font: undefined,
-        controlChars: '{}\n\t',
-        spaceSize: 0,
-        tabSize: 8,
-        tabs: (function () {
-            var t = [];
-            for (var i = 0; i < 100; i += 8) {
-                t.push(i);
-            }
-            return t;
-        })(),
-        getNextTab: function (x) {
+    function getTabs() {
+        var t = [];
+        for (var i = 0; i < 100; i += 8) {
+            t.push(i);
+        }
+        return t;
+    }
+    var simpleTextStyler = /** @class */ (function () {
+        function simpleTextStyler() {
+            this.sizes = [];
+            this.baseSize = undefined;
+            this.font = undefined;
+            this.controlChars = '{}\n\t';
+            this.spaceSize = 0;
+            this.tabSize = 8; // in spaceSize units
+            this.width = 0;
+            this.tabs = getTabs();
+        }
+        simpleTextStyler.prototype.getNextTab = function (x) {
             var i = 0;
             while (i < this.tabs.length) {
                 if (x < this.tabs[i] * this.tabSize * this.spaceSize) {
@@ -825,25 +829,26 @@
                 i++;
             }
             return this.tabs[i - 1] * this.tabSize * this.spaceSize;
-        },
-        getFontSize: function (font) {
+        };
+        simpleTextStyler.prototype.getFontSize = function (font) {
             var numFind = /[0-9]+/;
             var number = parseInt(numFind.exec(font)[0], 10);
             if (isNaN(number)) {
                 throw Error('SimpleTextStyler Cant find font size');
             }
             return Number(number);
-        },
-        setFont: function (context) {
+        };
+        simpleTextStyler.prototype.setFont = function (context) {
             this.font = context.font;
             this.baseSize = this.getFontSize(this.font);
             for (var i = 32; i < 256; i++) {
                 this.sizes[i - 32] = context.measureText(String.fromCharCode(i), 0, 0).width / this.baseSize;
             }
             this.spaceSize = this.sizes[0];
-        },
-        drawText: function (context, text, x, y, size) {
-            console.log('drawText_drawText', text);
+        };
+        simpleTextStyler.prototype.drawText = function (context, text, x, y, size) {
+            var _this = this;
+            this.width = 0;
             var i, len, subText;
             var w, scale;
             var xx, 
@@ -867,15 +872,16 @@
             else {
                 ctx = context;
             }
-            function renderText(text) {
-                console.log('renderText', text);
+            var renderText = function (textToRender) {
                 ctx.save();
                 ctx.fillStyle = colour;
                 ctx.translate(x, y);
                 ctx.scale(scale, scale);
-                ctx.fillText(text, 0, 0);
+                ctx.fillText(textToRender, 0, 0);
+                _this.width += ctx.measureText(textToRender).width;
+                console.log('renderText this.width', _this.width, ctx.measureText(textToRender).width, text);
                 ctx.restore();
-            }
+            };
             var colour = ctx.fillStyle;
             ctx.font = this.font;
             len = text.length;
@@ -891,6 +897,7 @@
                     if (this.controlChars.indexOf(c) > -1) {
                         if (subText !== '') {
                             scale = size / this.baseSize;
+                            console.log('subtext not empty while . scale', scale);
                             renderText(subText);
                             x += w;
                             w = 0;
@@ -954,11 +961,13 @@
                 i += 1;
             }
             if (subText !== '') {
-                console.log('renderText(subText)');
                 renderText(subText);
             }
-        },
-    };
+            console.log('I will return', this.width, text);
+            return this.width;
+        };
+        return simpleTextStyler;
+    }());
 
     function asyncForEach(array, callback) {
         return __awaiter(this, void 0, void 0, function () {
@@ -1049,6 +1058,7 @@
             };
             this.currentCanvas = [];
             this.imageHasChanged = false;
+            this.simpleTextStyler = new simpleTextStyler();
             this.textUpdate = false;
             this.form = bannerdesigner;
             this.container = container;
@@ -1097,8 +1107,7 @@
             }
         };
         CanvasCreator.prototype.update = function () {
-            var _a;
-            this.formElements = (_a = this.formElements) !== null && _a !== void 0 ? _a : Array.from(this.form.elements);
+            this.formElements = Array.from(this.form.elements);
             var info = {
                 dates: {},
             };
@@ -1176,7 +1185,6 @@
                                             return [4 /*yield*/, this.addImage(contentInfo, current)];
                                         case 1:
                                             _a.sent();
-                                            console.log('this.addText ... this.addText ... this.addText');
                                             this.addText(contentInfo, current);
                                             return [2 /*return*/];
                                     }
@@ -1273,9 +1281,9 @@
                             canvasContext.textBaseline = 'top';
                             tournameTop = cfg.top * 2;
                             headerString = "{" + this.theme.artist + artist.toUpperCase() + "}\n{" + this.theme.tourname + tourname.toUpperCase() + "}";
-                            simpleTextStyler.setFont(canvasContext);
+                            this.simpleTextStyler.setFont(canvasContext);
                             if (!headerString) return [3 /*break*/, 3];
-                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
+                            return [4 /*yield*/, this.simpleTextStyler.drawText(canvasContext, headerString, cfg.left * 2, tournameTop, fontSize)];
                         case 2:
                             _a.sent();
                             _a.label = 3;
@@ -1290,7 +1298,7 @@
         };
         CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var cfg, dateTexts, canvasContext, counter, _loop_1, this_1, _a, _b, _i, dates, datestexting, textTop;
+                var cfg, dateTexts, canvasContext, baseTop, maxTop, counter, baseLeft, lefty, widest, _loop_1, this_1, _a, _b, _i, dates;
                 return __generator(this, function (_c) {
                     switch (_c.label) {
                         case 0:
@@ -1301,9 +1309,15 @@
                             return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
                         case 1:
                             _c.sent();
+                            baseTop = top + cfg.top + cfg.fontSize;
+                            maxTop = canvasContext.canvas.height - this.currentCanvas[0].top;
                             counter = 0;
+                            baseLeft = cfg.left * 2;
+                            lefty = baseLeft;
+                            widest = 0;
+                            this.simpleTextStyler.setFont(canvasContext);
                             _loop_1 = function (dates) {
-                                var dateText_1, ticketText_1, venueText_1, theTopPos;
+                                var dateText_1, ticketText_1, venueText_1, theTopPos, returnedStuff;
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
                                         case 0:
@@ -1332,17 +1346,33 @@
                                             });
                                             if (!dateText_1) return [3 /*break*/, 2];
                                             dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
-                                            console.log('counter', top + cfg.top + cfg.fontSize, counter);
-                                            console.log('counter top pos:', top + cfg.top + cfg.fontSize + cfg.fontSize * counter, counter);
-                                            theTopPos = top + cfg.top + cfg.fontSize + cfg.fontSize * counter;
-                                            console.log('counter  cfg.fontSize', cfg.fontSize);
-                                            return [4 /*yield*/, simpleTextStyler.drawText(canvasContext, "{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}", cfg.left * 2, theTopPos, cfg.fontSize)];
+                                            theTopPos = baseTop + cfg.fontSize * counter;
+                                            if (theTopPos > maxTop) {
+                                                // Reset topPos to base
+                                                theTopPos = baseTop;
+                                                // calculate new leftpos
+                                                lefty = Math.round(lefty + widest + baseLeft);
+                                                // Reset counter and widest
+                                                counter = 0;
+                                                widest = 0;
+                                            }
+                                            return [4 /*yield*/, this_1.simpleTextStyler.drawText(canvasContext, "{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}", lefty, theTopPos, cfg.fontSize)];
                                         case 1:
-                                            _a.sent();
-                                            _a.label = 2;
-                                        case 2:
+                                            returnedStuff = _a.sent();
+                                            widest = returnedStuff > widest ? returnedStuff : widest;
+                                            // if (cfgName === 'wide') {
+                                            //   canvasContext.beginPath(); // Start a new path
+                                            //   canvasContext.moveTo(lefty, theTopPos); // Move the pen to (30, 50)
+                                            //   canvasContext.lineTo(lefty, theTopPos + 100); // Draw a line to (150, 100)
+                                            //   canvasContext.strokeStyle = '#ff0000';
+                                            //   canvasContext.lineWidth = 2;
+                                            //   canvasContext.stroke();
+                                            //   canvasContext.fillStyle = 'green';
+                                            //   canvasContext.fillRect(lefty, theTopPos - 70, widest, 20);
+                                            // }
                                             counter++;
-                                            return [2 /*return*/];
+                                            _a.label = 2;
+                                        case 2: return [2 /*return*/];
                                     }
                                 });
                             };
@@ -1362,15 +1392,7 @@
                         case 4:
                             _i++;
                             return [3 /*break*/, 2];
-                        case 5:
-                            simpleTextStyler.setFont(canvasContext);
-                            datestexting = dateTexts.join('\n');
-                            textTop = top + cfg.top + cfg.fontSize;
-                            if (datestexting) {
-                                console.log(textTop);
-                                // await simpleTextStyler.drawText(canvasContext, datestexting, cfg.left * 2, textTop, cfg.fontSize);
-                            }
-                            return [2 /*return*/];
+                        case 5: return [2 /*return*/];
                     }
                 });
             });
