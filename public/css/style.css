@@ -878,3 +878,11 @@ h5 {
   bottom: auto;
   left: auto;
 }
+
+.not-logged-in .canvascontainer {
+  display: none;
+}
+
+.not-logged-in .canvas-app {
+  margin: auto;
+}
