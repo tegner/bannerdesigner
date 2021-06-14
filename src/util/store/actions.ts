@@ -3,6 +3,7 @@ export enum STOREACTIONS {
   imageChange = 'imageChange',
   setImagePosition = 'setImagePosition',
   setImageScale = 'setImageScale',
+  setLoginStatus = 'setLoginStatus',
   setTheme = 'setTheme',
   setThemeName = 'setThemeName',
   textUpdate = 'textUpdate',
@@ -21,6 +22,10 @@ export default {
   },
   [STOREACTIONS.setImageScale](context, payload) {
     context.commit(STOREACTIONS.setImageScale, payload);
+  },
+  [STOREACTIONS.setLoginStatus](context, payload) {
+    console.log('STOREACTIONS.setLoginStatus', context, payload);
+    context.commit(STOREACTIONS.setLoginStatus, payload);
   },
   [STOREACTIONS.setTheme](context, payload) {
     context.commit(STOREACTIONS.setTheme, payload);

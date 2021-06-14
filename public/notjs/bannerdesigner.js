@@ -105,6 +105,7 @@
         STOREACTIONS["imageChange"] = "imageChange";
         STOREACTIONS["setImagePosition"] = "setImagePosition";
         STOREACTIONS["setImageScale"] = "setImageScale";
+        STOREACTIONS["setLoginStatus"] = "setLoginStatus";
         STOREACTIONS["setTheme"] = "setTheme";
         STOREACTIONS["setThemeName"] = "setThemeName";
         STOREACTIONS["textUpdate"] = "textUpdate";
@@ -122,6 +123,10 @@
         },
         _a[STOREACTIONS.setImageScale] = function (context, payload) {
             context.commit(STOREACTIONS.setImageScale, payload);
+        },
+        _a[STOREACTIONS.setLoginStatus] = function (context, payload) {
+            console.log('STOREACTIONS.setLoginStatus', context, payload);
+            context.commit(STOREACTIONS.setLoginStatus, payload);
         },
         _a[STOREACTIONS.setTheme] = function (context, payload) {
             context.commit(STOREACTIONS.setTheme, payload);
@@ -195,10 +200,17 @@
         STATENAMES["imageChange"] = "imageChange";
         STATENAMES["imageScale"] = "imageScale";
         STATENAMES["imagePosition"] = "imagePosition";
+        STATENAMES["loginStatus"] = "loginStatus";
         STATENAMES["textUpdate"] = "textUpdate";
         STATENAMES["theme"] = "theme";
         STATENAMES["themeName"] = "themeName";
     })(STATENAMES || (STATENAMES = {}));
+    var ELoginStatus;
+    (function (ELoginStatus) {
+        ELoginStatus[ELoginStatus["loggedIn"] = 0] = "loggedIn";
+        ELoginStatus[ELoginStatus["notLoggedIn"] = 1] = "notLoggedIn";
+        ELoginStatus[ELoginStatus["expired"] = 2] = "expired";
+    })(ELoginStatus || (ELoginStatus = {}));
     var defaultTheme = THEMENAMES.modern;
     var initialState = (_a$2 = {},
         _a$2[STATENAMES.canvases] = [],
@@ -208,6 +220,7 @@
             _b[RATIOTYPES.wide] = 1,
             _b),
         _a$2[STATENAMES.imagePosition] = 'topleft',
+        _a$2[STATENAMES.loginStatus] = ELoginStatus.notLoggedIn,
         _a$2[STATENAMES.textUpdate] = false,
         _a$2[STATENAMES.theme] = themes[defaultTheme],
         _a$2[STATENAMES.themeName] = defaultTheme,
@@ -229,6 +242,10 @@
         },
         _a$3[STOREACTIONS.setImageScale] = function (state, payload) {
             state[STATENAMES.imageScale] = __assign(__assign({}, state[STATENAMES.imageScale]), payload);
+            return state;
+        },
+        _a$3[STOREACTIONS.setLoginStatus] = function (state, payload) {
+            state[STATENAMES.loginStatus] = payload;
             return state;
         },
         _a$3[STOREACTIONS.setTheme] = function (state, payload) {
@@ -1946,7 +1963,106 @@
         return container;
     }
 
-    var thing = document.getElementById('app');
-    thing.appendChild(createForm());
+    var decode = function (hash) { return window.atob(hash); };
+    var encode = function (str) { return window.btoa(str); };
+
+    var DATES = [
+        {
+            expires: 'Jan 20 2022',
+            username: 'signesvendsen',
+        },
+        {
+            expires: 'Jan 20 2021',
+            username: 'petersommer',
+        },
+    ];
+
+    var TOKEN = 'bm_token';
+
+    // const decodedData = window.atob(encodedData); // decode the string
+    var NotLoggedIn = /** @class */ (function () {
+        function NotLoggedIn() {
+            this.toDay = new Date().getTime();
+            console.log('not logged in');
+        }
+        /**
+         * render
+         */
+        NotLoggedIn.prototype.render = function () {
+            var _this = this;
+            var loginForm = document.createElement('form');
+            var userInput = document.createElement('input');
+            loginForm.addEventListener('submit', function (ev) {
+                ev.preventDefault();
+                var val = userInput.value;
+                var userData = DATES.find(function (el) { return el.username === val; });
+                var expires = userData.expires;
+                var userDate = new Date(expires);
+                if (userDate && userDate.getTime() > _this.toDay) {
+                    var encodedData = encode(JSON.stringify(userDate.getTime()));
+                    localStorage.setItem(TOKEN, encodedData);
+                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                }
+                else {
+                    console.log('flooops');
+                }
+            });
+            loginForm.appendChild(userInput);
+            return loginForm;
+        };
+        return NotLoggedIn;
+    }());
+
+    // import { eventhandler } from './util/eventhandler';
+    // import { ELoginStatus, STATENAMES } from './util/initialstate';
+    // import store from './util/store';
+    // import store from './util/store';
+    // import { STOREACTIONS } from './util/store/actions';
+    var App = /** @class */ (function () {
+        function App(elId) {
+            this.body = document.body;
+            this.appContainer = document.getElementById(elId);
+        }
+        /**
+         * init
+         */
+        App.prototype.init = function () {
+            var token = localStorage.getItem(TOKEN);
+            console.log('token', token);
+            if (!token) {
+                this.notLoggedIn();
+            }
+            else {
+                var decodedToken = JSON.parse(decode(token));
+                var decodedDate = new Date(decodedToken).getTime();
+                console.log('dec', decodedToken, decodedDate);
+                if (decodedDate > new Date().getTime()) {
+                    this.renderForm();
+                    // store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                }
+                else {
+                    this.tokenExpired();
+                    // store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                }
+            }
+        };
+        App.prototype.renderForm = function () {
+            this.body.classList.remove('not-logged-in');
+            this.appContainer.appendChild(createForm());
+        };
+        App.prototype.notLoggedIn = function () {
+            this.body.classList.add('not-logged-in');
+            var newLogin = new NotLoggedIn();
+            this.appContainer.appendChild(newLogin.render());
+        };
+        App.prototype.tokenExpired = function () {
+            this.body.classList.add('not-logged-in');
+            console.log('tokenExpired');
+        };
+        return App;
+    }());
+    var APP = new App('app');
+
+    APP.init();
 
 }());

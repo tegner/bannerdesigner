@@ -7,9 +7,16 @@ export enum STATENAMES {
   imageChange = 'imageChange',
   imageScale = 'imageScale',
   imagePosition = 'imagePosition',
+  loginStatus = 'loginStatus',
   textUpdate = 'textUpdate',
   theme = 'theme',
   themeName = 'themeName',
+}
+
+export enum ELoginStatus {
+  'loggedIn',
+  'notLoggedIn',
+  'expired',
 }
 
 export type TCanvas = ICurrentCanvasConfig & ICanvasConfig;
@@ -20,6 +27,7 @@ export interface IStoreState {
     [id: string]: number;
   };
   [STATENAMES.imagePosition]: TPlacementNames;
+  [STATENAMES.loginStatus]: ELoginStatus;
   [STATENAMES.textUpdate]: boolean;
   [STATENAMES.theme]: IThemeObject;
   [STATENAMES.themeName]: string;
@@ -37,6 +45,7 @@ export const initialState: IStoreState = {
     [RATIOTYPES.wide]: 1,
   },
   [STATENAMES.imagePosition]: 'topleft',
+  [STATENAMES.loginStatus]: ELoginStatus.notLoggedIn,
   [STATENAMES.textUpdate]: false,
   [STATENAMES.theme]: themes[defaultTheme],
   [STATENAMES.themeName]: defaultTheme,
