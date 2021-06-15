@@ -1,3 +1,4 @@
+import { APP } from '../App';
 import { encode } from '../util/encoding';
 import { ELoginStatus } from '../util/initialstate';
 import store from '../util/store';
@@ -33,6 +34,7 @@ export class NotLoggedIn {
         const encodedData = encode(JSON.stringify(userDate.getTime()));
 
         localStorage.setItem(TOKEN, encodedData);
+        APP.renderForm();
         store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
       } else {
         console.log('flooops');
