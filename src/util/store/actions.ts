@@ -6,8 +6,8 @@ export enum STOREACTIONS {
   setLoginStatus = 'setLoginStatus',
   setTheme = 'setTheme',
   setThemeName = 'setThemeName',
-  textUpdate = 'textUpdate',
   updateCanvases = 'updateCanvases',
+  updateContent = 'updateContent',
 }
 
 export default {
@@ -33,10 +33,23 @@ export default {
   [STOREACTIONS.setThemeName](context, payload) {
     context.commit(STOREACTIONS.setThemeName, payload);
   },
-  [STOREACTIONS.textUpdate](context, payload) {
-    context.commit(STOREACTIONS.textUpdate, payload);
-  },
   [STOREACTIONS.updateCanvases](context, payload) {
     context.commit(STOREACTIONS.updateCanvases, payload);
+  },
+  [STOREACTIONS.updateContent](context, payload) {
+    console.log('updateContent', payload);
+    const { artist, image, imageDidChange, tourname, venueInfo } = payload;
+
+    if (imageDidChange) {
+      context.commit(STOREACTIONS.imageChange, true);
+    }
+
+    const stateUpdate = {
+      artist,
+      image,
+      tourname,
+      venueInfo,
+    };
+    context.commit(STOREACTIONS.updateContent, stateUpdate);
   },
 };
