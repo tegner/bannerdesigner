@@ -1,4 +1,4 @@
-export function imageUploader(input: HTMLInputElement) {
+export function imageUploader(input: HTMLInputElement): Promise<HTMLImageElement> {
   var url = input.value;
   var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
 

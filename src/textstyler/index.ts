@@ -79,7 +79,7 @@ export class simpleTextStyler {
       ctx.fillText(textToRender, 0, 0);
 
       this.width += ctx.measureText(textToRender).width;
-      console.log('renderText this.width', this.width, ctx.measureText(textToRender).width, text);
+
       ctx.restore();
     };
     var colour = ctx.fillStyle;
@@ -98,7 +98,7 @@ export class simpleTextStyler {
         if (this.controlChars.indexOf(c) > -1) {
           if (subText !== '') {
             scale = size / this.baseSize;
-            console.log('subtext not empty while . scale', scale);
+
             renderText(subText);
             x += w;
             w = 0;
@@ -156,7 +156,7 @@ export class simpleTextStyler {
     if (subText !== '') {
       renderText(subText);
     }
-    console.log('I will return', this.width, text);
+
     return this.width;
   }
 }
