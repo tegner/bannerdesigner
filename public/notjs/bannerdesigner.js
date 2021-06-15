@@ -107,8 +107,8 @@
         STOREACTIONS["setImageScale"] = "setImageScale";
         STOREACTIONS["setTheme"] = "setTheme";
         STOREACTIONS["setThemeName"] = "setThemeName";
-        STOREACTIONS["textUpdate"] = "textUpdate";
         STOREACTIONS["updateCanvases"] = "updateCanvases";
+        STOREACTIONS["updateContent"] = "updateContent";
     })(STOREACTIONS || (STOREACTIONS = {}));
     var actions = (_a = {},
         _a[STOREACTIONS.alterTheme] = function (context, payload) {
@@ -129,11 +129,22 @@
         _a[STOREACTIONS.setThemeName] = function (context, payload) {
             context.commit(STOREACTIONS.setThemeName, payload);
         },
-        _a[STOREACTIONS.textUpdate] = function (context, payload) {
-            context.commit(STOREACTIONS.textUpdate, payload);
-        },
         _a[STOREACTIONS.updateCanvases] = function (context, payload) {
             context.commit(STOREACTIONS.updateCanvases, payload);
+        },
+        _a[STOREACTIONS.updateContent] = function (context, payload) {
+            console.log('updateContent', payload);
+            var artist = payload.artist, image = payload.image, imageDidChange = payload.imageDidChange, tourname = payload.tourname, venueInfo = payload.venueInfo;
+            if (imageDidChange) {
+                context.commit(STOREACTIONS.imageChange, true);
+            }
+            var stateUpdate = {
+                artist: artist,
+                image: image,
+                tourname: tourname,
+                venueInfo: venueInfo,
+            };
+            context.commit(STOREACTIONS.updateContent, stateUpdate);
         },
         _a);
 
@@ -195,9 +206,9 @@
         STATENAMES["imageChange"] = "imageChange";
         STATENAMES["imageScale"] = "imageScale";
         STATENAMES["imagePosition"] = "imagePosition";
-        STATENAMES["textUpdate"] = "textUpdate";
         STATENAMES["theme"] = "theme";
         STATENAMES["themeName"] = "themeName";
+        STATENAMES["userContent"] = "userContent";
     })(STATENAMES || (STATENAMES = {}));
     var defaultTheme = THEMENAMES.modern;
     var initialState = (_a$2 = {},
@@ -208,9 +219,9 @@
             _b[RATIOTYPES.wide] = 1,
             _b),
         _a$2[STATENAMES.imagePosition] = 'topleft',
-        _a$2[STATENAMES.textUpdate] = false,
         _a$2[STATENAMES.theme] = themes[defaultTheme],
         _a$2[STATENAMES.themeName] = defaultTheme,
+        _a$2[STATENAMES.userContent] = {},
         _a$2);
 
     var _a$3;
@@ -244,8 +255,9 @@
             (_a = state[STATENAMES.canvases]).push.apply(_a, payload);
             return state;
         },
-        _a$3[STOREACTIONS.textUpdate] = function (state, payload) {
-            state[STATENAMES.textUpdate] = payload;
+        _a$3[STOREACTIONS.updateContent] = function (state, payload) {
+            console.log('mutation updateContent', payload);
+            state[STATENAMES.userContent] = payload;
             return state;
         },
         _a$3);
@@ -279,6 +291,7 @@
             this.state = {};
             this.actions = {};
             this.mutations = {};
+            this.stateLibrary = [];
             // A status enum to set during actions and mutations
             this.status = 'resting';
             // Attach our PubSub module as an `events` element
@@ -299,11 +312,8 @@
                     // Set the value as we would normally
                     state[key] = value;
                     // Trace out to the console. This will be grouped by the related action
-                    // console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
                     // Publish the change event for the components that are listening
-                    if (_this.status === 'resting') {
-                        _this.events.publish('stateChange', _this.state, key);
-                    }
+                    _this.events.publish('stateChange', _this.state, key);
                     // Give the user a little telling off if they set a value directly
                     if (_this.status !== 'mutation') {
                         console.warn("You should use a mutation to set " + String(key));
@@ -359,9 +369,11 @@
             // Let anything that's watching the status know that we're mutating state
             this.status = 'mutation';
             // Get a new version of the state by running the mutation and storing the result of it
+            // this.mutations[mutationKey](this.state, payload);
             var newState = this.mutations[mutationKey](this.state, payload);
-            // Merge the old and new together to create a new state and set it
-            this.state = Object.assign(this.state, newState);
+            // // Merge the old and new together to create a new state and set it
+            // this.state = Object.assign(this.state, newState);
+            this.stateLibrary.push(__assign({}, newState));
             return true;
         };
         return Store;
@@ -482,6 +494,120 @@
         return DragHandler;
     }());
 
+    function imageUploader(input) {
+        var url = input.value;
+        var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
+        return new Promise(function (resolve, reject) {
+            if (input.files && input.files[0] && (ext == 'gif' || ext == 'png' || ext == 'jpeg' || ext == 'jpg')) {
+                var reader = new FileReader();
+                reader.addEventListener('load', function (readerLoadEvent) {
+                    var base_image = new Image();
+                    base_image.src = readerLoadEvent.target.result.toString();
+                    base_image.addEventListener('load', function () {
+                        resolve(base_image);
+                    });
+                });
+                reader.readAsDataURL(input.files[0]);
+            }
+            else {
+                reject();
+            }
+        });
+    }
+
+    var ContentHandler = /** @class */ (function () {
+        function ContentHandler() {
+            this.previousInfo = {};
+        }
+        /**
+         * update
+         */
+        ContentHandler.prototype.update = function (formData, caller) {
+            return __awaiter(this, void 0, void 0, function () {
+                var info, dates, imageInput, imageReturn, _loop_1, date, imageDidChange;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            this.formElements = Array.from(formData);
+                            info = {
+                                venueInfo: [],
+                            };
+                            dates = {};
+                            this.formElements.forEach(function (el) {
+                                if (el.dataset.line) {
+                                    dates[el.dataset.line] = dates[el.dataset.line] || [];
+                                    dates[el.dataset.line].push(el);
+                                }
+                                else if (el.name) {
+                                    info[el.name] = el.value;
+                                }
+                                else if (el.type === 'file') {
+                                    imageInput = el.value ? el : null;
+                                }
+                            });
+                            if (!imageInput) return [3 /*break*/, 2];
+                            return [4 /*yield*/, imageUploader(imageInput)];
+                        case 1:
+                            imageReturn = _a.sent();
+                            info.image = imageReturn;
+                            _a.label = 2;
+                        case 2:
+                            _loop_1 = function (date) {
+                                var dateText = '', venueText = '', ticketText = '';
+                                dates[date].forEach(function (dateLineEl) {
+                                    if (dateLineEl.name.indexOf(DATEINFOTYPES.date) !== -1) {
+                                        dateText = dateLineEl.value.toUpperCase();
+                                    }
+                                    if (dateLineEl.name.indexOf(DATEINFOTYPES.venue) !== -1) {
+                                        venueText = dateLineEl.value.toUpperCase();
+                                    }
+                                    if (dateLineEl.name.indexOf(DATEINFOTYPES.tickets) !== -1 && dateLineEl.checked) {
+                                        switch (dateLineEl.value) {
+                                            case 'few':
+                                                ticketText = 'Få billetter'.toUpperCase();
+                                                break;
+                                            case 'soldout':
+                                                ticketText = 'Udsolgt'.toUpperCase();
+                                                break;
+                                            default:
+                                                ticketText = '';
+                                                break;
+                                        }
+                                    }
+                                });
+                                info.venueInfo.push({
+                                    dateText: dateText,
+                                    ticketText: ticketText,
+                                    venueText: venueText,
+                                });
+                            };
+                            for (date in dates) {
+                                _loop_1(date);
+                            }
+                            if (JSON.stringify(this.previousInfo) !== JSON.stringify(info)) {
+                                console.log('contentHandler - we got new info - publish', info);
+                                imageDidChange = false;
+                                if (info.image) {
+                                    if (!this.previousInfo.image) {
+                                        imageDidChange = true;
+                                    }
+                                    else if (this.previousInfo.image && this.previousInfo.image.baseURI !== info.image.baseURI) {
+                                        imageDidChange = true;
+                                    }
+                                }
+                                console.log('imageDidChange?', imageDidChange);
+                                this.previousInfo = info;
+                                store.dispatch(STOREACTIONS.updateContent, __assign(__assign({}, info), { imageDidChange: imageDidChange }));
+                            }
+                            return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        return ContentHandler;
+    }());
+    var contentHandler = new ContentHandler();
+
     // import { ImagePlacementPicker } from './imageplacement';
     var ImageHandler = /** @class */ (function () {
         // TODO: VisualScaling
@@ -492,7 +618,7 @@
         //   [RATIOTYPES.square]: null,
         //   [RATIOTYPES.wide]: null,
         // };
-        function ImageHandler() {
+        function ImageHandler(parentForm) {
             var _a, _b;
             this.containers = [];
             this.imagePickerFrag = document.createElement('div');
@@ -520,6 +646,7 @@
                     this.prevScale[key] = store.state.imageScale[key];
                 }
             }
+            this.parentForm = parentForm;
             // TODO: VisualScaling
             // eventhandler.subscribe([STATENAMES.imageScale], (imageScale, state) => {
             //   let changed = '';
@@ -557,7 +684,7 @@
             var _this = this;
             var splitValue = this.imageFileElement.value.split('\\');
             this.imageFileValue.innerHTML = splitValue[splitValue.length - 1];
-            store.dispatch(STOREACTIONS.imageChange, true);
+            contentHandler.update(this.parentForm.elements, 'imagepicker');
             this.clearHandlers();
             store.state.canvases.forEach(function (element) {
                 _this.renderHandlers(element, element.configName);
@@ -660,27 +787,6 @@
         PLACEMENTNAMES["topleft"] = "topleft";
         PLACEMENTNAMES["topright"] = "topright";
     })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
-
-    function imageUploader(input) {
-        var url = input.value;
-        var ext = url.substring(url.lastIndexOf('.') + 1).toLowerCase();
-        return new Promise(function (resolve, reject) {
-            if (input.files && input.files[0] && (ext == 'gif' || ext == 'png' || ext == 'jpeg' || ext == 'jpg')) {
-                var reader = new FileReader();
-                reader.addEventListener('load', function (readerLoadEvent) {
-                    var base_image = new Image();
-                    base_image.src = readerLoadEvent.target.result.toString();
-                    base_image.addEventListener('load', function () {
-                        resolve(base_image);
-                    });
-                });
-                reader.readAsDataURL(input.files[0]);
-            }
-            else {
-                reject();
-            }
-        });
-    }
 
     function bottomRight(options) {
         var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
@@ -879,7 +985,6 @@
                 ctx.scale(scale, scale);
                 ctx.fillText(textToRender, 0, 0);
                 _this.width += ctx.measureText(textToRender).width;
-                console.log('renderText this.width', _this.width, ctx.measureText(textToRender).width, text);
                 ctx.restore();
             };
             var colour = ctx.fillStyle;
@@ -897,7 +1002,6 @@
                     if (this.controlChars.indexOf(c) > -1) {
                         if (subText !== '') {
                             scale = size / this.baseSize;
-                            console.log('subtext not empty while . scale', scale);
                             renderText(subText);
                             x += w;
                             w = 0;
@@ -963,7 +1067,6 @@
             if (subText !== '') {
                 renderText(subText);
             }
-            console.log('I will return', this.width, text);
             return this.width;
         };
         return simpleTextStyler;
@@ -1020,7 +1123,7 @@
         return can;
     };
     var CanvasCreator = /** @class */ (function () {
-        function CanvasCreator(container, bannerdesigner, type) {
+        function CanvasCreator(container, type) {
             var _this = this;
             this.containerWidth = 640;
             this.canvasContainer = document.createElement('div');
@@ -1059,8 +1162,6 @@
             this.currentCanvas = [];
             this.imageHasChanged = false;
             this.simpleTextStyler = new simpleTextStyler();
-            this.textUpdate = false;
-            this.form = bannerdesigner;
             this.container = container;
             this.containerWidth = container.clientWidth;
             this.canvasContainer.className = 'flex flex-wrap flex-start';
@@ -1073,20 +1174,14 @@
             });
             eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, _state) {
                 _this.imageHasChanged = imageChange;
-                if (_this.imageHasChanged === true || _this.imageHasChanged.type === _this.currentType) {
-                    _this.update();
+                if (_this.imageHasChanged.type === _this.currentType) {
+                    _this.handleContent();
                 }
             });
-            eventhandler.subscribe([STATENAMES.textUpdate], function (textUpdate) {
-                _this.textUpdate = textUpdate;
-                if (_this.textUpdate === true) {
-                    _this.update();
-                }
+            eventhandler.subscribe([STATENAMES.userContent], function (userContent) {
+                _this.handleContent(userContent);
             });
         }
-        CanvasCreator.prototype.getCanvas = function () {
-            return this.currentCanvas;
-        };
         CanvasCreator.prototype.setTheme = function (theme, update) {
             var _this = this;
             if (update === void 0) { update = true; }
@@ -1097,33 +1192,15 @@
                 themeFont.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ . abcdefghijklmnopqrstuvwxyzæøå . 0987654321';
                 document.body.appendChild(themeFont);
                 setTimeout(function () {
-                    if (update)
-                        _this.update();
+                    if (update) {
+                        _this.handleContent();
+                    }
                     _this.theme.loaded = true;
                 }, 200);
             }
             else if (update) {
-                this.update();
+                this.handleContent();
             }
-        };
-        CanvasCreator.prototype.update = function () {
-            this.formElements = Array.from(this.form.elements);
-            var info = {
-                dates: {},
-            };
-            this.formElements.forEach(function (el) {
-                if (el.dataset.line) {
-                    info.dates[el.dataset.line] = info.dates[el.dataset.line] || [];
-                    info.dates[el.dataset.line].push(el);
-                }
-                else if (el.name) {
-                    info[el.name] = el.value;
-                }
-                else if (el.type === 'file') {
-                    info['image'] = el.value ? el : null;
-                }
-            });
-            this.addContent(info, true);
         };
         CanvasCreator.prototype.addAll = function (type) {
             this.addCanvas(type);
@@ -1170,107 +1247,176 @@
             wrapper.appendChild(canvaswrapper);
             this.resetCanvas(curCanvas);
         };
-        CanvasCreator.prototype.addContent = function (contentInfo, clear) {
-            return __awaiter(this, void 0, void 0, function () {
-                var _this = this;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0: return [4 /*yield*/, asyncForEach(this.currentCanvas, function (current) { return __awaiter(_this, void 0, void 0, function () {
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            if (clear) {
-                                                this.resetCanvas(current);
-                                            }
-                                            return [4 /*yield*/, this.addImage(contentInfo, current)];
-                                        case 1:
-                                            _a.sent();
-                                            this.addText(contentInfo, current);
-                                            return [2 /*return*/];
-                                    }
-                                });
-                            }); })];
-                        case 1:
-                            _a.sent();
-                            if (this.imageHasChanged)
-                                store.dispatch(STOREACTIONS.imageChange, false);
-                            if (this.textUpdate)
-                                store.dispatch(STOREACTIONS.textUpdate, false);
-                            return [2 /*return*/];
-                    }
-                });
-            });
+        CanvasCreator.prototype.canvasFont = function (cfgName) {
+            return this.canvasConfig[cfgName].fontSize + "px " + this.theme.fontFamily;
         };
-        CanvasCreator.prototype.addImage = function (contentInfo, current) {
+        CanvasCreator.prototype.handleContent = function (clear) {
+            if (clear === void 0) { clear = true; }
             return __awaiter(this, void 0, void 0, function () {
-                var image, canvas, canvasContext, type, imageHasChanged, imageReturn, options, imgSize, imgPos, _a, image_1, x, y, w, h;
+                var _a, artist_1, image_1, tourname_1, venueInfo_1;
                 var _this = this;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
-                            image = contentInfo.image;
-                            canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
-                            imageHasChanged = this.imageHasChanged;
-                            if (!(imageHasChanged !== false)) return [3 /*break*/, 3];
-                            if (!(image && (imageHasChanged === true || imageHasChanged === type))) return [3 /*break*/, 2];
-                            return [4 /*yield*/, imageUploader(image)];
+                            if (!store.state.userContent) return [3 /*break*/, 2];
+                            _a = store.state.userContent, artist_1 = _a.artist, image_1 = _a.image, tourname_1 = _a.tourname, venueInfo_1 = _a.venueInfo;
+                            return [4 /*yield*/, asyncForEach(this.currentCanvas, function (current) { return __awaiter(_this, void 0, void 0, function () {
+                                    return __generator(this, function (_a) {
+                                        switch (_a.label) {
+                                            case 0:
+                                                if (clear) {
+                                                    this.resetCanvas(current);
+                                                }
+                                                if (!image_1) return [3 /*break*/, 2];
+                                                return [4 /*yield*/, this.handleImage(image_1, current)];
+                                            case 1:
+                                                _a.sent();
+                                                _a.label = 2;
+                                            case 2:
+                                                if (!(artist_1 || tourname_1)) return [3 /*break*/, 4];
+                                                return [4 /*yield*/, this.handleText(artist_1, tourname_1, current)];
+                                            case 3:
+                                                _a.sent();
+                                                _a.label = 4;
+                                            case 4:
+                                                if (!venueInfo_1) return [3 /*break*/, 6];
+                                                return [4 /*yield*/, this.handleDates(venueInfo_1, current)];
+                                            case 5:
+                                                _a.sent();
+                                                _a.label = 6;
+                                            case 6: return [2 /*return*/];
+                                        }
+                                    });
+                                }); })];
                         case 1:
-                            imageReturn = _b.sent();
-                            this.image = imageReturn;
-                            if (current.image)
-                                delete current.image;
+                            _b.sent();
                             _b.label = 2;
-                        case 2:
-                            options = {
-                                cHeight: canvas.height,
-                                cWidth: canvas.width,
-                                iHeight: this.image.height,
-                                iWidth: this.image.width,
-                                type: type,
-                            };
-                            imgSize = initialscaler(options);
-                            imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
-                            if (imageHasChanged.type === type) {
-                                switch (imageHasChanged.action) {
-                                    case 'scale':
-                                        imgSize = initialscaler(options);
-                                        break;
-                                    case 'position':
-                                        imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
-                                        break;
-                                    default:
-                                        imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
-                                }
-                            }
-                            current.image = __assign(__assign({ image: this.image }, imgPos), imgSize);
-                            _b.label = 3;
-                        case 3:
-                            if (current.image) {
-                                _a = current.image, image_1 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
-                                canvasContext.drawImage(image_1, x, y, w, h);
-                                if (current.dragImage) {
-                                    current.dragImage.setImage(current.image);
-                                    return [2 /*return*/];
-                                }
-                                current.dragImage = new DragHandler(current, current.scaleFactor);
-                                current.dragImage.events.on(EVENTNAMES.dragstop, function (getBack) {
-                                    var detail = getBack.detail;
-                                    current.image = __assign(__assign({}, current.image), detail);
-                                    _this.update();
-                                });
-                            }
-                            return [2 /*return*/];
+                        case 2: return [2 /*return*/];
                     }
                 });
             });
         };
-        CanvasCreator.prototype.addText = function (stuff, current) {
+        CanvasCreator.prototype.handleDates = function (venueInfo, current) {
             return __awaiter(this, void 0, void 0, function () {
-                var artist, dates, tourname, canvasContext, configName, cfg, fontSize, tournameTop, headerString;
+                var canvasContext, configName, cfg, dateTexts, baseTop, maxTop, counter, baseLeft, lefty, widest, _i, venueInfo_2, venueInf, dateText, ticketText, venueText, theTopPos, returnedStuff;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            artist = stuff.artist, dates = stuff.dates, tourname = stuff.tourname;
+                            canvasContext = current.canvasContext, configName = current.configName;
+                            cfg = this.canvasConfig[configName];
+                            dateTexts = [];
+                            canvasContext.textBaseline = 'alphabetic';
+                            return [4 /*yield*/, (canvasContext.font = this.canvasFont(configName))];
+                        case 1:
+                            _a.sent();
+                            baseTop = cfg.top * 2 + cfg.fontSize * 2 + cfg.top + cfg.fontSize;
+                            maxTop = canvasContext.canvas.height - this.currentCanvas[0].top;
+                            counter = 0;
+                            baseLeft = cfg.left * 2;
+                            lefty = baseLeft;
+                            widest = 0;
+                            this.simpleTextStyler.setFont(canvasContext);
+                            _i = 0, venueInfo_2 = venueInfo;
+                            _a.label = 2;
+                        case 2:
+                            if (!(_i < venueInfo_2.length)) return [3 /*break*/, 5];
+                            venueInf = venueInfo_2[_i];
+                            dateText = venueInf.dateText, ticketText = venueInf.ticketText, venueText = venueInf.venueText;
+                            if (!dateText) return [3 /*break*/, 4];
+                            dateTexts.push("{" + this.theme.date + dateText + "} {" + this.theme.venue + venueText + " {-" + ticketText + "}}");
+                            theTopPos = baseTop + cfg.fontSize * counter;
+                            if (theTopPos > maxTop) {
+                                // Reset topPos to base
+                                theTopPos = baseTop;
+                                // calculate new leftpos
+                                lefty = Math.round(lefty + widest + baseLeft);
+                                // Reset counter and widest
+                                counter = 0;
+                                widest = 0;
+                            }
+                            return [4 /*yield*/, this.simpleTextStyler.drawText(canvasContext, "{" + this.theme.date + dateText + "} {" + this.theme.venue + venueText + " {-" + ticketText + "}}", lefty, theTopPos, cfg.fontSize)];
+                        case 3:
+                            returnedStuff = _a.sent();
+                            widest = returnedStuff > widest ? returnedStuff : widest;
+                            // if (cfgName === 'wide') {
+                            //   canvasContext.beginPath(); // Start a new path
+                            //   canvasContext.moveTo(lefty, theTopPos); // Move the pen to (30, 50)
+                            //   canvasContext.lineTo(lefty, theTopPos + 100); // Draw a line to (150, 100)
+                            //   canvasContext.strokeStyle = '#ff0000';
+                            //   canvasContext.lineWidth = 2;
+                            //   canvasContext.stroke();
+                            //   canvasContext.fillStyle = 'green';
+                            //   canvasContext.fillRect(lefty, theTopPos - 70, widest, 20);
+                            // }
+                            counter++;
+                            _a.label = 4;
+                        case 4:
+                            _i++;
+                            return [3 /*break*/, 2];
+                        case 5: return [2 /*return*/];
+                    }
+                });
+            });
+        };
+        CanvasCreator.prototype.handleImage = function (image, current) {
+            return __awaiter(this, void 0, void 0, function () {
+                var canvas, canvasContext, type, imageHasChanged, options, imgSize, imgPos, _a, image_2, x, y, w, h;
+                return __generator(this, function (_b) {
+                    canvas = current.canvas, canvasContext = current.canvasContext, type = current.type;
+                    imageHasChanged = this.imageHasChanged;
+                    // let imageReturn;
+                    if (imageHasChanged !== false) {
+                        if (image && (imageHasChanged === true || imageHasChanged === type)) {
+                            this.image = image;
+                            if (current.image)
+                                delete current.image;
+                        }
+                        options = {
+                            cHeight: canvas.height,
+                            cWidth: canvas.width,
+                            iHeight: this.image.height,
+                            iWidth: this.image.width,
+                            type: type,
+                        };
+                        imgSize = initialscaler(options);
+                        imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
+                        if (imageHasChanged.type === type) {
+                            switch (imageHasChanged.action) {
+                                case 'scale':
+                                    imgSize = initialscaler(options);
+                                    break;
+                                case 'position':
+                                    imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
+                                    break;
+                                default:
+                                    imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
+                            }
+                        }
+                        current.image = __assign(__assign({ image: this.image }, imgPos), imgSize);
+                    }
+                    if (current.image) {
+                        _a = current.image, image_2 = _a.image, x = _a.x, y = _a.y, w = _a.w, h = _a.h;
+                        canvasContext.drawImage(image_2, x, y, w, h);
+                        if (current.dragImage) {
+                            current.dragImage.setImage(current.image);
+                            return [2 /*return*/];
+                        }
+                        current.dragImage = new DragHandler(current, current.scaleFactor);
+                        current.dragImage.events.on(EVENTNAMES.dragstop, function (getBack) {
+                            var detail = getBack.detail;
+                            current.image = __assign(__assign({}, current.image), detail);
+                        });
+                    }
+                    return [2 /*return*/];
+                });
+            });
+        };
+        CanvasCreator.prototype.handleText = function (artist, tourname, current) {
+            return __awaiter(this, void 0, void 0, function () {
+                var canvasContext, configName, cfg, fontSize, tournameTop, headerString;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
                             canvasContext = current.canvasContext, configName = current.configName;
                             cfg = this.canvasConfig[configName];
                             fontSize = cfg.fontSize;
@@ -1290,115 +1436,10 @@
                         case 3:
                             this.bannerName = artist.replace(/\s/g, '-') + "_" + tourname.replace(/\s/g, '-');
                             canvasContext.measureText(headerString).actualBoundingBoxAscent;
-                            this.addDates(dates, configName, tournameTop + fontSize * 2, current);
                             return [2 /*return*/];
                     }
                 });
             });
-        };
-        CanvasCreator.prototype.addDates = function (datesInfo, cfgName, top, current) {
-            return __awaiter(this, void 0, void 0, function () {
-                var cfg, dateTexts, canvasContext, baseTop, maxTop, counter, baseLeft, lefty, widest, _loop_1, this_1, _a, _b, _i, dates;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
-                        case 0:
-                            cfg = this.canvasConfig[cfgName];
-                            dateTexts = [];
-                            canvasContext = current.canvasContext;
-                            canvasContext.textBaseline = 'alphabetic';
-                            return [4 /*yield*/, (canvasContext.font = this.canvasFont(cfgName))];
-                        case 1:
-                            _c.sent();
-                            baseTop = top + cfg.top + cfg.fontSize;
-                            maxTop = canvasContext.canvas.height - this.currentCanvas[0].top;
-                            counter = 0;
-                            baseLeft = cfg.left * 2;
-                            lefty = baseLeft;
-                            widest = 0;
-                            this.simpleTextStyler.setFont(canvasContext);
-                            _loop_1 = function (dates) {
-                                var dateText_1, ticketText_1, venueText_1, theTopPos, returnedStuff;
-                                return __generator(this, function (_a) {
-                                    switch (_a.label) {
-                                        case 0:
-                                            if (!datesInfo[dates]) return [3 /*break*/, 2];
-                                            datesInfo[dates].forEach(function (datesInfoElement, i) {
-                                                var elName = datesInfoElement.name;
-                                                if (elName.indexOf(DATEINFOTYPES.date) !== -1) {
-                                                    dateText_1 = datesInfoElement.value.toUpperCase();
-                                                }
-                                                if (elName.indexOf(DATEINFOTYPES.venue) !== -1) {
-                                                    venueText_1 = datesInfoElement.value.toUpperCase();
-                                                }
-                                                if (elName.indexOf(DATEINFOTYPES.tickets) !== -1 && datesInfoElement.checked) {
-                                                    switch (datesInfoElement.value) {
-                                                        case 'few':
-                                                            ticketText_1 = 'Få billetter'.toUpperCase();
-                                                            break;
-                                                        case 'soldout':
-                                                            ticketText_1 = 'Udsolgt'.toUpperCase();
-                                                            break;
-                                                        default:
-                                                            ticketText_1 = '';
-                                                            break;
-                                                    }
-                                                }
-                                            });
-                                            if (!dateText_1) return [3 /*break*/, 2];
-                                            dateTexts.push("{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}");
-                                            theTopPos = baseTop + cfg.fontSize * counter;
-                                            if (theTopPos > maxTop) {
-                                                // Reset topPos to base
-                                                theTopPos = baseTop;
-                                                // calculate new leftpos
-                                                lefty = Math.round(lefty + widest + baseLeft);
-                                                // Reset counter and widest
-                                                counter = 0;
-                                                widest = 0;
-                                            }
-                                            return [4 /*yield*/, this_1.simpleTextStyler.drawText(canvasContext, "{" + this_1.theme.date + dateText_1 + "} {" + this_1.theme.venue + venueText_1 + " {-" + ticketText_1 + "}}", lefty, theTopPos, cfg.fontSize)];
-                                        case 1:
-                                            returnedStuff = _a.sent();
-                                            widest = returnedStuff > widest ? returnedStuff : widest;
-                                            // if (cfgName === 'wide') {
-                                            //   canvasContext.beginPath(); // Start a new path
-                                            //   canvasContext.moveTo(lefty, theTopPos); // Move the pen to (30, 50)
-                                            //   canvasContext.lineTo(lefty, theTopPos + 100); // Draw a line to (150, 100)
-                                            //   canvasContext.strokeStyle = '#ff0000';
-                                            //   canvasContext.lineWidth = 2;
-                                            //   canvasContext.stroke();
-                                            //   canvasContext.fillStyle = 'green';
-                                            //   canvasContext.fillRect(lefty, theTopPos - 70, widest, 20);
-                                            // }
-                                            counter++;
-                                            _a.label = 2;
-                                        case 2: return [2 /*return*/];
-                                    }
-                                });
-                            };
-                            this_1 = this;
-                            _a = [];
-                            for (_b in datesInfo)
-                                _a.push(_b);
-                            _i = 0;
-                            _c.label = 2;
-                        case 2:
-                            if (!(_i < _a.length)) return [3 /*break*/, 5];
-                            dates = _a[_i];
-                            return [5 /*yield**/, _loop_1(dates)];
-                        case 3:
-                            _c.sent();
-                            _c.label = 4;
-                        case 4:
-                            _i++;
-                            return [3 /*break*/, 2];
-                        case 5: return [2 /*return*/];
-                    }
-                });
-            });
-        };
-        CanvasCreator.prototype.canvasFont = function (cfgName) {
-            return this.canvasConfig[cfgName].fontSize + "px " + this.theme.fontFamily;
         };
         CanvasCreator.prototype.resetCanvas = function (currentCfg) {
             currentCfg.canvasContext.clearRect(0, 0, currentCfg.canvas.width, currentCfg.canvas.height);
@@ -1869,8 +1910,8 @@
         var container = document.createDocumentFragment();
         var formEl = document.createElement('form');
         formEl.className = 'form-container';
-        var canvasCreator = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.wide);
-        new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
+        var canvasCreator = new CanvasCreator(canvascontainer, RATIOTYPES.wide);
+        new CanvasCreator(canvascontainer, RATIOTYPES.square);
         formEl.addEventListener('change', function (ev) {
             var target = ev.target;
             if (target.nodeName === 'SELECT' && target.dataset.type === 'themepicker') {
@@ -1904,7 +1945,7 @@
         updateButton.innerText = 'Opdater';
         updateButton.addEventListener('click', function (ev) {
             ev.preventDefault();
-            store.dispatch(STOREACTIONS.textUpdate, true);
+            contentHandler.update(formEl.elements);
         });
         textContainer.appendChild(updateButton);
         /**
@@ -1926,7 +1967,7 @@
         imageContainer.className = 'form-area';
         formEl.appendChild(imageContainer);
         /** Image */
-        imageContainer.appendChild(new ImageHandler().render());
+        imageContainer.appendChild(new ImageHandler(formEl).render());
         /**
          * Add form element to container
          */
@@ -1948,5 +1989,10 @@
 
     var thing = document.getElementById('app');
     thing.appendChild(createForm());
+    // window.addEventListener('beforeunload', (ev) => {
+    //   console.log('beforeunload');
+    //   ev.preventDefault();
+    //   return (ev.returnValue = 'Did you remember to download your work?');
+    // });
 
 }());

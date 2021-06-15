@@ -9,6 +9,7 @@ import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 import { themes } from '../canvascreator/themes';
 import { RATIOTYPES } from '../canvascreator/canvascreator';
+import { contentHandler } from '../contentHandler';
 
 const formElement = (name: string): string => `
   <div class="form-element">
@@ -24,8 +25,8 @@ export function createForm() {
   const formEl = document.createElement('form');
   formEl.className = 'form-container';
 
-  const canvasCreator = new CanvasCreator(canvascontainer, formEl, RATIOTYPES.wide);
-  new CanvasCreator(canvascontainer, formEl, RATIOTYPES.square);
+  const canvasCreator = new CanvasCreator(canvascontainer, RATIOTYPES.wide);
+  new CanvasCreator(canvascontainer, RATIOTYPES.square);
 
   formEl.addEventListener('change', (ev) => {
     const target = ev.target as HTMLInputElement;
@@ -66,7 +67,7 @@ export function createForm() {
 
   updateButton.addEventListener('click', (ev) => {
     ev.preventDefault();
-    store.dispatch(STOREACTIONS.textUpdate, true);
+    contentHandler.update(formEl.elements);
   });
   textContainer.appendChild(updateButton);
 
@@ -93,7 +94,7 @@ export function createForm() {
   formEl.appendChild(imageContainer);
 
   /** Image */
-  imageContainer.appendChild(new ImageHandler().render());
+  imageContainer.appendChild(new ImageHandler(formEl).render());
 
   /**
    * Add form element to container

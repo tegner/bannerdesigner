@@ -7,12 +7,26 @@ export enum STATENAMES {
   imageChange = 'imageChange',
   imageScale = 'imageScale',
   imagePosition = 'imagePosition',
-  textUpdate = 'textUpdate',
   theme = 'theme',
   themeName = 'themeName',
+  userContent = 'userContent',
 }
 
 export type TCanvas = ICurrentCanvasConfig & ICanvasConfig;
+
+interface IVenueInfo {
+  dateText: string;
+  ticketText: string;
+  venueText: string;
+}
+
+export interface IUserContent {
+  artist?: string;
+  image?: HTMLImageElement;
+  tourname?: string;
+  venueInfo?: IVenueInfo[];
+}
+
 export interface IStoreState {
   [STATENAMES.canvases]: TCanvas[];
   [STATENAMES.imageChange]: any;
@@ -20,9 +34,9 @@ export interface IStoreState {
     [id: string]: number;
   };
   [STATENAMES.imagePosition]: TPlacementNames;
-  [STATENAMES.textUpdate]: boolean;
   [STATENAMES.theme]: IThemeObject;
   [STATENAMES.themeName]: string;
+  [STATENAMES.userContent]: IUserContent;
 }
 
 export type StateType = Partial<IStoreState>;
@@ -37,7 +51,7 @@ export const initialState: IStoreState = {
     [RATIOTYPES.wide]: 1,
   },
   [STATENAMES.imagePosition]: 'topleft',
-  [STATENAMES.textUpdate]: false,
   [STATENAMES.theme]: themes[defaultTheme],
   [STATENAMES.themeName]: defaultTheme,
+  [STATENAMES.userContent]: {},
 };

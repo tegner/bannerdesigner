@@ -37,8 +37,9 @@ export default {
 
     return state;
   },
-  [STOREACTIONS.textUpdate](state, payload) {
-    state[STATENAMES.textUpdate] = payload;
+  [STOREACTIONS.updateContent](state, payload) {
+    console.log('mutation updateContent', payload);
+    state[STATENAMES.userContent] = payload;
 
     return state;
   },

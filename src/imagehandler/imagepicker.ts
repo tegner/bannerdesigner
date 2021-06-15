@@ -2,6 +2,7 @@
 // import { eventhandler } from '../util/eventhandler';
 // import { STATENAMES } from '../util/initialstate';
 import { RATIOTYPES } from '../canvascreator/canvascreator';
+import { contentHandler } from '../contentHandler';
 import store from '../util/store';
 import { STOREACTIONS } from '../util/store/actions';
 
@@ -24,6 +25,8 @@ export class ImageHandler {
     return imageFileValue;
   })();
 
+  private parentForm: HTMLFormElement;
+
   private parents = {
     [RATIOTYPES.square]: null,
     [RATIOTYPES.wide]: null,
@@ -43,13 +46,13 @@ export class ImageHandler {
   //   [RATIOTYPES.wide]: null,
   // };
 
-  constructor() {
+  constructor(parentForm: HTMLFormElement) {
     for (const key in store.state.imageScale) {
       if (key) {
         this.prevScale[key] = store.state.imageScale[key];
       }
     }
-
+    this.parentForm = parentForm;
     // TODO: VisualScaling
     // eventhandler.subscribe([STATENAMES.imageScale], (imageScale, state) => {
     //   let changed = '';
@@ -96,8 +99,7 @@ export class ImageHandler {
   private change() {
     const splitValue = this.imageFileElement.value.split('\\');
     this.imageFileValue.innerHTML = splitValue[splitValue.length - 1];
-
-    store.dispatch(STOREACTIONS.imageChange, true);
+    contentHandler.update(this.parentForm.elements, 'imagepicker');
 
     this.clearHandlers();
     store.state.canvases.forEach((element) => {

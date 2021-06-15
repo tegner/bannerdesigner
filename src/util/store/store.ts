@@ -8,6 +8,7 @@ export class Store {
 
   private actions = {};
   private mutations = {};
+  private stateLibrary = [];
 
   constructor(params) {
     // Add some default objects to hold our actions, mutations and state
@@ -38,12 +39,10 @@ export class Store {
         state[key] = value;
 
         // Trace out to the console. This will be grouped by the related action
-        // console.log(`stateChange: ${String(key)}: ${value} . this.events ${this.events}`);
 
         // Publish the change event for the components that are listening
-        if (this.status === 'resting') {
-          this.events.publish('stateChange', this.state, key);
-        }
+
+        this.events.publish('stateChange', this.state, key);
 
         // Give the user a little telling off if they set a value directly
         if (this.status !== 'mutation') {
@@ -111,10 +110,13 @@ export class Store {
     this.status = 'mutation';
 
     // Get a new version of the state by running the mutation and storing the result of it
+    // this.mutations[mutationKey](this.state, payload);
+
     let newState = this.mutations[mutationKey](this.state, payload);
 
-    // Merge the old and new together to create a new state and set it
-    this.state = Object.assign(this.state, newState);
+    // // Merge the old and new together to create a new state and set it
+    // this.state = Object.assign(this.state, newState);
+    this.stateLibrary.push({ ...newState });
 
     return true;
   }
