@@ -2042,11 +2042,13 @@
                 if (userDate && userDate.getTime() > _this.toDay) {
                     var encodedData = encode(JSON.stringify(userDate.getTime()));
                     localStorage.setItem(TOKEN, encodedData);
-                    APP.renderForm();
                     store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
                 }
+                else if (userDate && userDate.getTime() < _this.toDay) {
+                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                }
                 else {
-                    console.log('flooops');
+                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
                 }
             });
             loginForm.appendChild(userInput);
@@ -2062,8 +2064,24 @@
     // import { STOREACTIONS } from './util/store/actions';
     var App = /** @class */ (function () {
         function App(elId) {
+            var _this = this;
             this.body = document.body;
             this.appContainer = document.getElementById(elId);
+            eventhandler.subscribe(STATENAMES.loginStatus, function (status, _state) {
+                console.log('login status?', status);
+                switch (status) {
+                    case ELoginStatus.expired:
+                        _this.tokenExpired();
+                        break;
+                    case ELoginStatus.loggedIn:
+                        _this.renderForm();
+                        break;
+                    case ELoginStatus.notLoggedIn:
+                    default:
+                        _this.notLoggedIn();
+                        break;
+                }
+            });
         }
         /**
          * init
@@ -2077,14 +2095,11 @@
             else {
                 var decodedToken = JSON.parse(decode(token));
                 var decodedDate = new Date(decodedToken).getTime();
-                console.log('dec', decodedToken, decodedDate);
                 if (decodedDate > new Date().getTime()) {
-                    this.renderForm();
-                    // store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
                 }
                 else {
-                    this.tokenExpired();
-                    // store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
                 }
             }
         };

@@ -2,6 +2,10 @@ import { createForm } from './formcreator';
 import { NotLoggedIn } from './notloggedin';
 import { TOKEN } from './notloggedin/token';
 import { decode } from './util/encoding';
+import { eventhandler } from './util/eventhandler';
+import { ELoginStatus, STATENAMES } from './util/initialstate';
+import store from './util/store';
+import { STOREACTIONS } from './util/store/actions';
 // import { eventhandler } from './util/eventhandler';
 // import { ELoginStatus, STATENAMES } from './util/initialstate';
 // import store from './util/store';
@@ -14,6 +18,22 @@ class App {
 
   constructor(elId) {
     this.appContainer = document.getElementById(elId) as HTMLDivElement;
+
+    eventhandler.subscribe(STATENAMES.loginStatus, (status, _state) => {
+      console.log('login status?', status);
+      switch (status) {
+        case ELoginStatus.expired:
+          this.tokenExpired();
+          break;
+        case ELoginStatus.loggedIn:
+          this.renderForm();
+          break;
+        case ELoginStatus.notLoggedIn:
+        default:
+          this.notLoggedIn();
+          break;
+      }
+    });
   }
 
   /**
@@ -27,13 +47,11 @@ class App {
     } else {
       const decodedToken = JSON.parse(decode(token));
       const decodedDate = new Date(decodedToken).getTime();
-      console.log('dec', decodedToken, decodedDate);
+
       if (decodedDate > new Date().getTime()) {
-        this.renderForm();
-        // store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
       } else {
-        this.tokenExpired();
-        // store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
       }
     }
   }
