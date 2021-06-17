@@ -1,16 +1,7 @@
 import { createForm } from './formcreator';
 import { NotLoggedIn } from './notloggedin';
-import { TOKEN } from './notloggedin/token';
-import { decode } from './util/encoding';
 import { eventhandler } from './util/eventhandler';
 import { ELoginStatus, STATENAMES } from './util/initialstate';
-import store from './util/store';
-import { STOREACTIONS } from './util/store/actions';
-// import { eventhandler } from './util/eventhandler';
-// import { ELoginStatus, STATENAMES } from './util/initialstate';
-// import store from './util/store';
-// import store from './util/store';
-// import { STOREACTIONS } from './util/store/actions';
 
 class App {
   private appContainer: HTMLDivElement;
@@ -28,6 +19,9 @@ class App {
         case ELoginStatus.loggedIn:
           this.renderForm();
           break;
+        case ELoginStatus.logInError:
+          this.logInError();
+          break;
         case ELoginStatus.notLoggedIn:
         default:
           this.notLoggedIn();
@@ -40,37 +34,29 @@ class App {
    * init
    */
   public init() {
-    const token = localStorage.getItem(TOKEN);
-    console.log('token', token);
-    if (!token) {
-      this.notLoggedIn();
-    } else {
-      const decodedToken = JSON.parse(decode(token));
-      const decodedDate = new Date(decodedToken).getTime();
-
-      if (decodedDate > new Date().getTime()) {
-        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
-      } else {
-        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
-      }
-    }
+    const loginHandler = new NotLoggedIn();
+    this.appContainer.appendChild(loginHandler.render());
   }
 
-  public renderForm() {
+  private renderForm() {
     this.body.classList.remove('not-logged-in');
     this.appContainer.appendChild(createForm());
   }
 
   private notLoggedIn() {
     this.body.classList.add('not-logged-in');
-    const newLogin = new NotLoggedIn();
+    console.log('add not logged in message');
+  }
 
-    this.appContainer.appendChild(newLogin.render());
+  private logInError() {
+    this.body.classList.add('not-logged-in');
+    console.log('add not log in error message');
   }
 
   private tokenExpired() {
     this.body.classList.add('not-logged-in');
     console.log('tokenExpired');
+    console.log('add not token expired message');
   }
 }
 

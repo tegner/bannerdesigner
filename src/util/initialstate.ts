@@ -15,6 +15,7 @@ export enum STATENAMES {
 
 export enum ELoginStatus {
   'loggedIn',
+  'logInError',
   'notLoggedIn',
   'expired',
 }

@@ -219,8 +219,9 @@
     var ELoginStatus;
     (function (ELoginStatus) {
         ELoginStatus[ELoginStatus["loggedIn"] = 0] = "loggedIn";
-        ELoginStatus[ELoginStatus["notLoggedIn"] = 1] = "notLoggedIn";
-        ELoginStatus[ELoginStatus["expired"] = 2] = "expired";
+        ELoginStatus[ELoginStatus["logInError"] = 1] = "logInError";
+        ELoginStatus[ELoginStatus["notLoggedIn"] = 2] = "notLoggedIn";
+        ELoginStatus[ELoginStatus["expired"] = 3] = "expired";
     })(ELoginStatus || (ELoginStatus = {}));
     var defaultTheme = THEMENAMES.modern;
     var initialState = (_a$2 = {},
@@ -2023,8 +2024,9 @@
     // const decodedData = window.atob(encodedData); // decode the string
     var NotLoggedIn = /** @class */ (function () {
         function NotLoggedIn() {
+            this.container = document.createElement('div');
             this.toDay = new Date().getTime();
-            console.log('not logged in');
+            this.checkTokenStatus();
         }
         /**
          * render
@@ -2037,31 +2039,47 @@
                 ev.preventDefault();
                 var val = userInput.value;
                 var userData = DATES.find(function (el) { return el.username === val; });
-                var expires = userData.expires;
-                var userDate = new Date(expires);
-                if (userDate && userDate.getTime() > _this.toDay) {
-                    var encodedData = encode(JSON.stringify(userDate.getTime()));
-                    localStorage.setItem(TOKEN, encodedData);
-                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
-                }
-                else if (userDate && userDate.getTime() < _this.toDay) {
-                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                if (!userData) {
+                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.logInError);
                 }
                 else {
-                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
+                    var expires = userData.expires;
+                    var userDate = new Date(expires);
+                    if (userDate && userDate.getTime() > _this.toDay) {
+                        var encodedData = encode(JSON.stringify(userDate.getTime()));
+                        localStorage.setItem(TOKEN, encodedData);
+                        store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                    }
+                    else if (userDate && userDate.getTime() < _this.toDay) {
+                        store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                    }
                 }
             });
             loginForm.appendChild(userInput);
-            return loginForm;
+            this.container.appendChild(loginForm);
+            return this.container;
+        };
+        NotLoggedIn.prototype.checkTokenStatus = function () {
+            console.log('not logged in');
+            this.token = localStorage.getItem(TOKEN);
+            console.log('token', this.token);
+            if (!this.token) {
+                store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
+            }
+            else {
+                var decodedToken = JSON.parse(decode(this.token));
+                var decodedDate = new Date(decodedToken).getTime();
+                if (decodedDate > new Date().getTime()) {
+                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                }
+                else {
+                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                }
+            }
         };
         return NotLoggedIn;
     }());
 
-    // import { eventhandler } from './util/eventhandler';
-    // import { ELoginStatus, STATENAMES } from './util/initialstate';
-    // import store from './util/store';
-    // import store from './util/store';
-    // import { STOREACTIONS } from './util/store/actions';
     var App = /** @class */ (function () {
         function App(elId) {
             var _this = this;
@@ -2076,6 +2094,9 @@
                     case ELoginStatus.loggedIn:
                         _this.renderForm();
                         break;
+                    case ELoginStatus.logInError:
+                        _this.logInError();
+                        break;
                     case ELoginStatus.notLoggedIn:
                     default:
                         _this.notLoggedIn();
@@ -2087,21 +2108,8 @@
          * init
          */
         App.prototype.init = function () {
-            var token = localStorage.getItem(TOKEN);
-            console.log('token', token);
-            if (!token) {
-                this.notLoggedIn();
-            }
-            else {
-                var decodedToken = JSON.parse(decode(token));
-                var decodedDate = new Date(decodedToken).getTime();
-                if (decodedDate > new Date().getTime()) {
-                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
-                }
-                else {
-                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
-                }
-            }
+            var loginHandler = new NotLoggedIn();
+            this.appContainer.appendChild(loginHandler.render());
         };
         App.prototype.renderForm = function () {
             this.body.classList.remove('not-logged-in');
@@ -2109,12 +2117,16 @@
         };
         App.prototype.notLoggedIn = function () {
             this.body.classList.add('not-logged-in');
-            var newLogin = new NotLoggedIn();
-            this.appContainer.appendChild(newLogin.render());
+            console.log('add not logged in message');
+        };
+        App.prototype.logInError = function () {
+            this.body.classList.add('not-logged-in');
+            console.log('add not log in error message');
         };
         App.prototype.tokenExpired = function () {
             this.body.classList.add('not-logged-in');
             console.log('tokenExpired');
+            console.log('add not token expired message');
         };
         return App;
     }());
