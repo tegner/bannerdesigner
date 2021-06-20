@@ -886,3 +886,15 @@ h5 {
 .not-logged-in .canvas-app {
   margin: auto;
 }
+
+.login-container {
+  text-align: center;
+  width: 650px;
+}
+
+.login-form-container {
+  margin: 20px 0;
+}
+
+.message-container {
+}

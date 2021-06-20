@@ -2033,6 +2033,9 @@
          */
         LoginHandler.prototype.renderLoginForm = function () {
             var _this = this;
+            var loginMessage = document.createElement('small');
+            loginMessage.innerHTML = 'Angiv dit brugernavn for at komme igang.';
+            this.container.appendChild(loginMessage);
             var loginForm = document.createElement('form');
             var userInput = document.createElement('input');
             loginForm.addEventListener('submit', function (ev) {
@@ -2080,30 +2083,68 @@
         return LoginHandler;
     }());
 
+    var CONTACT = '<a href="mailto: bruger@bannermaker.dk">bruger@bannermaker.dk</a>';
+
+    var loginError = function () {
+        var expiredEl = document.createElement('div');
+        expiredEl.innerHTML = "\n    Det angivne brugernavn findes ikke.<br />\n    Kontakt " + CONTACT + " for at blive oprettet.\n    ";
+        return expiredEl;
+    };
+
+    var loginExpired = function () {
+        var expiredEl = document.createElement('div');
+        expiredEl.innerHTML = "\n    Din adgang er udl\u00F8bet.<br />\n    Kontakt " + CONTACT + " for at f\u00E5 en opdateret dit abonnement.\n    ";
+        return expiredEl;
+    };
+
+    var notLoggedIn = function () {
+        var expiredEl = document.createElement('div');
+        expiredEl.innerHTML = "\n    Hvis du endnu ikke er oprettet: kontakt " + CONTACT + " for at blive oprettet.\n    ";
+        return expiredEl;
+    };
+
     var App = /** @class */ (function () {
         function App() {
             var _this = this;
             this.body = document.body;
-            this.appContainer = document.getElementById('app');
-            console.log('constructing app');
-            eventhandler.subscribe(STATENAMES.loginStatus, function (status, _state) {
-                console.log('login status?', status);
-                switch (status) {
-                    case ELoginStatus.expired:
-                        _this.tokenExpired();
-                        break;
-                    case ELoginStatus.loggedIn:
-                        _this.renderForm();
-                        break;
-                    case ELoginStatus.logInError:
-                        _this.logInError();
-                        break;
-                    case ELoginStatus.notLoggedIn:
-                    default:
-                        _this.notLoggedIn();
-                        break;
-                }
-            });
+            this.loginContainer = document.createElement('div');
+            this.loginFormContainer = document.createElement('div');
+            this.messageContainer = document.createElement('div');
+            try {
+                this.appContainer = document.getElementById('app');
+                console.log('constructing app', this.appContainer);
+                this.loginContainer.className = 'login-container';
+                this.appContainer.appendChild(this.loginContainer);
+                eventhandler.subscribe(STATENAMES.loginStatus, function (status, _state) {
+                    console.log('login status?', status);
+                    switch (status) {
+                        case ELoginStatus.expired:
+                            _this.clearMessage();
+                            _this.tokenExpired();
+                            break;
+                        case ELoginStatus.loggedIn:
+                            _this.clearEverything();
+                            _this.renderForm();
+                            break;
+                        case ELoginStatus.logInError:
+                            _this.clearMessage();
+                            _this.logInError();
+                            break;
+                        case ELoginStatus.notLoggedIn:
+                        default:
+                            _this.clearMessage();
+                            _this.notLoggedIn();
+                            break;
+                    }
+                });
+                this.loginFormContainer.className = 'login-form-container';
+                this.loginContainer.appendChild(this.loginFormContainer);
+                this.messageContainer.className = 'message-container';
+                this.loginContainer.appendChild(this.messageContainer);
+            }
+            catch (error) {
+                console.error('BANNERMAKER APP constructor', error);
+            }
         }
         /**
          * init
@@ -2112,8 +2153,34 @@
             var loginHandler = new LoginHandler();
             this.loginForm = loginHandler.renderLoginForm();
             if (store.state.loginStatus !== ELoginStatus.loggedIn) {
-                this.appContainer.appendChild(this.loginForm);
+                console.log(this.loginForm);
+                this.loginFormContainer.appendChild(this.loginForm);
             }
+        };
+        App.prototype.clearEverything = function () {
+            while (this.appContainer.firstChild) {
+                this.appContainer.firstChild.remove();
+            }
+        };
+        // private clearForm() {
+        //   while (this.loginFormContainer.firstChild) {
+        //     this.loginFormContainer.firstChild.remove();
+        //   }
+        // }
+        App.prototype.clearMessage = function () {
+            while (this.messageContainer.firstChild) {
+                this.messageContainer.firstChild.remove();
+            }
+        };
+        App.prototype.logInError = function () {
+            this.body.classList.add('not-logged-in');
+            console.log('add log in error message');
+            this.messageContainer.appendChild(loginError());
+        };
+        App.prototype.notLoggedIn = function () {
+            this.body.classList.add('not-logged-in');
+            console.log('add not logged in message');
+            this.messageContainer.appendChild(notLoggedIn());
         };
         App.prototype.renderForm = function () {
             this.body.classList.remove('not-logged-in');
@@ -2121,18 +2188,11 @@
                 this.loginForm.remove();
             this.appContainer.appendChild(createForm());
         };
-        App.prototype.notLoggedIn = function () {
-            this.body.classList.add('not-logged-in');
-            console.log('add not logged in message');
-        };
-        App.prototype.logInError = function () {
-            this.body.classList.add('not-logged-in');
-            console.log('add log in error message');
-        };
         App.prototype.tokenExpired = function () {
             this.body.classList.add('not-logged-in');
             console.log('tokenExpired');
             console.log('add token expired message');
+            this.messageContainer.appendChild(loginExpired());
         };
         return App;
     }());
