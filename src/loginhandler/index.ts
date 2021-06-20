@@ -7,7 +7,7 @@ import { TOKEN } from './token';
 
 // const decodedData = window.atob(encodedData); // decode the string
 
-export class NotLoggedIn {
+export class LoginHandler {
   private container = document.createElement('div');
   private toDay: number = new Date().getTime();
   private token;
@@ -19,7 +19,7 @@ export class NotLoggedIn {
   /**
    * render
    */
-  public render() {
+  public renderLoginForm() {
     const loginForm = document.createElement('form');
     const userInput = document.createElement('input');
 
@@ -56,7 +56,7 @@ export class NotLoggedIn {
     this.token = localStorage.getItem(TOKEN);
     console.log('token', this.token);
     if (!this.token) {
-      store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
+      store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
     } else {
       const decodedToken = JSON.parse(decode(this.token));
       const decodedDate = new Date(decodedToken).getTime();

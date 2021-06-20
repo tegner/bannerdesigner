@@ -60,7 +60,7 @@ export const initialState: IStoreState = {
     [RATIOTYPES.wide]: 1,
   },
   [STATENAMES.imagePosition]: 'topleft',
-  [STATENAMES.loginStatus]: ELoginStatus.notLoggedIn,
+  [STATENAMES.loginStatus]: undefined,
   [STATENAMES.theme]: themes[defaultTheme],
   [STATENAMES.themeName]: defaultTheme,
   [STATENAMES.userContent]: {},

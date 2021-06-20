@@ -232,7 +232,7 @@
             _b[RATIOTYPES.wide] = 1,
             _b),
         _a$2[STATENAMES.imagePosition] = 'topleft',
-        _a$2[STATENAMES.loginStatus] = ELoginStatus.notLoggedIn,
+        _a$2[STATENAMES.loginStatus] = undefined,
         _a$2[STATENAMES.theme] = themes[defaultTheme],
         _a$2[STATENAMES.themeName] = defaultTheme,
         _a$2[STATENAMES.userContent] = {},
@@ -2022,8 +2022,8 @@
     var TOKEN = 'bm_token';
 
     // const decodedData = window.atob(encodedData); // decode the string
-    var NotLoggedIn = /** @class */ (function () {
-        function NotLoggedIn() {
+    var LoginHandler = /** @class */ (function () {
+        function LoginHandler() {
             this.container = document.createElement('div');
             this.toDay = new Date().getTime();
             this.checkTokenStatus();
@@ -2031,7 +2031,7 @@
         /**
          * render
          */
-        NotLoggedIn.prototype.render = function () {
+        LoginHandler.prototype.renderLoginForm = function () {
             var _this = this;
             var loginForm = document.createElement('form');
             var userInput = document.createElement('input');
@@ -2059,12 +2059,12 @@
             this.container.appendChild(loginForm);
             return this.container;
         };
-        NotLoggedIn.prototype.checkTokenStatus = function () {
+        LoginHandler.prototype.checkTokenStatus = function () {
             console.log('not logged in');
             this.token = localStorage.getItem(TOKEN);
             console.log('token', this.token);
             if (!this.token) {
-                store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
+                store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
             }
             else {
                 var decodedToken = JSON.parse(decode(this.token));
@@ -2077,14 +2077,15 @@
                 }
             }
         };
-        return NotLoggedIn;
+        return LoginHandler;
     }());
 
     var App = /** @class */ (function () {
-        function App(elId) {
+        function App() {
             var _this = this;
             this.body = document.body;
-            this.appContainer = document.getElementById(elId);
+            this.appContainer = document.getElementById('app');
+            console.log('constructing app');
             eventhandler.subscribe(STATENAMES.loginStatus, function (status, _state) {
                 console.log('login status?', status);
                 switch (status) {
@@ -2108,11 +2109,16 @@
          * init
          */
         App.prototype.init = function () {
-            var loginHandler = new NotLoggedIn();
-            this.appContainer.appendChild(loginHandler.render());
+            var loginHandler = new LoginHandler();
+            this.loginForm = loginHandler.renderLoginForm();
+            if (store.state.loginStatus !== ELoginStatus.loggedIn) {
+                this.appContainer.appendChild(this.loginForm);
+            }
         };
         App.prototype.renderForm = function () {
             this.body.classList.remove('not-logged-in');
+            if (this.loginForm)
+                this.loginForm.remove();
             this.appContainer.appendChild(createForm());
         };
         App.prototype.notLoggedIn = function () {
@@ -2121,16 +2127,16 @@
         };
         App.prototype.logInError = function () {
             this.body.classList.add('not-logged-in');
-            console.log('add not log in error message');
+            console.log('add log in error message');
         };
         App.prototype.tokenExpired = function () {
             this.body.classList.add('not-logged-in');
             console.log('tokenExpired');
-            console.log('add not token expired message');
+            console.log('add token expired message');
         };
         return App;
     }());
-    var APP = new App('app');
+    var APP = new App();
 
     APP.init();
     // window.addEventListener('beforeunload', (ev) => {
