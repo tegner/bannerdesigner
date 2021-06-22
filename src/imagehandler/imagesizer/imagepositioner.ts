@@ -9,7 +9,15 @@ import { top } from './top';
 import { topLeft } from './topleft';
 import { topRight } from './topright';
 
+export interface IImagePositioner {
+  cHeight: number;
+  cWidth: number;
+  iHeight: number;
+  iWidth: number;
+}
+
 export function imagePositioner(options, pos) {
+  console.log('imagePositioner', options);
   switch (pos) {
     case PLACEMENTNAMES.bottom:
       return bottom(options);

@@ -1,3 +1,9 @@
+export enum IMAGECHANGEACTIONS {
+  DRAG,
+  POSITION,
+  SCALE,
+}
+
 export enum STOREACTIONS {
   alterTheme = 'alterTheme',
   imageChange = 'imageChange',

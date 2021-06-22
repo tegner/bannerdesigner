@@ -1,7 +1,7 @@
 import { ICanvasImage, ICurrentCanvasConfig } from '../canvascreator/canvascreator';
 import { EventBus } from '../eventbus';
 import store from '../util/store';
-import { STOREACTIONS } from '../util/store/actions';
+import { IMAGECHANGEACTIONS, STOREACTIONS } from '../util/store/actions';
 
 export enum EVENTNAMES {
   'dragstop' = 'dragstop',
@@ -64,7 +64,7 @@ export class DragHandler {
 
       const { x, y } = this.imageInfo;
 
-      store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.current.type, x, y });
+      store.dispatch(STOREACTIONS.imageChange, { action: IMAGECHANGEACTIONS.DRAG, type: this.current.type, x, y });
     }
   }
 

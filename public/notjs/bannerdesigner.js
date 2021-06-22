@@ -99,6 +99,12 @@
     }());
 
     var _a;
+    var IMAGECHANGEACTIONS;
+    (function (IMAGECHANGEACTIONS) {
+        IMAGECHANGEACTIONS[IMAGECHANGEACTIONS["DRAG"] = 0] = "DRAG";
+        IMAGECHANGEACTIONS[IMAGECHANGEACTIONS["POSITION"] = 1] = "POSITION";
+        IMAGECHANGEACTIONS[IMAGECHANGEACTIONS["SCALE"] = 2] = "SCALE";
+    })(IMAGECHANGEACTIONS || (IMAGECHANGEACTIONS = {}));
     var STOREACTIONS;
     (function (STOREACTIONS) {
         STOREACTIONS["alterTheme"] = "alterTheme";
@@ -444,7 +450,7 @@
                 this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
                 this.current.canvas.style.cursor = 'default';
                 var _a = this.imageInfo, x = _a.x, y = _a.y;
-                store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.current.type, x: x, y: y });
+                store.dispatch(STOREACTIONS.imageChange, { action: IMAGECHANGEACTIONS.DRAG, type: this.current.type, x: x, y: y });
             }
         };
         // test if x,y is inside the bounding box of texts[textIndex]
@@ -510,6 +516,72 @@
             this.dragStopped();
         };
         return DragHandler;
+    }());
+
+    function placementList(placements, currentplacement) {
+        var placementOption = [];
+        for (var key in placements) {
+            if (placements[key]) {
+                placementOption.push("<div data-value=\"" + key + "\" data-selected=\"" + (key === currentplacement ? 'true' : 'false') + "\" class=\"placement placement--" + key + "\" title=\"" + placements[key] + "\"></div>");
+            }
+        }
+        return placementOption.join('');
+    }
+    var placementPicker = function (placements, currentplacement) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Billed placering</label>\n    <div class=\"placements-container\">\n      <div class=\"placements\">\n        " + placementList(placements, currentplacement) + "\n      </div>\n    </div>\n  </div>\n"; };
+    var PLACEMENTNAMES;
+    (function (PLACEMENTNAMES) {
+        PLACEMENTNAMES["bottom"] = "bottom";
+        PLACEMENTNAMES["bottomleft"] = "bottomleft";
+        PLACEMENTNAMES["bottomright"] = "bottomright";
+        PLACEMENTNAMES["center"] = "center";
+        PLACEMENTNAMES["left"] = "left";
+        PLACEMENTNAMES["right"] = "right";
+        PLACEMENTNAMES["top"] = "top";
+        PLACEMENTNAMES["topleft"] = "topleft";
+        PLACEMENTNAMES["topright"] = "topright";
+    })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
+    var ImagePlacementPicker = /** @class */ (function () {
+        function ImagePlacementPicker(callType) {
+            this.placements = {
+                bottom: 'Bottom',
+                bottomleft: 'Bottom Left',
+                bottomright: 'Bottom Right',
+                center: 'Center',
+                left: 'Left',
+                right: 'Right',
+                top: 'Top',
+                topleft: 'Top Left',
+                topright: 'Top Right',
+            };
+            this.placements;
+            this.type = callType;
+            console.log('ImagePlacementPicker callType', callType);
+        }
+        ImagePlacementPicker.prototype.render = function () {
+            var _this = this;
+            console.log('ImagePlacementPicker render', this.type);
+            var placementPickerDiv = document.createElement('div');
+            placementPickerDiv.className = 'form-element';
+            placementPickerDiv.innerHTML = placementPicker(this.placements, 'topleft');
+            this.elements = placementPickerDiv.querySelectorAll('.placement');
+            Array.from(this.elements).forEach(function (el) {
+                if (el.dataset.selected === 'true')
+                    _this.currentSelected = el;
+                el.addEventListener('click', function (_ev) {
+                    _this.currentSelected.dataset.selected = 'false';
+                    el.dataset.selected = 'true';
+                    store.dispatch(STOREACTIONS.setImagePosition, { type: _this.type, val: el.dataset.value });
+                    store.dispatch(STOREACTIONS.imageChange, {
+                        action: IMAGECHANGEACTIONS.POSITION,
+                        type: _this.type,
+                        val: el.dataset.value,
+                    });
+                    _this.currentSelected = el;
+                });
+            });
+            return placementPickerDiv;
+        };
+        return ImagePlacementPicker;
     }());
 
     function imageUploader(input) {
@@ -626,7 +698,6 @@
     }());
     var contentHandler = new ContentHandler();
 
-    // import { ImagePlacementPicker } from './imageplacement';
     var ImageHandler = /** @class */ (function () {
         // TODO: VisualScaling
         // private scalers: {
@@ -721,7 +792,11 @@
             this.debounceTimeout = setTimeout(function () {
                 var _a;
                 store.dispatch(STOREACTIONS.setImageScale, (_a = {}, _a[type] = parseInt(imageScale, 10) / 100, _a));
-                store.dispatch(STOREACTIONS.imageChange, { action: 'scale', type: type, scale: parseInt(imageScale, 10) / 100 });
+                store.dispatch(STOREACTIONS.imageChange, {
+                    action: IMAGECHANGEACTIONS.SCALE,
+                    type: type,
+                    scale: parseInt(imageScale, 10) / 100,
+                });
             }, 250);
         };
         ImageHandler.prototype.renderHandlers = function (element, configName) {
@@ -786,25 +861,12 @@
             //   // store.dispatch(STOREACTIONS.imageChange, true);
             // });
             /** Image placement */
-            // const imagePlacement = new ImagePlacementPicker(element.configName);
-            // handlingFieldset.appendChild(imagePlacement.render());
+            var imagePlacement = new ImagePlacementPicker(element.configName);
+            handlingFieldset.appendChild(imagePlacement.render());
             this.imagePickerFrag.appendChild(handlingFieldset);
         };
         return ImageHandler;
     }());
-
-    var PLACEMENTNAMES;
-    (function (PLACEMENTNAMES) {
-        PLACEMENTNAMES["bottom"] = "bottom";
-        PLACEMENTNAMES["bottomleft"] = "bottomleft";
-        PLACEMENTNAMES["bottomright"] = "bottomright";
-        PLACEMENTNAMES["center"] = "center";
-        PLACEMENTNAMES["left"] = "left";
-        PLACEMENTNAMES["right"] = "right";
-        PLACEMENTNAMES["top"] = "top";
-        PLACEMENTNAMES["topleft"] = "topleft";
-        PLACEMENTNAMES["topright"] = "topright";
-    })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
 
     function bottomRight(options) {
         var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
@@ -860,6 +922,7 @@
     }
 
     function imagePositioner(options, pos) {
+        console.log('imagePositioner', options);
         switch (pos) {
             case PLACEMENTNAMES.bottom:
                 return bottom(options);
@@ -1192,6 +1255,7 @@
             });
             eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, _state) {
                 _this.imageHasChanged = imageChange;
+                console.log('canvascreator imageCHange', imageChange, _this.currentType);
                 if (_this.imageHasChanged.type === _this.currentType) {
                     _this.handleContent();
                 }
@@ -1399,15 +1463,20 @@
                         imgSize = initialscaler(options);
                         imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
                         if (imageHasChanged.type === type) {
+                            console.log('options', options, store.state.imagePosition);
                             switch (imageHasChanged.action) {
-                                case 'scale':
-                                    imgSize = initialscaler(options);
-                                    break;
-                                case 'position':
+                                case IMAGECHANGEACTIONS.DRAG:
                                     imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
                                     break;
+                                case IMAGECHANGEACTIONS.POSITION:
+                                    console.log('yeep yuup', imagePositioner(__assign(__assign({}, options), imgSize), store.state.imagePosition));
+                                    imgPos = imagePositioner(__assign(__assign({}, options), imgSize), store.state.imagePosition);
+                                    break;
+                                case IMAGECHANGEACTIONS.SCALE:
+                                    imgSize = initialscaler(options);
+                                    break;
                                 default:
-                                    imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
+                                    imgPos = imagePositioner(__assign(__assign({}, options), imgSize), store.state.imagePosition);
                             }
                         }
                         current.image = __assign(__assign({ image: this.image }, imgPos), imgSize);
@@ -2010,18 +2079,29 @@
 
     var DATES = [
         {
-            expires: 'Jan 20 2022',
-            username: 'signesvendsen',
+            expires: 'Jan 20 3210',
+            username: 'anders',
         },
         {
-            expires: 'Jan 20 2021',
-            username: 'petersommer',
+            expires: 'Jun 9 3210',
+            username: 'jeSper',
         },
     ];
+    (function () {
+        fetch('/ulog/dates.json')
+            .then(function (resp) {
+            console.log('resp', resp);
+            return resp.json();
+        })
+            .then(function (rj) {
+            console.log('rj', rj);
+        });
+    })();
 
     var TOKEN = 'bm_token';
 
     // const decodedData = window.atob(encodedData); // decode the string
+    var getUserDate = function (val) { return DATES.find(function (el) { return el.username.toLowerCase() === val; }); };
     var LoginHandler = /** @class */ (function () {
         function LoginHandler() {
             this.container = document.createElement('div');
@@ -2040,16 +2120,17 @@
             var userInput = document.createElement('input');
             loginForm.addEventListener('submit', function (ev) {
                 ev.preventDefault();
-                var val = userInput.value;
-                var userData = DATES.find(function (el) { return el.username === val; });
+                var val = userInput.value.toLowerCase();
+                var userData = getUserDate(val);
                 if (!userData) {
                     store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.logInError);
                 }
                 else {
                     var expires = userData.expires;
                     var userDate = new Date(expires);
-                    if (userDate && userDate.getTime() > _this.toDay) {
-                        var encodedData = encode(JSON.stringify(userDate.getTime()));
+                    var userTime = userDate ? userDate.getTime() : null;
+                    if (userTime && userTime > _this.toDay) {
+                        var encodedData = encode(JSON.stringify(userData));
                         localStorage.setItem(TOKEN, encodedData);
                         store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
                     }
@@ -2066,18 +2147,25 @@
             console.log('not logged in');
             this.token = localStorage.getItem(TOKEN);
             console.log('token', this.token);
-            if (!this.token) {
-                store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
-            }
-            else {
+            if (this.token) {
                 var decodedToken = JSON.parse(decode(this.token));
-                var decodedDate = new Date(decodedToken).getTime();
-                if (decodedDate > new Date().getTime()) {
-                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                var decodedDate = new Date(decodedToken.expires).getTime();
+                console.log('decodedToken', decodedToken);
+                var userData = getUserDate(decodedToken.username);
+                if (userData) {
+                    if (decodedDate > new Date().getTime()) {
+                        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                    }
+                    else {
+                        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                    }
                 }
                 else {
-                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
                 }
+            }
+            else {
+                store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
             }
         };
         return LoginHandler;

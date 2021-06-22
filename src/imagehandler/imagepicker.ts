@@ -1,10 +1,10 @@
-// import { ImagePlacementPicker } from './imageplacement';
+import { ImagePlacementPicker } from './imageplacement';
 // import { eventhandler } from '../util/eventhandler';
 // import { STATENAMES } from '../util/initialstate';
 import { RATIOTYPES } from '../canvascreator/canvascreator';
 import { contentHandler } from '../contentHandler';
 import store from '../util/store';
-import { STOREACTIONS } from '../util/store/actions';
+import { IMAGECHANGEACTIONS, STOREACTIONS } from '../util/store/actions';
 
 export class ImageHandler {
   private containers = [];
@@ -120,7 +120,11 @@ export class ImageHandler {
     clearTimeout(this.debounceTimeout);
     this.debounceTimeout = setTimeout(() => {
       store.dispatch(STOREACTIONS.setImageScale, { [type]: parseInt(imageScale, 10) / 100 });
-      store.dispatch(STOREACTIONS.imageChange, { action: 'scale', type, scale: parseInt(imageScale, 10) / 100 });
+      store.dispatch(STOREACTIONS.imageChange, {
+        action: IMAGECHANGEACTIONS.SCALE,
+        type,
+        scale: parseInt(imageScale, 10) / 100,
+      });
     }, 250);
   }
 
@@ -203,8 +207,8 @@ export class ImageHandler {
     // });
 
     /** Image placement */
-    // const imagePlacement = new ImagePlacementPicker(element.configName);
-    // handlingFieldset.appendChild(imagePlacement.render());
+    const imagePlacement = new ImagePlacementPicker(element.configName);
+    handlingFieldset.appendChild(imagePlacement.render());
 
     this.imagePickerFrag.appendChild(handlingFieldset);
   }

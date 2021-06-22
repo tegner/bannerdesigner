@@ -8,7 +8,7 @@ import { simpleTextStyler } from '../textstyler';
 import store from '../util/store';
 import { asyncForEach } from '../util/asyncforeach';
 import { eventhandler } from '../util/eventhandler';
-import { STOREACTIONS } from '../util/store/actions';
+import { IMAGECHANGEACTIONS, STOREACTIONS } from '../util/store/actions';
 import { STATENAMES } from '../util/initialstate';
 import { initialscaler } from '../imagehandler/imagesizer/initialscaler';
 
@@ -87,7 +87,7 @@ export class CanvasCreator {
 
     eventhandler.subscribe([STATENAMES.imageChange], (imageChange, _state) => {
       this.imageHasChanged = imageChange;
-
+      console.log('canvascreator imageCHange', imageChange, this.currentType);
       if (this.imageHasChanged.type === this.currentType) {
         this.handleContent();
       }
@@ -309,15 +309,20 @@ export class CanvasCreator {
 
       let imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
       if (imageHasChanged.type === type) {
+        console.log('options', options, store.state.imagePosition);
         switch (imageHasChanged.action) {
-          case 'scale':
-            imgSize = initialscaler(options);
-            break;
-          case 'position':
+          case IMAGECHANGEACTIONS.DRAG:
             imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
             break;
+          case IMAGECHANGEACTIONS.POSITION:
+            console.log('yeep yuup', imagePositioner({ ...options, ...imgSize }, store.state.imagePosition));
+            imgPos = imagePositioner({ ...options, ...imgSize }, store.state.imagePosition);
+            break;
+          case IMAGECHANGEACTIONS.SCALE:
+            imgSize = initialscaler(options);
+            break;
           default:
-            imgPos = imagePositioner({ options, ...imgSize }, store.state.imagePosition);
+            imgPos = imagePositioner({ ...options, ...imgSize }, store.state.imagePosition);
         }
       }
 

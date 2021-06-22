@@ -1,10 +1,26 @@
-export const DATES = [
+export interface IDATES {
+  expires: string;
+  username: string;
+}
+
+export const DATES: IDATES[] = [
   {
-    expires: 'Jan 20 2022',
-    username: 'signesvendsen',
+    expires: 'Jan 20 3210',
+    username: 'anders',
   },
   {
-    expires: 'Jan 20 2021',
-    username: 'petersommer',
+    expires: 'Jun 9 3210',
+    username: 'jeSper',
   },
 ];
+
+// (() => {
+//   fetch('/ulog/dates.json')
+//     .then((resp) => {
+//       console.log('resp', resp);
+//       return resp.json();
+//     })
+//     .then((rj) => {
+//       console.log('rj', rj);
+//     });
+// })();
