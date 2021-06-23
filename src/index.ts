@@ -1,8 +1,6 @@
-import { createForm } from './formcreator';
+import { APP } from './App';
 
-const thing = document.getElementById('app');
-
-thing.appendChild(createForm());
+APP.init();
 
 // window.addEventListener('beforeunload', (ev) => {
 //   console.log('beforeunload');

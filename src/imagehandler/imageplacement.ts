@@ -1,6 +1,6 @@
 import { RATIOTYPES } from '../canvascreator/canvascreator';
 import store from '../util/store';
-import { STOREACTIONS } from '../util/store/actions';
+import { IMAGECHANGEACTIONS, STOREACTIONS } from '../util/store/actions';
 
 function placementList(placements, currentplacement): string {
   const placementOption = [];
@@ -70,9 +70,11 @@ export class ImagePlacementPicker {
   constructor(callType) {
     this.placements;
     this.type = callType;
+    console.log('ImagePlacementPicker callType', callType);
   }
 
   public render() {
+    console.log('ImagePlacementPicker render', this.type);
     const placementPickerDiv = document.createElement('div');
     placementPickerDiv.className = 'form-element';
     placementPickerDiv.innerHTML = placementPicker(this.placements, 'topleft');
@@ -86,7 +88,11 @@ export class ImagePlacementPicker {
         el.dataset.selected = 'true';
 
         store.dispatch(STOREACTIONS.setImagePosition, { type: this.type, val: el.dataset.value });
-        store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.type, val: el.dataset.value });
+        store.dispatch(STOREACTIONS.imageChange, {
+          action: IMAGECHANGEACTIONS.POSITION,
+          type: this.type,
+          val: el.dataset.value,
+        });
         this.currentSelected = el;
       });
     });

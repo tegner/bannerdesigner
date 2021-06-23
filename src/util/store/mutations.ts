@@ -22,6 +22,11 @@ export default {
 
     return state;
   },
+  [STOREACTIONS.setLoginStatus](state, payload) {
+    state[STATENAMES.loginStatus] = payload;
+
+    return state;
+  },
   [STOREACTIONS.setTheme](state, payload) {
     state[STATENAMES.theme] = payload;
 

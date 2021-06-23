@@ -99,12 +99,19 @@
     }());
 
     var _a;
+    var IMAGECHANGEACTIONS;
+    (function (IMAGECHANGEACTIONS) {
+        IMAGECHANGEACTIONS[IMAGECHANGEACTIONS["DRAG"] = 0] = "DRAG";
+        IMAGECHANGEACTIONS[IMAGECHANGEACTIONS["POSITION"] = 1] = "POSITION";
+        IMAGECHANGEACTIONS[IMAGECHANGEACTIONS["SCALE"] = 2] = "SCALE";
+    })(IMAGECHANGEACTIONS || (IMAGECHANGEACTIONS = {}));
     var STOREACTIONS;
     (function (STOREACTIONS) {
         STOREACTIONS["alterTheme"] = "alterTheme";
         STOREACTIONS["imageChange"] = "imageChange";
         STOREACTIONS["setImagePosition"] = "setImagePosition";
         STOREACTIONS["setImageScale"] = "setImageScale";
+        STOREACTIONS["setLoginStatus"] = "setLoginStatus";
         STOREACTIONS["setTheme"] = "setTheme";
         STOREACTIONS["setThemeName"] = "setThemeName";
         STOREACTIONS["updateCanvases"] = "updateCanvases";
@@ -122,6 +129,10 @@
         },
         _a[STOREACTIONS.setImageScale] = function (context, payload) {
             context.commit(STOREACTIONS.setImageScale, payload);
+        },
+        _a[STOREACTIONS.setLoginStatus] = function (context, payload) {
+            console.log('STOREACTIONS.setLoginStatus', context, payload);
+            context.commit(STOREACTIONS.setLoginStatus, payload);
         },
         _a[STOREACTIONS.setTheme] = function (context, payload) {
             context.commit(STOREACTIONS.setTheme, payload);
@@ -206,10 +217,18 @@
         STATENAMES["imageChange"] = "imageChange";
         STATENAMES["imageScale"] = "imageScale";
         STATENAMES["imagePosition"] = "imagePosition";
+        STATENAMES["loginStatus"] = "loginStatus";
         STATENAMES["theme"] = "theme";
         STATENAMES["themeName"] = "themeName";
         STATENAMES["userContent"] = "userContent";
     })(STATENAMES || (STATENAMES = {}));
+    var ELoginStatus;
+    (function (ELoginStatus) {
+        ELoginStatus[ELoginStatus["loggedIn"] = 0] = "loggedIn";
+        ELoginStatus[ELoginStatus["logInError"] = 1] = "logInError";
+        ELoginStatus[ELoginStatus["notLoggedIn"] = 2] = "notLoggedIn";
+        ELoginStatus[ELoginStatus["expired"] = 3] = "expired";
+    })(ELoginStatus || (ELoginStatus = {}));
     var defaultTheme = THEMENAMES.modern;
     var initialState = (_a$2 = {},
         _a$2[STATENAMES.canvases] = [],
@@ -219,6 +238,7 @@
             _b[RATIOTYPES.wide] = 1,
             _b),
         _a$2[STATENAMES.imagePosition] = 'topleft',
+        _a$2[STATENAMES.loginStatus] = undefined,
         _a$2[STATENAMES.theme] = themes[defaultTheme],
         _a$2[STATENAMES.themeName] = defaultTheme,
         _a$2[STATENAMES.userContent] = {},
@@ -240,6 +260,10 @@
         },
         _a$3[STOREACTIONS.setImageScale] = function (state, payload) {
             state[STATENAMES.imageScale] = __assign(__assign({}, state[STATENAMES.imageScale]), payload);
+            return state;
+        },
+        _a$3[STOREACTIONS.setLoginStatus] = function (state, payload) {
+            state[STATENAMES.loginStatus] = payload;
             return state;
         },
         _a$3[STOREACTIONS.setTheme] = function (state, payload) {
@@ -426,7 +450,7 @@
                 this.events.emit(EVENTNAMES.dragstop, this.imageInfo);
                 this.current.canvas.style.cursor = 'default';
                 var _a = this.imageInfo, x = _a.x, y = _a.y;
-                store.dispatch(STOREACTIONS.imageChange, { action: 'position', type: this.current.type, x: x, y: y });
+                store.dispatch(STOREACTIONS.imageChange, { action: IMAGECHANGEACTIONS.DRAG, type: this.current.type, x: x, y: y });
             }
         };
         // test if x,y is inside the bounding box of texts[textIndex]
@@ -492,6 +516,72 @@
             this.dragStopped();
         };
         return DragHandler;
+    }());
+
+    function placementList(placements, currentplacement) {
+        var placementOption = [];
+        for (var key in placements) {
+            if (placements[key]) {
+                placementOption.push("<div data-value=\"" + key + "\" data-selected=\"" + (key === currentplacement ? 'true' : 'false') + "\" class=\"placement placement--" + key + "\" title=\"" + placements[key] + "\"></div>");
+            }
+        }
+        return placementOption.join('');
+    }
+    var placementPicker = function (placements, currentplacement) { return "\n  <div class=\"form-element\">\n    <label class=\"form-label\">Billed placering</label>\n    <div class=\"placements-container\">\n      <div class=\"placements\">\n        " + placementList(placements, currentplacement) + "\n      </div>\n    </div>\n  </div>\n"; };
+    var PLACEMENTNAMES;
+    (function (PLACEMENTNAMES) {
+        PLACEMENTNAMES["bottom"] = "bottom";
+        PLACEMENTNAMES["bottomleft"] = "bottomleft";
+        PLACEMENTNAMES["bottomright"] = "bottomright";
+        PLACEMENTNAMES["center"] = "center";
+        PLACEMENTNAMES["left"] = "left";
+        PLACEMENTNAMES["right"] = "right";
+        PLACEMENTNAMES["top"] = "top";
+        PLACEMENTNAMES["topleft"] = "topleft";
+        PLACEMENTNAMES["topright"] = "topright";
+    })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
+    var ImagePlacementPicker = /** @class */ (function () {
+        function ImagePlacementPicker(callType) {
+            this.placements = {
+                bottom: 'Bottom',
+                bottomleft: 'Bottom Left',
+                bottomright: 'Bottom Right',
+                center: 'Center',
+                left: 'Left',
+                right: 'Right',
+                top: 'Top',
+                topleft: 'Top Left',
+                topright: 'Top Right',
+            };
+            this.placements;
+            this.type = callType;
+            console.log('ImagePlacementPicker callType', callType);
+        }
+        ImagePlacementPicker.prototype.render = function () {
+            var _this = this;
+            console.log('ImagePlacementPicker render', this.type);
+            var placementPickerDiv = document.createElement('div');
+            placementPickerDiv.className = 'form-element';
+            placementPickerDiv.innerHTML = placementPicker(this.placements, 'topleft');
+            this.elements = placementPickerDiv.querySelectorAll('.placement');
+            Array.from(this.elements).forEach(function (el) {
+                if (el.dataset.selected === 'true')
+                    _this.currentSelected = el;
+                el.addEventListener('click', function (_ev) {
+                    _this.currentSelected.dataset.selected = 'false';
+                    el.dataset.selected = 'true';
+                    store.dispatch(STOREACTIONS.setImagePosition, { type: _this.type, val: el.dataset.value });
+                    store.dispatch(STOREACTIONS.imageChange, {
+                        action: IMAGECHANGEACTIONS.POSITION,
+                        type: _this.type,
+                        val: el.dataset.value,
+                    });
+                    _this.currentSelected = el;
+                });
+            });
+            return placementPickerDiv;
+        };
+        return ImagePlacementPicker;
     }());
 
     function imageUploader(input) {
@@ -608,7 +698,6 @@
     }());
     var contentHandler = new ContentHandler();
 
-    // import { ImagePlacementPicker } from './imageplacement';
     var ImageHandler = /** @class */ (function () {
         // TODO: VisualScaling
         // private scalers: {
@@ -703,7 +792,11 @@
             this.debounceTimeout = setTimeout(function () {
                 var _a;
                 store.dispatch(STOREACTIONS.setImageScale, (_a = {}, _a[type] = parseInt(imageScale, 10) / 100, _a));
-                store.dispatch(STOREACTIONS.imageChange, { action: 'scale', type: type, scale: parseInt(imageScale, 10) / 100 });
+                store.dispatch(STOREACTIONS.imageChange, {
+                    action: IMAGECHANGEACTIONS.SCALE,
+                    type: type,
+                    scale: parseInt(imageScale, 10) / 100,
+                });
             }, 250);
         };
         ImageHandler.prototype.renderHandlers = function (element, configName) {
@@ -768,25 +861,12 @@
             //   // store.dispatch(STOREACTIONS.imageChange, true);
             // });
             /** Image placement */
-            // const imagePlacement = new ImagePlacementPicker(element.configName);
-            // handlingFieldset.appendChild(imagePlacement.render());
+            var imagePlacement = new ImagePlacementPicker(element.configName);
+            handlingFieldset.appendChild(imagePlacement.render());
             this.imagePickerFrag.appendChild(handlingFieldset);
         };
         return ImageHandler;
     }());
-
-    var PLACEMENTNAMES;
-    (function (PLACEMENTNAMES) {
-        PLACEMENTNAMES["bottom"] = "bottom";
-        PLACEMENTNAMES["bottomleft"] = "bottomleft";
-        PLACEMENTNAMES["bottomright"] = "bottomright";
-        PLACEMENTNAMES["center"] = "center";
-        PLACEMENTNAMES["left"] = "left";
-        PLACEMENTNAMES["right"] = "right";
-        PLACEMENTNAMES["top"] = "top";
-        PLACEMENTNAMES["topleft"] = "topleft";
-        PLACEMENTNAMES["topright"] = "topright";
-    })(PLACEMENTNAMES || (PLACEMENTNAMES = {}));
 
     function bottomRight(options) {
         var cHeight = options.cHeight, cWidth = options.cWidth, h = options.h, w = options.w;
@@ -842,6 +922,7 @@
     }
 
     function imagePositioner(options, pos) {
+        console.log('imagePositioner', options);
         switch (pos) {
             case PLACEMENTNAMES.bottom:
                 return bottom(options);
@@ -1174,6 +1255,7 @@
             });
             eventhandler.subscribe([STATENAMES.imageChange], function (imageChange, _state) {
                 _this.imageHasChanged = imageChange;
+                console.log('canvascreator imageCHange', imageChange, _this.currentType);
                 if (_this.imageHasChanged.type === _this.currentType) {
                     _this.handleContent();
                 }
@@ -1381,15 +1463,20 @@
                         imgSize = initialscaler(options);
                         imgPos = current.image ? { x: current.image.x, y: current.image.y } : { x: 0, y: 0 };
                         if (imageHasChanged.type === type) {
+                            console.log('options', options, store.state.imagePosition);
                             switch (imageHasChanged.action) {
-                                case 'scale':
-                                    imgSize = initialscaler(options);
-                                    break;
-                                case 'position':
+                                case IMAGECHANGEACTIONS.DRAG:
                                     imgPos = { x: imageHasChanged.x, y: imageHasChanged.y };
                                     break;
+                                case IMAGECHANGEACTIONS.POSITION:
+                                    console.log('yeep yuup', imagePositioner(__assign(__assign({}, options), imgSize), store.state.imagePosition));
+                                    imgPos = imagePositioner(__assign(__assign({}, options), imgSize), store.state.imagePosition);
+                                    break;
+                                case IMAGECHANGEACTIONS.SCALE:
+                                    imgSize = initialscaler(options);
+                                    break;
                                 default:
-                                    imgPos = imagePositioner(__assign({ options: options }, imgSize), store.state.imagePosition);
+                                    imgPos = imagePositioner(__assign(__assign({}, options), imgSize), store.state.imagePosition);
                             }
                         }
                         current.image = __assign(__assign({ image: this.image }, imgPos), imgSize);
@@ -1987,8 +2074,219 @@
         return container;
     }
 
-    var thing = document.getElementById('app');
-    thing.appendChild(createForm());
+    var decode = function (hash) { return window.atob(hash); };
+    var encode = function (str) { return window.btoa(str); };
+
+    var DATES = [
+        {
+            expires: 'Jan 20 3210',
+            username: 'anders',
+        },
+        {
+            expires: 'Jun 9 3210',
+            username: 'jeSper',
+        },
+    ];
+    (function () {
+        fetch('/ulog/dates.json')
+            .then(function (resp) {
+            console.log('resp', resp);
+            return resp.json();
+        })
+            .then(function (rj) {
+            console.log('rj', rj);
+        });
+    })();
+
+    var TOKEN = 'bm_token';
+
+    // const decodedData = window.atob(encodedData); // decode the string
+    var getUserDate = function (val) { return DATES.find(function (el) { return el.username.toLowerCase() === val; }); };
+    var LoginHandler = /** @class */ (function () {
+        function LoginHandler() {
+            this.container = document.createElement('div');
+            this.toDay = new Date().getTime();
+            this.checkTokenStatus();
+        }
+        /**
+         * render
+         */
+        LoginHandler.prototype.renderLoginForm = function () {
+            var _this = this;
+            var loginMessage = document.createElement('small');
+            loginMessage.innerHTML = 'Angiv dit brugernavn for at komme igang.';
+            this.container.appendChild(loginMessage);
+            var loginForm = document.createElement('form');
+            var userInput = document.createElement('input');
+            loginForm.addEventListener('submit', function (ev) {
+                ev.preventDefault();
+                var val = userInput.value.toLowerCase();
+                var userData = getUserDate(val);
+                if (!userData) {
+                    store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.logInError);
+                }
+                else {
+                    var expires = userData.expires;
+                    var userDate = new Date(expires);
+                    var userTime = userDate ? userDate.getTime() : null;
+                    if (userTime && userTime > _this.toDay) {
+                        var encodedData = encode(JSON.stringify(userData));
+                        localStorage.setItem(TOKEN, encodedData);
+                        store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                    }
+                    else if (userDate && userDate.getTime() < _this.toDay) {
+                        store.commit(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                    }
+                }
+            });
+            loginForm.appendChild(userInput);
+            this.container.appendChild(loginForm);
+            return this.container;
+        };
+        LoginHandler.prototype.checkTokenStatus = function () {
+            console.log('not logged in');
+            this.token = localStorage.getItem(TOKEN);
+            console.log('token', this.token);
+            if (this.token) {
+                var decodedToken = JSON.parse(decode(this.token));
+                var decodedDate = new Date(decodedToken.expires).getTime();
+                console.log('decodedToken', decodedToken);
+                var userData = getUserDate(decodedToken.username);
+                if (userData) {
+                    if (decodedDate > new Date().getTime()) {
+                        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.loggedIn);
+                    }
+                    else {
+                        store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.expired);
+                    }
+                }
+                else {
+                    store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
+                }
+            }
+            else {
+                store.dispatch(STOREACTIONS.setLoginStatus, ELoginStatus.notLoggedIn);
+            }
+        };
+        return LoginHandler;
+    }());
+
+    var CONTACT = '<a href="mailto: bruger@bannermaker.dk">bruger@bannermaker.dk</a>';
+
+    var loginError = function () {
+        var expiredEl = document.createElement('div');
+        expiredEl.innerHTML = "\n    Det angivne brugernavn findes ikke.<br />\n    Kontakt " + CONTACT + " for at blive oprettet.\n    ";
+        return expiredEl;
+    };
+
+    var loginExpired = function () {
+        var expiredEl = document.createElement('div');
+        expiredEl.innerHTML = "\n    Din adgang er udl\u00F8bet.<br />\n    Kontakt " + CONTACT + " for at f\u00E5 en opdateret dit abonnement.\n    ";
+        return expiredEl;
+    };
+
+    var notLoggedIn = function () {
+        var expiredEl = document.createElement('div');
+        expiredEl.innerHTML = "\n    Hvis du endnu ikke er oprettet: kontakt " + CONTACT + " for at blive oprettet.\n    ";
+        return expiredEl;
+    };
+
+    var App = /** @class */ (function () {
+        function App() {
+            var _this = this;
+            this.body = document.body;
+            this.loginContainer = document.createElement('div');
+            this.loginFormContainer = document.createElement('div');
+            this.messageContainer = document.createElement('div');
+            try {
+                this.appContainer = document.getElementById('app');
+                console.log('constructing app', this.appContainer);
+                this.loginContainer.className = 'login-container';
+                this.appContainer.appendChild(this.loginContainer);
+                eventhandler.subscribe(STATENAMES.loginStatus, function (status, _state) {
+                    console.log('login status?', status);
+                    switch (status) {
+                        case ELoginStatus.expired:
+                            _this.clearMessage();
+                            _this.tokenExpired();
+                            break;
+                        case ELoginStatus.loggedIn:
+                            _this.clearEverything();
+                            _this.renderForm();
+                            break;
+                        case ELoginStatus.logInError:
+                            _this.clearMessage();
+                            _this.logInError();
+                            break;
+                        case ELoginStatus.notLoggedIn:
+                        default:
+                            _this.clearMessage();
+                            _this.notLoggedIn();
+                            break;
+                    }
+                });
+                this.loginFormContainer.className = 'login-form-container';
+                this.loginContainer.appendChild(this.loginFormContainer);
+                this.messageContainer.className = 'message-container';
+                this.loginContainer.appendChild(this.messageContainer);
+            }
+            catch (error) {
+                console.error('BANNERMAKER APP constructor', error);
+            }
+        }
+        /**
+         * init
+         */
+        App.prototype.init = function () {
+            var loginHandler = new LoginHandler();
+            this.loginForm = loginHandler.renderLoginForm();
+            if (store.state.loginStatus !== ELoginStatus.loggedIn) {
+                console.log(this.loginForm);
+                this.loginFormContainer.appendChild(this.loginForm);
+            }
+        };
+        App.prototype.clearEverything = function () {
+            while (this.appContainer.firstChild) {
+                this.appContainer.firstChild.remove();
+            }
+        };
+        // private clearForm() {
+        //   while (this.loginFormContainer.firstChild) {
+        //     this.loginFormContainer.firstChild.remove();
+        //   }
+        // }
+        App.prototype.clearMessage = function () {
+            while (this.messageContainer.firstChild) {
+                this.messageContainer.firstChild.remove();
+            }
+        };
+        App.prototype.logInError = function () {
+            this.body.classList.add('not-logged-in');
+            console.log('add log in error message');
+            this.messageContainer.appendChild(loginError());
+        };
+        App.prototype.notLoggedIn = function () {
+            this.body.classList.add('not-logged-in');
+            console.log('add not logged in message');
+            this.messageContainer.appendChild(notLoggedIn());
+        };
+        App.prototype.renderForm = function () {
+            this.body.classList.remove('not-logged-in');
+            if (this.loginForm)
+                this.loginForm.remove();
+            this.appContainer.appendChild(createForm());
+        };
+        App.prototype.tokenExpired = function () {
+            this.body.classList.add('not-logged-in');
+            console.log('tokenExpired');
+            console.log('add token expired message');
+            this.messageContainer.appendChild(loginExpired());
+        };
+        return App;
+    }());
+    var APP = new App();
+
+    APP.init();
     // window.addEventListener('beforeunload', (ev) => {
     //   console.log('beforeunload');
     //   ev.preventDefault();
